@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace DiscordBot.Db.Entity
 {
-    public class Book
+    public class User
     {
         public int Id { get; set; }
-        public string Title { get; set; }
-        public string Author { get; set; }
+        public string Name { get; set; }
     }
 }

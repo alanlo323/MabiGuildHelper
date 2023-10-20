@@ -27,7 +27,7 @@ namespace DiscordBot
         {
 
             HostApplicationBuilder builder = Host.CreateApplicationBuilder();
-            builder.Services.AddOptions<DiscordBotConfig>().Bind(builder.Configuration.GetSection(DiscordBotConfig.SectionName)).Validate(x => true || x.Validate()).ValidateOnStart();
+            builder.Services.AddOptions<DiscordBotConfig>().Bind(builder.Configuration.GetSection(DiscordBotConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
 
             builder.Services.AddLogging(loggingBuilder =>
             {
@@ -59,14 +59,8 @@ namespace DiscordBot
                 ;
 
             using IHost host = builder.Build();
-            host.Start();
-
             host.Services.GetRequiredService<Bot>().Start();
-
-            Thread.Sleep(-1);
-
-            await host.StopAsync();
+            host.Run();
         }
-
     }
 }

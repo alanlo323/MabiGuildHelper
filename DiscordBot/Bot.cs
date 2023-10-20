@@ -22,15 +22,16 @@ namespace DiscordBot
         ILogger<Bot> _logger;
         DiscordSocketClient _client;
         DiscordBotConfig _discordBotConfig;
+        AppDbContext _appDbContext;
 
         public Bot(ILogger<Bot> logger, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, AppDbContext appDbContext)
         {
             _logger = logger;
             _discordBotConfig = discordBotConfig.Value;
+            _appDbContext = appDbContext;
+
             _client = new DiscordSocketClient();
             _client.Log += LogAsync;
-
-            appDbContext.Database.EnsureCreated();
         }
 
         private Task LogAsync(LogMessage msg)
@@ -50,7 +51,11 @@ namespace DiscordBot
 
         public async void Start()
         {
-            _logger.LogInformation("Starting bot");
+            await Task.Delay(100);
+
+            _logger.LogInformation("Starting Discord Bot");
+
+            await _appDbContext.Database.EnsureCreatedAsync();
 
             await _client.LoginAsync(TokenType.Bot, _discordBotConfig.Token);
             await _client.StartAsync();
