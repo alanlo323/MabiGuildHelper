@@ -19,8 +19,9 @@ namespace DiscordBot.Helper
                 FileName = "${basedir}/logs/${shortdate}.log",
                 Layout = "${date:format=yyyy-MM-dd HH\\:mm\\:ss} [${uppercase:${level}}] ${message}",
             };
+            var logconsole = new ConsoleTarget("logconsole");
             config.AddRule(LogLevel.Trace, LogLevel.Fatal, fileTarget);
-            config.AddTarget(new ConsoleTarget("Console"));
+            config.AddRule(LogLevel.Trace, LogLevel.Fatal, logconsole);
             LogManager.Configuration = config;
         }
     }
