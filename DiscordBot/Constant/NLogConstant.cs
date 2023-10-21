@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DiscordBot.Configuration
+namespace DiscordBot.Constant
 {
-    public class NLogConfig
+    public class NLogConstant
     {
         public const string SectionName = "NLog";
         public const string FileName = "FileName";

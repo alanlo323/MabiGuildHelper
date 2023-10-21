@@ -1,5 +1,7 @@
 ﻿using Discord.WebSocket;
+using DiscordBot.Commands;
 using DiscordBot.Configuration;
+using DiscordBot.Constant;
 using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Helper;
@@ -28,6 +30,7 @@ namespace DiscordBot
 
             HostApplicationBuilder builder = Host.CreateApplicationBuilder();
             builder.Services.AddOptions<DiscordBotConfig>().Bind(builder.Configuration.GetSection(DiscordBotConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
+            builder.Services.AddOptions<GameConfig>().Bind(builder.Configuration.GetSection(GameConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
 
             builder.Services.AddLogging(loggingBuilder =>
             {
@@ -39,8 +42,8 @@ namespace DiscordBot
                 config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, new ConsoleTarget());
                 config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, new FileTarget
                 {
-                    FileName = builder.Configuration.GetSection(NLogConfig.SectionName).GetValue<string>(NLogConfig.FileName),
-                    Layout = builder.Configuration.GetSection(NLogConfig.SectionName).GetValue<string>(NLogConfig.Layout),
+                    FileName = builder.Configuration.GetSection(NLogConstant.SectionName).GetValue<string>(NLogConstant.FileName),
+                    Layout = builder.Configuration.GetSection(NLogConstant.SectionName).GetValue<string>(NLogConstant.Layout),
                 }); ; ;
 
                 loggingBuilder.AddNLog(config);
@@ -49,6 +52,7 @@ namespace DiscordBot
             builder.Services
                 .AddSingleton<Bot>()
                 .AddSingleton<DiscordSocketClient>()
+                .AddSingleton<CommandHelper>()
                 .AddDbContext<AppDbContext>(optionsBuilder =>
                 {
                     if (!optionsBuilder.IsConfigured)
@@ -56,6 +60,8 @@ namespace DiscordBot
                         optionsBuilder.UseSqlite(builder.Configuration.GetConnectionString(AppDbContext.ConnectionStringName));
                     }
                 })
+                .AddScoped<IBaseCommand, HelloWorldCommand>()
+                .AddScoped<IBaseCommand, RandomCommand>()
                 ;
 
             using IHost host = builder.Build();

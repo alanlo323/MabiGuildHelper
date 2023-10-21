@@ -14,6 +14,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using DiscordBot.Configuration;
+using Discord.Net;
+using Newtonsoft.Json;
+using DiscordBot.Commands;
 
 namespace DiscordBot
 {
@@ -22,16 +25,22 @@ namespace DiscordBot
         ILogger<Bot> _logger;
         DiscordSocketClient _client;
         DiscordBotConfig _discordBotConfig;
+        GameConfig _gameConfig;
         AppDbContext _appDbContext;
+        CommandHelper _commandController;
 
-        public Bot(ILogger<Bot> logger, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, AppDbContext appDbContext)
+        public Bot(ILogger<Bot> logger, DiscordSocketClient client, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, IOptionsSnapshot<GameConfig> gameConfig, AppDbContext appDbContext, CommandHelper commandController)
         {
             _logger = logger;
+            _client = client;
             _discordBotConfig = discordBotConfig.Value;
+            _gameConfig = gameConfig.Value;
             _appDbContext = appDbContext;
+            _commandController = commandController;
 
-            _client = new DiscordSocketClient();
             _client.Log += LogAsync;
+            _client.Ready += Client_Ready;
+            _client.SlashCommandExecuted += SlashCommandHandler;
         }
 
         private Task LogAsync(LogMessage msg)
@@ -60,5 +69,40 @@ namespace DiscordBot
             await _client.LoginAsync(TokenType.Bot, _discordBotConfig.Token);
             await _client.StartAsync();
         }
+
+        public async Task Client_Ready()
+        {
+            _logger.LogInformation($"Runngin in {_client.Guilds.Count} servers");
+            await _client.SetActivityAsync(new Game(_gameConfig.DisplayName, ActivityType.Playing));
+            await RefreshCommand();
+        }
+
+        private async Task RefreshCommand()
+        {
+            _logger.LogInformation("Refreshing commands");
+
+            List<SlashCommandProperties> commandProperties = _commandController.GetCommandList().Select(x => x.GetSlashCommandProperties()).ToList();
+
+            foreach (SocketGuild guild in _client.Guilds)
+            {
+                try
+                {
+                    await guild.BulkOverwriteApplicationCommandAsync(commandProperties.ToArray());
+                }
+                catch (Exception exception)
+                {
+                    _logger.LogError(exception, exception.Message);
+                    _logger.LogWarning($"Cannot refresh commands for Guild: {guild.Name} [{guild.Id}]");
+                }
+            }
+            _logger.LogInformation("Commands refreshed");
+        }
+
+        private async Task SlashCommandHandler(SocketSlashCommand command)
+        {
+            IBaseCommand commandInstance = _commandController.GetCommand(command.CommandName);
+            await commandInstance.Excute(command);
+        }
+
     }
 }
