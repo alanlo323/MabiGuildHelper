@@ -12,8 +12,7 @@ namespace DiscordBot.Db
     {
         public static readonly string ConnectionStringName = "MabiDb";
 
-        public DbSet<Guild> Guilds { get; set; }
-        public DbSet<User> Users { get; set; }
+        public DbSet<GuildSetting> GuildSettings { get; set; }
 
         public AppDbContext(DbContextOptions option) : base(option) { }
     }

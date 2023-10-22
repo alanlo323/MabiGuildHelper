@@ -5,13 +5,16 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using DiscordBot.Extension;
+using DiscordBot.Util;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Commands
 {
-    public class RandomCommand : IBaseCommand
+    public class ErinnTimeCommand : IBaseCommand
     {
-        public string Name { get; set; } = "random";
-        public string Description { get; set; } = "Return random result";
+        public string Name { get; set; } = "erinntime";
+        public string Description { get; set; } = "顯示目前愛爾琳時間";
 
         public SlashCommandProperties GetSlashCommandProperties()
         {
@@ -24,7 +27,7 @@ namespace DiscordBot.Commands
 
         public async Task Excute(SocketSlashCommand command)
         {
-            await command.RespondAsync($"{Random.Shared.NextDouble()}");
+            await command.RespondAsync($"愛爾琳時間⏱ {GameUtil.GetErinnTime().ToString(@"hh\:mm")}", ephemeral:true);
         }
     }
 }

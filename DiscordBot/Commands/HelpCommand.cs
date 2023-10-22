@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using DiscordBot.Extension;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Commands
@@ -16,7 +17,7 @@ namespace DiscordBot.Commands
 
         public SlashCommandProperties GetSlashCommandProperties()
         {
-            var command = new SlashCommandBuilder();
+            var command = new SlashCommandBuilder()
                 .WithName(Name)
                 .WithDescription(Description)
                 ;
@@ -25,7 +26,7 @@ namespace DiscordBot.Commands
 
         public async Task Excute(SocketSlashCommand command)
         {
-            await command.RespondAsync($"```待定, 暫不提供```");
+            await command.RespondAsync("待定, 暫不提供".ToQuotation());
         }
     }
 }

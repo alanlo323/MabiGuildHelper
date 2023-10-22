@@ -17,6 +17,7 @@ using DiscordBot.Configuration;
 using Discord.Net;
 using Newtonsoft.Json;
 using DiscordBot.Commands;
+using DiscordBot.Extension;
 
 namespace DiscordBot
 {
@@ -28,6 +29,8 @@ namespace DiscordBot
         GameConfig _gameConfig;
         AppDbContext _appDbContext;
         CommandHelper _commandController;
+
+        bool isReady = false;
 
         public Bot(ILogger<Bot> logger, DiscordSocketClient client, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, IOptionsSnapshot<GameConfig> gameConfig, AppDbContext appDbContext, CommandHelper commandController)
         {
@@ -72,6 +75,7 @@ namespace DiscordBot
 
         public async Task Client_Ready()
         {
+            isReady = true;
             _logger.LogInformation($"Runngin in {_client.Guilds.Count} servers");
             await _client.SetActivityAsync(new Game(_gameConfig.DisplayName, ActivityType.Playing));
             await RefreshCommand();
@@ -100,7 +104,21 @@ namespace DiscordBot
 
         private async Task SlashCommandHandler(SocketSlashCommand command)
         {
+            if(!isReady) return; ;
+
+            SocketUser user = command.User;
             IBaseCommand commandInstance = _commandController.GetCommand(command.CommandName);
+            if (command.IsDMInteraction)
+            {
+                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {commandInstance.GetType().Name} with DM");
+            }
+            else
+            {
+                SocketGuild guild = _client.GetGuild(command.GuildId.Value);
+                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {commandInstance.GetType().Name} in [{guild.Name}({guild.Id})] #{command.Channel.Name}({command.Channel.Id})");
+
+            }
+            //if (command.Data.Options.Count > 0) _logger.LogInformation($"Option: {command.Data.Options.ToJsonString()}");
             await commandInstance.Excute(command);
         }
 

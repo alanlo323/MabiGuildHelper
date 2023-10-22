@@ -60,8 +60,10 @@ namespace DiscordBot
                         optionsBuilder.UseSqlite(builder.Configuration.GetConnectionString(AppDbContext.ConnectionStringName));
                     }
                 })
-                .AddScoped<IBaseCommand, HelloWorldCommand>()
-                .AddScoped<IBaseCommand, RandomCommand>()
+                .AddScoped<IBaseCommand, AboutCommand>()
+                .AddScoped<IBaseCommand, HelpCommand>()
+                .AddScoped<IBaseCommand, SettingCommand>()
+                .AddScoped<IBaseCommand, ErinnTimeCommand>()
                 ;
 
             using IHost host = builder.Build();
