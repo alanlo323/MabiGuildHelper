@@ -5,6 +5,7 @@ using DiscordBot.Constant;
 using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Helper;
+using DiscordBot.SchedulerJob;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +15,7 @@ using Microsoft.Extensions.Options;
 using NLog.Config;
 using NLog.Extensions.Logging;
 using NLog.Targets;
+using Quartz;
 
 namespace DiscordBot
 {
@@ -50,9 +52,6 @@ namespace DiscordBot
             });
 
             builder.Services
-                .AddSingleton<Bot>()
-                .AddSingleton<DiscordSocketClient>()
-                .AddSingleton<CommandHelper>()
                 .AddDbContext<AppDbContext>(optionsBuilder =>
                 {
                     if (!optionsBuilder.IsConfigured)
@@ -60,11 +59,46 @@ namespace DiscordBot
                         optionsBuilder.UseSqlite(builder.Configuration.GetConnectionString(AppDbContext.ConnectionStringName));
                     }
                 })
+                .AddSingleton<Bot>()
+                .AddSingleton<DiscordSocketClient>()
+                .AddSingleton<CommandHelper>()
                 .AddScoped<IBaseCommand, AboutCommand>()
                 .AddScoped<IBaseCommand, HelpCommand>()
                 .AddScoped<IBaseCommand, SettingCommand>()
                 .AddScoped<IBaseCommand, ErinnTimeCommand>()
                 ;
+
+            builder.Services
+                .AddQuartz(q =>
+                {
+                    q.UseSimpleTypeLoader();
+                    q.UseInMemoryStore();
+                    q.UseDefaultThreadPool(tp =>
+                    {
+                        tp.MaxConcurrency = 10;
+                    });
+
+                    q.ScheduleJob<ErinnTimeJob>(trigger => trigger
+                        .WithIdentity(ErinnTimeJob.Key.Name)
+                        .StartAt(DateBuilder.NextGivenSecondDate(DateTime.Now, 15))
+                        .WithSimpleSchedule(x => x
+                            .WithIntervalInSeconds(15)
+                            .RepeatForever()
+                        ));
+
+                    var asd = DateBuilder.NextGivenMinuteDate(DateTime.Now, 0);
+                    q.ScheduleJob<DailyEffectJob>(trigger => trigger
+                        .WithIdentity(DailyEffectJob.Key.Name)
+                        .StartAt(DateBuilder.NextGivenMinuteDate(DateTime.Now, 0))
+                        .WithSimpleSchedule(x => x
+                            .WithIntervalInHours(1)
+                            .RepeatForever()
+                        ));
+                })
+                .AddQuartzHostedService(options => { options.WaitForJobsToComplete = true; }).AddQuartzHostedService(options =>
+                {
+                    options.WaitForJobsToComplete = true;
+                });
 
             using IHost host = builder.Build();
             host.Services.GetRequiredService<Bot>().Start();

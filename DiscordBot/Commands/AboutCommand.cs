@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using DiscordBot.Configuration;
 using DiscordBot.Extension;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
@@ -26,7 +27,15 @@ namespace DiscordBot.Commands
 
         public async Task Excute(SocketSlashCommand command)
         {
-            await command.RespondAsync("待定, 暫不提供".ToQuotation());
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.LightOrange)
+                .WithTitle($"瑪奇公會 夏夜月涼 專屬機器人")
+                .WithDescription("此機器人提供與夏夜月涼Discord伺服器使用\n如有想添加功能或錯誤回報, 請聯絡作者@alanlo")
+                .WithFooter("Owner @alanlo")
+                .WithImageUrl("https://i.imgur.com/2b0utzb.png")
+                ;
+
+            await command.RespondAsync(embed: embed.Build(), ephemeral: true);
         }
     }
 }

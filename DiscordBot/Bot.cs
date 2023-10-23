@@ -67,6 +67,7 @@ namespace DiscordBot
 
             _logger.LogInformation("Starting Discord Bot");
 
+            //await _appDbContext.Database.EnsureDeletedAsync();
             await _appDbContext.Database.EnsureCreatedAsync();
 
             await _client.LoginAsync(TokenType.Bot, _discordBotConfig.Token);
@@ -75,10 +76,11 @@ namespace DiscordBot
 
         public async Task Client_Ready()
         {
-            isReady = true;
             _logger.LogInformation($"Runngin in {_client.Guilds.Count} servers");
             await _client.SetActivityAsync(new Game(_gameConfig.DisplayName, ActivityType.Playing));
             await RefreshCommand();
+
+            isReady = true;
         }
 
         private async Task RefreshCommand()

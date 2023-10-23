@@ -11,6 +11,9 @@ namespace DiscordBot.Db.Entity
     public class GuildSetting
     {
         public ulong GuildId { get; set; }
-        public ulong ErinntimeChannelId { get; set; }
+        public ulong? ErinnTimeChannelId { get; set; }
+        public ulong? ErinnTimeMessageId { get; set; }
+        public ulong? DailyEffectChannelId { get; set; }
+        public ulong? DailyEffectMessageId { get; set; }
     }
 }

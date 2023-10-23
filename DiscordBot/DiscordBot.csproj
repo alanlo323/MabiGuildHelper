@@ -16,16 +16,15 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
     <PackageReference Include="NLog" Version="5.2.5" />
     <PackageReference Include="NLog.Extensions.Logging" Version="5.3.5" />
+    <PackageReference Include="Quartz" Version="3.7.0" />
+    <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.7.0" />
+    <PackageReference Include="Quartz.Extensions.Hosting" Version="3.7.0" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Scheduler\" />
   </ItemGroup>
 
 </Project>

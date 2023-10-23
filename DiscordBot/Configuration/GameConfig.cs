@@ -11,6 +11,8 @@ namespace DiscordBot.Configuration
         public const string SectionName = "Game";
 
         public string DisplayName { get; set; }
+        public DailyEffect[] DailyEffect { get; set; }
+        public DailyBankGift[] DailyBankGift { get; set; }
 
         public bool Validate()
         {
