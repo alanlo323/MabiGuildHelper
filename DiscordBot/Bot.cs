@@ -61,7 +61,7 @@ namespace DiscordBot
             return Task.CompletedTask;
         }
 
-        public async void Start()
+        public async Task Start()
         {
             await Task.Delay(100);
 

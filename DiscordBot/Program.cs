@@ -62,6 +62,7 @@ namespace DiscordBot
                 .AddSingleton<Bot>()
                 .AddSingleton<DiscordSocketClient>()
                 .AddSingleton<CommandHelper>()
+                .AddSingleton<DatabaseHelper>()
                 .AddScoped<IBaseCommand, AboutCommand>()
                 .AddScoped<IBaseCommand, HelpCommand>()
                 .AddScoped<IBaseCommand, SettingCommand>()
@@ -101,7 +102,8 @@ namespace DiscordBot
                 });
 
             using IHost host = builder.Build();
-            host.Services.GetRequiredService<Bot>().Start();
+            await host.Services.GetRequiredService<DatabaseHelper>().ResetDatabase();
+            await host.Services.GetRequiredService<Bot>().Start();
             host.Run();
         }
     }

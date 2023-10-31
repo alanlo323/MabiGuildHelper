@@ -35,7 +35,7 @@ namespace DiscordBot.Commands
                 .WithImageUrl("https://i.imgur.com/2b0utzb.png")
                 ;
 
-            await command.RespondAsync(embed: embed.Build(), ephemeral: true);
+            await command.RespondAsync(embed: embed.Build());
         }
     }
 }
