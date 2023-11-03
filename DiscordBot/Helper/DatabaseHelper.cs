@@ -66,10 +66,5 @@ namespace DiscordBot.Helper
                 _logger.LogError(ex, ex.Message);
             }
         }
-
-        public IBaseCommand GetCommand(string name)
-        {
-            return _serviceProvider.GetServices<IBaseCommand>().FirstOrDefault(x => x.Name == name);
-        }
     }
 }

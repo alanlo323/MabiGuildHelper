@@ -10,6 +10,7 @@ using DiscordBot.Configuration;
 using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Extension;
+using DiscordBot.Helper;
 using DiscordBot.SchedulerJob;
 using DiscordBot.Util;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,11 +29,12 @@ namespace DiscordBot.Commands
         GameConfig _gameConfig;
         IOptionsSnapshot<GameConfig> _gameConfigSnapshot;
         IServiceProvider _serviceProvider;
+        ImgurHelper _imgurHelper;
 
         public string Name { get; set; } = "setting";
         public string Description { get; set; } = "設定";
 
-        public SettingCommand(ILogger<SettingCommand> logger, DiscordSocketClient client, AppDbContext appDbContext, IOptionsSnapshot<GameConfig> gameConfig, IServiceProvider serviceProvider)
+        public SettingCommand(ILogger<SettingCommand> logger, DiscordSocketClient client, AppDbContext appDbContext, IOptionsSnapshot<GameConfig> gameConfig, IServiceProvider serviceProvider, ImgurHelper imgurHelper)
         {
             _logger = logger;
             _client = client;
@@ -40,6 +42,7 @@ namespace DiscordBot.Commands
             _gameConfig = gameConfig.Value;
             _gameConfigSnapshot = gameConfig;
             _serviceProvider = serviceProvider;
+            _imgurHelper = imgurHelper;
         }
 
         public SlashCommandProperties GetSlashCommandProperties()
@@ -61,6 +64,12 @@ namespace DiscordBot.Commands
                     .AddOption(new SlashCommandOptionBuilder()
                         .WithName("dailyeffect")
                         .WithDescription("今日資訊")
+                        .WithType(ApplicationCommandOptionType.SubCommand)
+                        .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: new List<ChannelType>() { ChannelType.Text })
+                    )
+                    .AddOption(new SlashCommandOptionBuilder()
+                        .WithName("dailydungeoninfo")
+                        .WithDescription("老手地城")
                         .WithType(ApplicationCommandOptionType.SubCommand)
                         .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: new List<ChannelType>() { ChannelType.Text })
                     )
@@ -101,6 +110,9 @@ namespace DiscordBot.Commands
                         break;
                     case "dailyeffect":
                         await HandleDailyEffectCommand(command, subOption);
+                        break;
+                    case "dailydungeoninfo":
+                        await HandleDailyDungeonInfoCommand(command, subOption);
                         break;
                     default:
                         break;
@@ -176,9 +188,46 @@ namespace DiscordBot.Commands
 
             _appDbContext.SaveChanges();
 
-            await command.RespondAsync($"已設定{optionChannel.Mention}為日期效果頻道", ephemeral: true);
+            await command.RespondAsync($"已設定{optionChannel.Mention}為今日資訊頻道", ephemeral: true);
 
             DailyEffectJob job = new(_serviceProvider.GetRequiredService<ILogger<DailyEffectJob>>(), _client, _appDbContext, _gameConfigSnapshot);
+            await job.Execute(null);
+        }
+
+        private async Task HandleDailyDungeonInfoCommand(SocketSlashCommand command, SocketSlashCommandDataOption option)
+        {
+            SocketTextChannel optionChannel = option.Options.First(x => x.Name == "channel").Value as SocketTextChannel;
+            SocketGuild guild = _client.GetGuild(command.GuildId.Value);
+
+            var guildInDb = _appDbContext.GuildSettings
+                .Where(x => x.GuildId == guild.Id)
+                .FirstOrDefault();
+            if (guildInDb == null)
+            {
+                GuildSetting newGuild = new()
+                {
+                    GuildId = guild.Id,
+                    DailyDungeonInfoChannelId = optionChannel.Id,
+                };
+                await _appDbContext.AddAsync(newGuild);
+                _logger.LogInformation($"Added GuildSetting in db:");
+                _logger.LogInformation($"{newGuild.ToJsonString()}");
+
+                guildInDb = newGuild;
+            }
+            else
+            {
+                guildInDb.DailyDungeonInfoChannelId = optionChannel.Id;
+                _appDbContext.Update(guildInDb);
+                _logger.LogInformation($"Update GuildSetting in db:");
+                _logger.LogInformation($"{guildInDb.ToJsonString()}");
+            }
+
+            _appDbContext.SaveChanges();
+
+            await command.RespondAsync($"已設定{optionChannel.Mention}為老手地城頻道", ephemeral: true);
+
+            DailyDungeonInfoJob job = new(_serviceProvider.GetRequiredService<ILogger<DailyDungeonInfoJob>>(), _client, _appDbContext, _imgurHelper);
             await job.Execute(null);
         }
     }

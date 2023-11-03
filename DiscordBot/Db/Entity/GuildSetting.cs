@@ -15,5 +15,7 @@ namespace DiscordBot.Db.Entity
         public ulong? ErinnTimeMessageId { get; set; }
         public ulong? DailyEffectChannelId { get; set; }
         public ulong? DailyEffectMessageId { get; set; }
+        public ulong? DailyDungeonInfoChannelId { get; set; }
+        public ulong? DailyDungeonInfoMessageId { get; set; }
     }
 }

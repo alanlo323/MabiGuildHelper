@@ -3,32 +3,38 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
 using DiscordBot.Commands;
 using DiscordBot.Configuration;
+using DiscordBot.DataEntity;
 using DiscordBot.Db;
 using DiscordBot.Db.Entity;
+using DiscordBot.Helper;
 using DiscordBot.Util;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Quartz;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.SchedulerJob
 {
-    public class ErinnTimeJob : IJob
+    public class DailyDungeonInfoJob : IJob
     {
-        public static readonly JobKey Key = new("ErinnTime");
+        public static readonly JobKey Key = new("DailyDungeonInfoJob");
 
-        ILogger<ErinnTimeJob> _logger;
+        ILogger<DailyDungeonInfoJob> _logger;
         DiscordSocketClient _client;
         AppDbContext _appDbContext;
+        ImgurHelper _imgurHelper;
 
-        public ErinnTimeJob(ILogger<ErinnTimeJob> logger, DiscordSocketClient client, AppDbContext appDbContext)
+        public DailyDungeonInfoJob(ILogger<DailyDungeonInfoJob> logger, DiscordSocketClient client, AppDbContext appDbContext, ImgurHelper imgurHelper)
         {
             _logger = logger;
             _client = client;
             _appDbContext = appDbContext;
+            _imgurHelper = imgurHelper;
         }
 
         public async Task Execute(IJobExecutionContext context)
@@ -40,32 +46,33 @@ namespace DiscordBot.SchedulerJob
                 var guild = _client.GetGuild(guildSetting.GuildId);
                 if (guild == null) continue;
 
-                SocketTextChannel textChannel = guild.GetTextChannel(guildSetting.ErinnTimeChannelId ?? 0);
+                SocketTextChannel textChannel = guild.GetTextChannel(guildSetting.DailyDungeonInfoChannelId ?? 0);
                 if (textChannel == null) continue;
 
-                string newName = $"愛爾琳時間";
+                Embed ember = EmbedUtil.GetTodayDungeonInfoEmbed(_imgurHelper, out DailyDungeonInfo todayDungeonInfo);
+                string newName = $"今日老手-{todayDungeonInfo.Name}";
                 if (textChannel.Name != newName)
                 {
                     string oldName = textChannel.Name;
                     await textChannel.ModifyAsync(x => x.Name = newName);
                 }
 
-                if (guildSetting.ErinnTimeMessageId == null)
+                if (guildSetting.DailyDungeonInfoMessageId == null)
                 {
-                    await CreateNewMessage(guildSetting, textChannel);
+                    await CreateNewMessage(guildSetting, textChannel, ember);
                     continue;
                 }
 
-                var message = await textChannel.GetMessageAsync(guildSetting.ErinnTimeMessageId ?? 0);
+                var message = await textChannel.GetMessageAsync(guildSetting.DailyDungeonInfoMessageId ?? 0);
                 if (message == null)
                 {
-                    await CreateNewMessage(guildSetting, textChannel);
+                    await CreateNewMessage(guildSetting, textChannel, ember);
                     continue;
                 };
 
                 if (message.Author.Id != applicationInfo.Id)
                 {
-                    await CreateNewMessage(guildSetting, textChannel);
+                    await CreateNewMessage(guildSetting, textChannel, ember);
                     continue;
                 }
 
@@ -73,7 +80,7 @@ namespace DiscordBot.SchedulerJob
                 {
                     await userMessage.ModifyAsync(x =>
                     {
-                        x.Embed = EmbedUtil.GetErinnTimeEmbed(true);
+                        x.Embed = ember;
                     });
                     continue;
                 }
@@ -82,10 +89,10 @@ namespace DiscordBot.SchedulerJob
             }
         }
 
-        private async Task CreateNewMessage(GuildSetting guildSetting, SocketTextChannel textChannel)
+        private async Task CreateNewMessage(GuildSetting guildSetting, SocketTextChannel textChannel, Embed ember)
         {
-            var message = await textChannel.SendMessageAsync(embed: EmbedUtil.GetErinnTimeEmbed(true));
-            guildSetting.ErinnTimeMessageId = message.Id;
+            var message = await textChannel.SendMessageAsync(embed: ember);
+            guildSetting.DailyDungeonInfoMessageId = message.Id;
             await _appDbContext.SaveChangesAsync();
         }
     }

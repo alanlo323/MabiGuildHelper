@@ -8,6 +8,7 @@ using Discord.WebSocket;
 using DiscordBot.Configuration;
 using DiscordBot.Extension;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using Color = Discord.Color;
 
 namespace DiscordBot.Commands
 {

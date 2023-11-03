@@ -19,4 +19,18 @@ namespace DiscordBot.Configuration
             return !string.IsNullOrEmpty(DisplayName);
         }
     }
+
+    public class DailyEffect
+    {
+        public string DayOfWeek { get; set; }
+        public string ChannelName { get; set; }
+        public string Title { get; set; }
+        public string[] Effect { get; set; }
+    }
+
+    public class DailyBankGift
+    {
+        public string DayOfWeek { get; set; }
+        public string[] Items { get; set; }
+    }
 }

@@ -18,6 +18,7 @@ using Discord.Net;
 using Newtonsoft.Json;
 using DiscordBot.Commands;
 using DiscordBot.Extension;
+using DiscordBot.Util;
 
 namespace DiscordBot
 {
@@ -70,7 +71,7 @@ namespace DiscordBot
             //await _appDbContext.Database.EnsureDeletedAsync();
             await _appDbContext.Database.EnsureCreatedAsync();
 
-            await _client.LoginAsync(TokenType.Bot, _discordBotConfig.Token);
+            await _client.LoginAsync(TokenType.Bot, EnvironmentUtil.IsProduction() ? _discordBotConfig.Token : _discordBotConfig.BetaToken);
             await _client.StartAsync();
         }
 
@@ -106,7 +107,7 @@ namespace DiscordBot
 
         private async Task SlashCommandHandler(SocketSlashCommand command)
         {
-            if(!isReady) return; ;
+            if (!isReady) return; ;
 
             SocketUser user = command.User;
             IBaseCommand commandInstance = _commandController.GetCommand(command.CommandName);

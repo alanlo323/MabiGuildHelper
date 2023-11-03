@@ -78,7 +78,7 @@ namespace DiscordBot.SchedulerJob
                 {
                     await userMessage.ModifyAsync(x =>
                     {
-                        x.Embed = GameUtil.GetDailyEffectEmbed(_gameConfig);
+                        x.Embed = EmbedUtil.GetDailyEffectEmbed(_gameConfig);
                     });
                     continue;
                 }
@@ -89,7 +89,7 @@ namespace DiscordBot.SchedulerJob
 
         private async Task CreateNewMessage(GuildSetting guildSetting, SocketTextChannel textChannel)
         {
-            var message = await textChannel.SendMessageAsync(embed: GameUtil.GetDailyEffectEmbed(_gameConfig));
+            var message = await textChannel.SendMessageAsync(embed: EmbedUtil.GetDailyEffectEmbed(_gameConfig));
             guildSetting.DailyEffectMessageId = message.Id;
             await _appDbContext.SaveChangesAsync();
         }

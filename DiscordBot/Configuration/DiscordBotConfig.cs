@@ -11,6 +11,7 @@ namespace DiscordBot.Configuration
         public const string SectionName = "DiscordBot";
 
         public string Token { get; set; }
+        public string BetaToken { get; set; }
 
         public bool Validate()
         {
