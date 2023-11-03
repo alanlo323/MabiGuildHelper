@@ -42,6 +42,7 @@
 
   <ItemGroup>
     <Folder Include="AppData\" />
+    <Folder Include="DB Backup\" />
   </ItemGroup>
 
 </Project>

@@ -71,6 +71,7 @@ namespace DiscordBot
                 .AddScoped<IBaseCommand, HelpCommand>()
                 .AddScoped<IBaseCommand, SettingCommand>()
                 .AddScoped<IBaseCommand, ErinnTimeCommand>()
+                .AddScoped<IBaseCommand, NoticeCommand>()
                 ;
 
             builder.Services

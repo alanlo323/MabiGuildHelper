@@ -37,6 +37,7 @@ namespace DiscordBot.Commands
             var command = new SlashCommandBuilder()
                 .WithName(Name)
                 .WithDescription(Description)
+                .WithDefaultMemberPermissions(GuildPermission.Administrator)
                 ;
             return command.Build();
         }

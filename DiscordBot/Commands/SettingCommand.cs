@@ -26,7 +26,6 @@ namespace DiscordBot.Commands
         ILogger<SettingCommand> _logger;
         DiscordSocketClient _client;
         AppDbContext _appDbContext;
-        GameConfig _gameConfig;
         IOptionsSnapshot<GameConfig> _gameConfigSnapshot;
         IServiceProvider _serviceProvider;
         ImgurHelper _imgurHelper;
@@ -39,7 +38,6 @@ namespace DiscordBot.Commands
             _logger = logger;
             _client = client;
             _appDbContext = appDbContext;
-            _gameConfig = gameConfig.Value;
             _gameConfigSnapshot = gameConfig;
             _serviceProvider = serviceProvider;
             _imgurHelper = imgurHelper;
