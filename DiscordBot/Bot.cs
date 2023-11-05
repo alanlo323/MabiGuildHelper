@@ -44,6 +44,7 @@ namespace DiscordBot
 
             _client.Log += LogAsync;
             _client.Ready += Client_Ready;
+            _client.GuildAvailable += Client_GuildAvailable;
             _client.SlashCommandExecuted += SlashCommandHandler;
         }
 
@@ -80,9 +81,14 @@ namespace DiscordBot
         {
             _logger.LogInformation($"Runngin in {_client.Guilds.Count} servers");
             await _client.SetActivityAsync(new Game(_gameConfig.DisplayName, ActivityType.Playing));
-            await RefreshCommand();
+            //await RefreshCommand();
 
             isReady = true;
+        }
+
+        public async Task Client_GuildAvailable(SocketGuild guild)
+        {
+            await RefreshCommandForGuild(guild);
         }
 
         private async Task RefreshCommand()
@@ -104,6 +110,22 @@ namespace DiscordBot
                 }
             }
             _logger.LogInformation("Commands refreshed");
+        }
+
+        private async Task RefreshCommandForGuild(SocketGuild guild)
+        {
+            List<SlashCommandProperties> commandProperties = _commandController.GetCommandList().Select(x => x.GetSlashCommandProperties()).ToList();
+
+            try
+            {
+                await guild.BulkOverwriteApplicationCommandAsync(commandProperties.ToArray());
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, exception.Message);
+                _logger.LogWarning($"Cannot refresh commands for Guild: {guild.Name} [{guild.Id}]");
+            }
+            _logger.LogInformation($"Guild:{guild.Name} [{guild.Id}] commands refreshed");
         }
 
         private async Task SlashCommandHandler(SocketSlashCommand command)

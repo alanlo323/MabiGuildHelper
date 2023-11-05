@@ -18,7 +18,7 @@ namespace DiscordBot.Util
 
         public static DateTime GetErinnTime(bool roundToTenMins = false)
         {
-            var offset = -10;
+            var offset = 0;
             var now = DateTime.Now;
             var erinnTimeSecond = (now.Hour * 60 * 60) + (now.Minute * 60) + now.Second;
             var errinDateTime = DateTime.MinValue.AddSeconds(erinnTimeSecond * 40).AddMinutes(offset);
@@ -34,10 +34,6 @@ namespace DiscordBot.Util
             DateTime now = DateTime.Now;
 
             int pos = (int)today.DayOfWeek + 7;
-            if (pos == 7)
-            {
-                pos = 14;
-            }
             DateTime day = today.AddDays(pos * (-1));
             int vetSize = DailyDungeonInfo.veteran.Length;
             int vet = (int)((day - baseDate).TotalDays) % vetSize;

@@ -39,6 +39,7 @@ namespace DiscordBot.SchedulerJob
 
         public async Task Execute(IJobExecutionContext context)
         {
+            Embed ember = EmbedUtil.GetTodayDungeonInfoEmbed(_imgurHelper, out DailyDungeonInfo todayDungeonInfo);
             var applicationInfo = await _client.GetApplicationInfoAsync();
             var guildSettings = _appDbContext.GuildSettings.ToList();
             foreach (GuildSetting guildSetting in guildSettings)
@@ -49,7 +50,6 @@ namespace DiscordBot.SchedulerJob
                 SocketTextChannel textChannel = guild.GetTextChannel(guildSetting.DailyDungeonInfoChannelId ?? 0);
                 if (textChannel == null) continue;
 
-                Embed ember = EmbedUtil.GetTodayDungeonInfoEmbed(_imgurHelper, out DailyDungeonInfo todayDungeonInfo);
                 string newName = $"今日老手-{todayDungeonInfo.Name}";
                 if (textChannel.Name != newName)
                 {
