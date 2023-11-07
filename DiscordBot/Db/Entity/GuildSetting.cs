@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace DiscordBot.Db.Entity
 {
     [PrimaryKey(nameof(GuildId))]
-    public class GuildSetting
+    public class GuildSetting : BaseEntity
     {
         public ulong GuildId { get; set; }
         public ulong? ErinnTimeChannelId { get; set; }
@@ -17,5 +17,7 @@ namespace DiscordBot.Db.Entity
         public ulong? DailyEffectMessageId { get; set; }
         public ulong? DailyDungeonInfoChannelId { get; set; }
         public ulong? DailyDungeonInfoMessageId { get; set; }
+        public ulong? InstanceResetChannelId { get; set; }
+        public ulong? InstanceResetMessageId { get; set; }
     }
 }

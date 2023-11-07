@@ -51,7 +51,6 @@ namespace DiscordBot.SchedulerJob
                 string newName = $"{todayEffect.ChannelName}";
                 if (textChannel.Name != newName)
                 {
-                    string oldName = textChannel.Name;
                     await textChannel.ModifyAsync(x => x.Name = newName);
                 }
 

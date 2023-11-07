@@ -9,6 +9,8 @@ using DiscordBot.Commands;
 using DiscordBot.Configuration;
 using DiscordBot.Db;
 using DiscordBot.Db.Entity;
+using DiscordBot.Extension;
+using DiscordBot.Helper;
 using DiscordBot.Util;
 using Microsoft.Extensions.Logging;
 using Quartz;
@@ -21,72 +23,23 @@ namespace DiscordBot.SchedulerJob
         public static readonly JobKey Key = new("ErinnTime");
 
         ILogger<ErinnTimeJob> _logger;
-        DiscordSocketClient _client;
         AppDbContext _appDbContext;
+        DiscordApiHelper _discordApiHelper;
 
-        public ErinnTimeJob(ILogger<ErinnTimeJob> logger, DiscordSocketClient client, AppDbContext appDbContext)
+        public ErinnTimeJob(ILogger<ErinnTimeJob> logger,AppDbContext appDbContext, DiscordApiHelper discordApiHelper)
         {
             _logger = logger;
-            _client = client;
             _appDbContext = appDbContext;
+            _discordApiHelper = discordApiHelper;
         }
 
         public async Task Execute(IJobExecutionContext context)
         {
-            var applicationInfo = await _client.GetApplicationInfoAsync();
             var guildSettings = _appDbContext.GuildSettings.ToList();
             foreach (GuildSetting guildSetting in guildSettings)
             {
-                var guild = _client.GetGuild(guildSetting.GuildId);
-                if (guild == null) continue;
-
-                SocketTextChannel textChannel = guild.GetTextChannel(guildSetting.ErinnTimeChannelId ?? 0);
-                if (textChannel == null) continue;
-
-                string newName = $"愛爾琳時間";
-                if (textChannel.Name != newName)
-                {
-                    string oldName = textChannel.Name;
-                    await textChannel.ModifyAsync(x => x.Name = newName);
-                }
-
-                if (guildSetting.ErinnTimeMessageId == null)
-                {
-                    await CreateNewMessage(guildSetting, textChannel);
-                    continue;
-                }
-
-                var message = await textChannel.GetMessageAsync(guildSetting.ErinnTimeMessageId ?? 0);
-                if (message == null)
-                {
-                    await CreateNewMessage(guildSetting, textChannel);
-                    continue;
-                };
-
-                if (message.Author.Id != applicationInfo.Id)
-                {
-                    await CreateNewMessage(guildSetting, textChannel);
-                    continue;
-                }
-
-                if (message is RestUserMessage userMessage)
-                {
-                    await userMessage.ModifyAsync(x =>
-                    {
-                        x.Embed = EmbedUtil.GetErinnTimeEmbed(true);
-                    });
-                    continue;
-                }
-
-                _logger.LogError("message is not RestUserMessage");
+                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.ErinnTimeChannelId), nameof(GuildSetting.ErinnTimeMessageId), null, EmbedUtil.GetErinnTimeEmbed(true));
             }
-        }
-
-        private async Task CreateNewMessage(GuildSetting guildSetting, SocketTextChannel textChannel)
-        {
-            var message = await textChannel.SendMessageAsync(embed: EmbedUtil.GetErinnTimeEmbed(true));
-            guildSetting.ErinnTimeMessageId = message.Id;
-            await _appDbContext.SaveChangesAsync();
         }
     }
 }

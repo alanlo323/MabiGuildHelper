@@ -62,9 +62,10 @@ namespace DiscordBot
                     }
                 })
                 .AddSingleton<Bot>()
-                .AddSingleton<DiscordSocketClient>()
                 .AddSingleton<CommandHelper>()
                 .AddSingleton<DatabaseHelper>()
+                .AddSingleton<DiscordSocketClient>()
+                .AddSingleton<DiscordApiHelper>()
                 .AddSingleton<ImgurHelper>()
                 .AddScoped<IBaseCommand, DebugCommand>()
                 .AddScoped<IBaseCommand, AboutCommand>()
@@ -72,6 +73,9 @@ namespace DiscordBot
                 .AddScoped<IBaseCommand, SettingCommand>()
                 .AddScoped<IBaseCommand, ErinnTimeCommand>()
                 .AddScoped<IBaseCommand, NoticeCommand>()
+                .AddScoped<DailyDungeonInfoJob>()
+                .AddScoped<DailyEffectJob>()
+                .AddScoped<ErinnTimeJob>()
                 ;
 
             builder.Services
@@ -97,7 +101,6 @@ namespace DiscordBot
                         q.ScheduleJob<DailyEffectJob>(trigger => trigger
                             .WithIdentity(DailyEffectJob.Key.Name)
                             .StartAt((DateTimeOffset)DateTimeUtil.GetNextGivenTime(0, 0, 0))
-                            //.StartAt((DateTimeOffset)DateTime.Now)
                             .WithSimpleSchedule(x => x
                                 .WithIntervalInHours(24)
                                 .RepeatForever()
@@ -106,7 +109,6 @@ namespace DiscordBot
                         q.ScheduleJob<DailyDungeonInfoJob>(trigger => trigger
                             .WithIdentity(DailyDungeonInfoJob.Key.Name)
                             .StartAt((DateTimeOffset)DateTimeUtil.GetNextGivenTime(7, 0, 0))
-                            //.StartAt((DateTimeOffset)DateTime.Now)
                             .WithSimpleSchedule(x => x
                                 .WithIntervalInHours(24)
                                 .RepeatForever()
@@ -119,7 +121,10 @@ namespace DiscordBot
                 });
 
             using IHost host = builder.Build();
-            //await host.Services.GetRequiredService<DatabaseHelper>().ResetDatabase();
+            if (EnvironmentUtil.IsLocal())
+            {
+                await host.Services.GetRequiredService<DatabaseHelper>().ResetDatabase();
+            }
             await host.Services.GetRequiredService<Bot>().Start();
             host.Run();
         }
