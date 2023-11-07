@@ -26,7 +26,7 @@ namespace DiscordBot.SchedulerJob
         AppDbContext _appDbContext;
         DiscordApiHelper _discordApiHelper;
 
-        public ErinnTimeJob(ILogger<ErinnTimeJob> logger,AppDbContext appDbContext, DiscordApiHelper discordApiHelper)
+        public ErinnTimeJob(ILogger<ErinnTimeJob> logger, AppDbContext appDbContext, DiscordApiHelper discordApiHelper)
         {
             _logger = logger;
             _appDbContext = appDbContext;
@@ -36,9 +36,10 @@ namespace DiscordBot.SchedulerJob
         public async Task Execute(IJobExecutionContext context)
         {
             var guildSettings = _appDbContext.GuildSettings.ToList();
+
             foreach (GuildSetting guildSetting in guildSettings)
             {
-                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.ErinnTimeChannelId), nameof(GuildSetting.ErinnTimeMessageId), null, EmbedUtil.GetErinnTimeEmbed(true));
+                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, "愛爾琳時間", nameof(GuildSetting.ErinnTimeChannelId), nameof(GuildSetting.ErinnTimeMessageId), null, EmbedUtil.GetErinnTimeEmbed(true));
             }
         }
     }

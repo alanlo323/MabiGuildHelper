@@ -27,7 +27,7 @@ namespace DiscordBot.Helper
             _appDbContext = appDbContext;
         }
 
-        public async Task UpdateOrCreateMeesage(GuildSetting guildSetting, string channelIdPropertyName, string messageIdPropertyName, string content, Embed embed)
+        public async Task UpdateOrCreateMeesage(GuildSetting guildSetting, string channelName, string channelIdPropertyName, string messageIdPropertyName, string content, Embed embed)
         {
             var guild = _client.GetGuild(guildSetting.GuildId);
             if (guild == null) return;
@@ -37,6 +37,8 @@ namespace DiscordBot.Helper
 
             SocketTextChannel textChannel = guild.GetTextChannel(channelId.Value);
             if (textChannel == null) return;
+
+            await textChannel.EnsureChannelName(channelName);
 
             if (!guildSetting.GetProperty<ulong?>(channelIdPropertyName).HasValue)
             {
