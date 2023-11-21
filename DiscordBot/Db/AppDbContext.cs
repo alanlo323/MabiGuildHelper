@@ -15,6 +15,8 @@ namespace DiscordBot.Db
         public static readonly string ConnectionStringName = "MabiDb";
 
         public DbSet<GuildSetting> GuildSettings { get; set; }
+        public DbSet<GuildUserSetting> GuildUserSettings { get; set; }
+        public DbSet<InstanceReminderSetting> InstanceReminderSettings { get; set; }
 
         public AppDbContext(DbContextOptions option) : base(option) { }
 
@@ -38,6 +40,10 @@ namespace DiscordBot.Db
                 }
             }
             return base.SaveChangesAsync(cancellationToken);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
         }
     }
 }

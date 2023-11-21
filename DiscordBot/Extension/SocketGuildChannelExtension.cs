@@ -17,6 +17,8 @@ namespace DiscordBot.Extension
     {
         public async static Task EnsureChannelName(this SocketGuildChannel channel, string targetName)
         {
+            if (string.IsNullOrWhiteSpace(targetName)) return;
+
             if (channel.Name != targetName)
             {
                 await channel.ModifyAsync(x => x.Name = targetName);

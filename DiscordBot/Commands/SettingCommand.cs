@@ -27,22 +27,18 @@ namespace DiscordBot.Commands
         ILogger<SettingCommand> _logger;
         DiscordSocketClient _client;
         AppDbContext _appDbContext;
-        IOptionsSnapshot<GameConfig> _gameConfigSnapshot;
         IServiceProvider _serviceProvider;
-        ImgurHelper _imgurHelper;
         DatabaseHelper _databaseHelper;
 
         public string Name { get; set; } = "setting";
         public string Description { get; set; } = "設定";
 
-        public SettingCommand(ILogger<SettingCommand> logger, DiscordSocketClient client, AppDbContext appDbContext, IOptionsSnapshot<GameConfig> gameConfig, IServiceProvider serviceProvider, ImgurHelper imgurHelper, DatabaseHelper databaseHelper)
+        public SettingCommand(ILogger<SettingCommand> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper)
         {
             _logger = logger;
             _client = client;
             _appDbContext = appDbContext;
-            _gameConfigSnapshot = gameConfig;
             _serviceProvider = serviceProvider;
-            _imgurHelper = imgurHelper;
             _databaseHelper = databaseHelper;
         }
 
@@ -80,8 +76,8 @@ namespace DiscordBot.Commands
                     .WithDescription("設定提醒功能頻道")
                     .WithType(ApplicationCommandOptionType.SubCommandGroup)
                     .AddOption(new SlashCommandOptionBuilder()
-                        .WithName("instancereset")
-                        .WithDescription("任務重置提醒")
+                        .WithName("instanceresetreminder")
+                        .WithDescription("重置提醒")
                         .WithType(ApplicationCommandOptionType.SubCommand)
                         .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: new List<ChannelType>() { ChannelType.Text })
                     )
@@ -135,8 +131,8 @@ namespace DiscordBot.Commands
             {
                 switch (subOption.Name)
                 {
-                    case "instancereset":
-                        await HandleInstanceResetCommand(command, subOption);
+                    case "instanceresetreminder":
+                        await HandleInstanceResetReminderCommand(command, subOption);
                         break;
                     default:
                         break;
@@ -183,10 +179,13 @@ namespace DiscordBot.Commands
             await job.Execute(null);
         }
 
-        private async Task HandleInstanceResetCommand(SocketSlashCommand command, SocketSlashCommandDataOption option)
+        private async Task HandleInstanceResetReminderCommand(SocketSlashCommand command, SocketSlashCommandDataOption option)
         {
-            SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.InstanceResetChannelId));
-            await command.FollowupAsync($"已設定{optionChannel.Mention}為任務重置提醒頻道", ephemeral: true);
+            SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.InstanceResetReminderChannelId));
+            await command.RespondAsync($"已設定{optionChannel.Mention}為重置提醒頻道", ephemeral: true);
+
+            InstanceResetReminderJob job = _serviceProvider.GetRequiredService<InstanceResetReminderJob>();
+            await job.Execute(null);
         }
     }
 }

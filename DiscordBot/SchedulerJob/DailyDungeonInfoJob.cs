@@ -22,7 +22,7 @@ namespace DiscordBot.SchedulerJob
 {
     public class DailyDungeonInfoJob : IJob
     {
-        public static readonly JobKey Key = new("DailyDungeonInfoJob");
+        public static readonly JobKey Key = new(nameof(DailyDungeonInfoJob));
 
         ILogger<DailyDungeonInfoJob> _logger;
         DiscordSocketClient _client;
@@ -46,7 +46,7 @@ namespace DiscordBot.SchedulerJob
 
             foreach (GuildSetting guildSetting in guildSettings)
             {
-                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, $"今日老手-{todayDungeonInfo.Name}", nameof(GuildSetting.DailyDungeonInfoChannelId), nameof(GuildSetting.DailyDungeonInfoMessageId), null, embed);
+                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.DailyDungeonInfoChannelId), nameof(GuildSetting.DailyDungeonInfoMessageId), channelName: $"今日老手-{todayDungeonInfo.Name}", embed: embed);
             }
         }
     }

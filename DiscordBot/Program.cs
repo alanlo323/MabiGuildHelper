@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using DiscordBot.ButtonHandler;
 using DiscordBot.Commands;
 using DiscordBot.Configuration;
 using DiscordBot.Constant;
@@ -7,6 +8,7 @@ using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Helper;
 using DiscordBot.SchedulerJob;
+using DiscordBot.SelectMenuHandler;
 using DiscordBot.Util;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -62,11 +64,13 @@ namespace DiscordBot
                     }
                 })
                 .AddSingleton<Bot>()
+                .AddSingleton<ButtonHandlerHelper>()
                 .AddSingleton<CommandHelper>()
                 .AddSingleton<DatabaseHelper>()
                 .AddSingleton<DiscordSocketClient>()
                 .AddSingleton<DiscordApiHelper>()
                 .AddSingleton<ImgurHelper>()
+                .AddSingleton<SelectMenuHandlerHelper>()
                 .AddScoped<IBaseCommand, DebugCommand>()
                 .AddScoped<IBaseCommand, AboutCommand>()
                 .AddScoped<IBaseCommand, HelpCommand>()
@@ -76,6 +80,9 @@ namespace DiscordBot
                 .AddScoped<DailyDungeonInfoJob>()
                 .AddScoped<DailyEffectJob>()
                 .AddScoped<ErinnTimeJob>()
+                .AddScoped<InstanceResetReminderJob>()
+                .AddScoped<IBaseButtonHandler, AddReminderButtonHandler>()
+                .AddScoped<IBaseSelectMenuHandler, AddReminderSelectMenuHandler>()
                 ;
 
             builder.Services
@@ -111,6 +118,14 @@ namespace DiscordBot
                             .StartAt((DateTimeOffset)DateTimeUtil.GetNextGivenTime(7, 0, 0))
                             .WithSimpleSchedule(x => x
                                 .WithIntervalInHours(24)
+                                .RepeatForever()
+                            ));
+
+                        q.ScheduleJob<InstanceResetReminderJob>(trigger => trigger
+                            .WithIdentity(InstanceResetReminderJob.Key.Name)
+                            .StartAt((DateTimeOffset)DateTime.Today.AddHours(DateTime.Now.Hour + 1))
+                            .WithSimpleSchedule(x => x
+                                .WithIntervalInHours(1)
                                 .RepeatForever()
                             ));
                     }

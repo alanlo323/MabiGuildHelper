@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Discord;
+using DiscordBot.DataEntity;
 
 namespace DiscordBot.Configuration
 {
@@ -13,6 +15,7 @@ namespace DiscordBot.Configuration
         public string DisplayName { get; set; }
         public DailyEffect[] DailyEffect { get; set; }
         public DailyBankGift[] DailyBankGift { get; set; }
+        public InstanceReset[] InstanceReset { get; set; }
 
         public bool Validate()
         {
@@ -32,5 +35,72 @@ namespace DiscordBot.Configuration
     {
         public string DayOfWeek { get; set; }
         public string[] Items { get; set; }
+    }
+
+    public class InstanceReset
+    {
+        public class Constant
+        {
+            public static string Battle { get; } = "戰鬥";
+            public static string Life { get; } = "生活";
+            public static string Misc { get; } = "雜項";
+            public static string ResetInOneDay { get; } = "一天內重置";
+            public static string ResetToday { get; } = "已在今天重置";
+        }
+
+        public int Id { get; set; }
+        public string Type { get; set; }
+        public string Name { get; set; }
+        public string ResetOn { get; set; }
+        public DateTime ResetOnTime
+        {
+            get
+            {
+                DateTime now = DateTime.Now;
+                string resetOnTimeStr = ResetOn.Split(' ')[1];
+                int resetOnHour = int.Parse(resetOnTimeStr.Split(':')[0]);
+                int resetOnMin = int.Parse(resetOnTimeStr.Split(':')[1]);
+                DateTime resetOn = now.Date.AddHours(resetOnHour).AddMinutes(resetOnMin);
+                return resetOn;
+            }
+        }
+        public DateTime NextResetDateTime
+        {
+            get
+            {
+                DateTime resetOn = ResetOnTime;
+
+                string resetOnDayOfWeekStr = ResetOn.Split(' ')[0];
+                DayOfWeek resetOnDayOfWeek = Enum.Parse<DayOfWeek>(resetOnDayOfWeekStr);
+
+                while (resetOn.DayOfWeek != resetOnDayOfWeek)
+                {
+                    resetOn = resetOn.AddDays(1);
+                }
+                if (DateTime.Now >= resetOn) resetOn = resetOn.AddDays(7);
+                return resetOn;
+            }
+        }
+        public DateTime LastResetDateTime
+        {
+            get
+            {
+                return NextResetDateTime.AddDays(-7);
+            }
+        }
+        public bool ResetInOneDay
+        {
+            get
+            {
+                return DateTime.Now.AddDays(1) >= NextResetDateTime;
+            }
+        }
+        public bool ResetToday
+        {
+            get
+            {
+                return DateTime.Now < LastResetDateTime.AddDays(1);
+            }
+        }
     }
 }

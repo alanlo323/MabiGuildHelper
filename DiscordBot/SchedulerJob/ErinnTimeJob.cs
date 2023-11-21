@@ -20,7 +20,7 @@ namespace DiscordBot.SchedulerJob
 {
     public class ErinnTimeJob : IJob
     {
-        public static readonly JobKey Key = new("ErinnTime");
+        public static readonly JobKey Key = new(nameof(ErinnTimeJob));
 
         ILogger<ErinnTimeJob> _logger;
         AppDbContext _appDbContext;
@@ -39,7 +39,7 @@ namespace DiscordBot.SchedulerJob
 
             foreach (GuildSetting guildSetting in guildSettings)
             {
-                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, "愛爾琳時間", nameof(GuildSetting.ErinnTimeChannelId), nameof(GuildSetting.ErinnTimeMessageId), null, EmbedUtil.GetErinnTimeEmbed(true));
+                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.ErinnTimeChannelId), nameof(GuildSetting.ErinnTimeMessageId), channelName: "愛爾琳時間", embed: EmbedUtil.GetErinnTimeEmbed(true));
             }
         }
     }

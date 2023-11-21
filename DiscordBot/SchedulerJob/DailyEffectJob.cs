@@ -20,7 +20,7 @@ namespace DiscordBot.SchedulerJob
 {
     public class DailyEffectJob : IJob
     {
-        public static readonly JobKey Key = new("DailyEffectJob");
+        public static readonly JobKey Key = new(nameof(DailyEffectJob));
 
         ILogger<DailyEffectJob> _logger;
         DiscordSocketClient _client;
@@ -46,7 +46,7 @@ namespace DiscordBot.SchedulerJob
 
             foreach (GuildSetting guildSetting in guildSettings)
             {
-                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, channelName, nameof(GuildSetting.ErinnTimeChannelId), nameof(GuildSetting.ErinnTimeMessageId), null, EmbedUtil.GetDailyEffectEmbed(_gameConfig));
+                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.ErinnTimeChannelId), nameof(GuildSetting.ErinnTimeMessageId), channelName: channelName, embed: EmbedUtil.GetDailyEffectEmbed(_gameConfig));
             }
         }
     }

@@ -25,7 +25,7 @@ namespace DiscordBot.Helper
 
         public IBaseCommand GetCommand(string name)
         {
-            return _serviceProvider.GetServices<IBaseCommand>().FirstOrDefault(x => x.Name == name);
+            return _serviceProvider.GetServices<IBaseCommand>().Single(x => x.Name == name);
         }
     }
 }

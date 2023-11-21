@@ -42,14 +42,14 @@ namespace DiscordBot.Helper
                 List<GuildSetting> settingList = new()
                 {
                     //// Information
-                    //new()
-                    //{
-                    //    GuildId = 607932041572646932,
-                    //    ErinnTimeChannelId = 1165535969798258688,
-                    //    ErinnTimeMessageId = 1165955533493256222,
-                    //    DailyEffectChannelId = 1165931046584455188,
-                    //    DailyEffectMessageId = 1166012004398542859
-                    //},
+                    new()
+                    {
+                        GuildId = 607932041572646932,
+                        //ErinnTimeChannelId = 1165535969798258688,
+                        //ErinnTimeMessageId = 1165955533493256222,
+                        //DailyEffectChannelId = 1165931046584455188,
+                        //DailyEffectMessageId = 1166012004398542859
+                    },
 
                     //// 夏夜
                     //new()
@@ -62,8 +62,28 @@ namespace DiscordBot.Helper
                     //},
                 };
 
+                List<GuildUserSetting> settingList2 = new()
+                {
+                    //new()
+                    //{
+                    //    GuildId = 607932041572646932,
+                    //    UserId = 170721070976860161,
+                    //    InstanceReminderSettings = new List<InstanceReminderSetting>() {
+                    //        new() {
+                    //            UserId = 170721070976860161 ,
+                    //            InstanceReminderId = 3,
+                    //        },
+                    //        new() {
+                    //            UserId = 170721070976860161 ,
+                    //            InstanceReminderId = 4,
+                    //        },
+                    //    },
+                    //},
+                };
+
                 await _appDbContext.AddRangeAsync(settingList);
-                await _appDbContext.SaveChangesAsync();
+                await _appDbContext.AddRangeAsync(settingList2);
+                await SaveChange();
 
                 _logger.LogInformation($"Database re-created and inserted with base record");
             }
