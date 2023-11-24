@@ -19,6 +19,9 @@ using Newtonsoft.Json;
 using DiscordBot.Commands;
 using DiscordBot.Extension;
 using DiscordBot.Util;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using DiscordBot.ButtonHandler;
+using DiscordBot.SelectMenuHandler;
 
 namespace DiscordBot
 {
@@ -29,23 +32,29 @@ namespace DiscordBot
         DiscordBotConfig _discordBotConfig;
         GameConfig _gameConfig;
         AppDbContext _appDbContext;
-        CommandHelper _commandController;
+        CommandHelper _commandHelper;
+        ButtonHandlerHelper _buttonHandlerHelper;
+        SelectMenuHandlerHelper _selectMenuHandlerHelper;
 
         bool isReady = false;
 
-        public Bot(ILogger<Bot> logger, DiscordSocketClient client, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, IOptionsSnapshot<GameConfig> gameConfig, AppDbContext appDbContext, CommandHelper commandController)
+        public Bot(ILogger<Bot> logger, DiscordSocketClient client, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, IOptionsSnapshot<GameConfig> gameConfig, AppDbContext appDbContext, CommandHelper commandHelper, ButtonHandlerHelper buttonHandlerHelper, SelectMenuHandlerHelper selectMenuHandlerHelper)
         {
             _logger = logger;
             _client = client;
             _discordBotConfig = discordBotConfig.Value;
             _gameConfig = gameConfig.Value;
             _appDbContext = appDbContext;
-            _commandController = commandController;
+            _commandHelper = commandHelper;
+            _buttonHandlerHelper = buttonHandlerHelper;
+            _selectMenuHandlerHelper = selectMenuHandlerHelper;
 
             _client.Log += LogAsync;
             _client.Ready += Client_Ready;
             _client.GuildAvailable += Client_GuildAvailable;
             _client.SlashCommandExecuted += SlashCommandHandler;
+            _client.ButtonExecuted += ButtonHandler;
+            _client.SelectMenuExecuted += MenuHandler;
         }
 
         private Task LogAsync(LogMessage msg)
@@ -70,7 +79,6 @@ namespace DiscordBot
             _logger.LogInformation("Starting Discord Bot");
             _logger.LogInformation($"Running in {EnvironmentUtil.GetEnvironment()} mode");
 
-            //await _appDbContext.Database.EnsureDeletedAsync();
             await _appDbContext.Database.EnsureCreatedAsync();
 
             await _client.LoginAsync(TokenType.Bot, EnvironmentUtil.IsProduction() ? _discordBotConfig.Token : _discordBotConfig.BetaToken);
@@ -95,7 +103,7 @@ namespace DiscordBot
         {
             _logger.LogInformation("Refreshing commands");
 
-            List<SlashCommandProperties> commandProperties = _commandController.GetCommandList().Select(x => x.GetSlashCommandProperties()).ToList();
+            List<SlashCommandProperties> commandProperties = _commandHelper.GetCommandList().Select(x => x.GetSlashCommandProperties()).ToList();
 
             foreach (SocketGuild guild in _client.Guilds)
             {
@@ -114,7 +122,7 @@ namespace DiscordBot
 
         private async Task RefreshCommandForGuild(SocketGuild guild)
         {
-            List<SlashCommandProperties> commandProperties = _commandController.GetCommandList().Select(x => x.GetSlashCommandProperties()).ToList();
+            List<SlashCommandProperties> commandProperties = _commandHelper.GetCommandList().Select(x => x.GetSlashCommandProperties()).ToList();
 
             try
             {
@@ -130,22 +138,59 @@ namespace DiscordBot
 
         private async Task SlashCommandHandler(SocketSlashCommand command)
         {
-            if (!isReady) return; ;
+            while (!isReady) await Task.Delay(100);
 
+            IBaseCommand instance = _commandHelper.GetCommand(command.CommandName);
             SocketUser user = command.User;
-            IBaseCommand commandInstance = _commandController.GetCommand(command.CommandName);
             if (command.IsDMInteraction)
             {
-                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {commandInstance.GetType().Name} with DM");
+                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
             }
             else
             {
                 SocketGuild guild = _client.GetGuild(command.GuildId.Value);
-                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {commandInstance.GetType().Name} in [{guild.Name}({guild.Id})] #{command.Channel.Name}({command.Channel.Id})");
+                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{command.Channel.Name}({command.Channel.Id})");
 
             }
-            //if (command.Data.Options.Count > 0) _logger.LogInformation($"Option: {command.Data.Options.ToJsonString()}");
-            await commandInstance.Excute(command);
+            await instance.Excute(command);
+        }
+
+        private async Task ButtonHandler(SocketMessageComponent component)
+        {
+            while (!isReady) await Task.Delay(100);
+
+            IBaseButtonHandler instance = _buttonHandlerHelper.GetButtonHandler(component.Data.CustomId);
+            SocketUser user = component.User;
+            if (component.IsDMInteraction)
+            {
+                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
+            }
+            else
+            {
+                SocketGuild guild = _client.GetGuild(component.GuildId.Value);
+                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{component.Channel.Name}({component.Channel.Id})");
+
+            }
+            await instance.Excute(component);
+        }
+
+        private async Task MenuHandler(SocketMessageComponent component)
+        {
+            while (!isReady) await Task.Delay(100);
+
+            IBaseSelectMenuHandler instance = _selectMenuHandlerHelper.GetSelectMenuHandler(component.Data.CustomId);
+            SocketUser user = component.User;
+            if (component.IsDMInteraction)
+            {
+                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
+            }
+            else
+            {
+                SocketGuild guild = _client.GetGuild(component.GuildId.Value);
+                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{component.Channel.Name}({component.Channel.Id})");
+
+            }
+            await instance.Excute(component);
         }
 
     }

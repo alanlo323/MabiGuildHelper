@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using DiscordBot.ButtonHandler;
 using DiscordBot.Commands;
 using DiscordBot.Configuration;
 using DiscordBot.Constant;
@@ -7,6 +8,7 @@ using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Helper;
 using DiscordBot.SchedulerJob;
+using DiscordBot.SelectMenuHandler;
 using DiscordBot.Util;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -62,16 +64,25 @@ namespace DiscordBot
                     }
                 })
                 .AddSingleton<Bot>()
-                .AddSingleton<DiscordSocketClient>()
+                .AddSingleton<ButtonHandlerHelper>()
                 .AddSingleton<CommandHelper>()
                 .AddSingleton<DatabaseHelper>()
+                .AddSingleton<DiscordSocketClient>()
+                .AddSingleton<DiscordApiHelper>()
                 .AddSingleton<ImgurHelper>()
+                .AddSingleton<SelectMenuHandlerHelper>()
                 .AddScoped<IBaseCommand, DebugCommand>()
                 .AddScoped<IBaseCommand, AboutCommand>()
                 .AddScoped<IBaseCommand, HelpCommand>()
                 .AddScoped<IBaseCommand, SettingCommand>()
                 .AddScoped<IBaseCommand, ErinnTimeCommand>()
                 .AddScoped<IBaseCommand, NoticeCommand>()
+                .AddScoped<DailyDungeonInfoJob>()
+                .AddScoped<DailyEffectJob>()
+                .AddScoped<ErinnTimeJob>()
+                .AddScoped<InstanceResetReminderJob>()
+                .AddScoped<IBaseButtonHandler, ManageReminderButtonHandler>()
+                .AddScoped<IBaseSelectMenuHandler, AddReminderSelectMenuHandler>()
                 ;
 
             builder.Services
@@ -97,7 +108,6 @@ namespace DiscordBot
                         q.ScheduleJob<DailyEffectJob>(trigger => trigger
                             .WithIdentity(DailyEffectJob.Key.Name)
                             .StartAt((DateTimeOffset)DateTimeUtil.GetNextGivenTime(0, 0, 0))
-                            //.StartAt((DateTimeOffset)DateTime.Now)
                             .WithSimpleSchedule(x => x
                                 .WithIntervalInHours(24)
                                 .RepeatForever()
@@ -106,9 +116,16 @@ namespace DiscordBot
                         q.ScheduleJob<DailyDungeonInfoJob>(trigger => trigger
                             .WithIdentity(DailyDungeonInfoJob.Key.Name)
                             .StartAt((DateTimeOffset)DateTimeUtil.GetNextGivenTime(7, 0, 0))
-                            //.StartAt((DateTimeOffset)DateTime.Now)
                             .WithSimpleSchedule(x => x
                                 .WithIntervalInHours(24)
+                                .RepeatForever()
+                            ));
+
+                        q.ScheduleJob<InstanceResetReminderJob>(trigger => trigger
+                            .WithIdentity(InstanceResetReminderJob.Key.Name)
+                            .StartAt((DateTimeOffset)DateTime.Today.AddHours(DateTime.Now.Hour + 1))
+                            .WithSimpleSchedule(x => x
+                                .WithIntervalInHours(1)
                                 .RepeatForever()
                             ));
                     }
@@ -119,7 +136,10 @@ namespace DiscordBot
                 });
 
             using IHost host = builder.Build();
-            //await host.Services.GetRequiredService<DatabaseHelper>().ResetDatabase();
+            if (EnvironmentUtil.IsLocal())
+            {
+                await host.Services.GetRequiredService<DatabaseHelper>().ResetDatabase();
+            }
             await host.Services.GetRequiredService<Bot>().Start();
             host.Run();
         }

@@ -22,78 +22,32 @@ namespace DiscordBot.SchedulerJob
 {
     public class DailyDungeonInfoJob : IJob
     {
-        public static readonly JobKey Key = new("DailyDungeonInfoJob");
+        public static readonly JobKey Key = new(nameof(DailyDungeonInfoJob));
 
         ILogger<DailyDungeonInfoJob> _logger;
         DiscordSocketClient _client;
         AppDbContext _appDbContext;
         ImgurHelper _imgurHelper;
+        DiscordApiHelper _discordApiHelper;
 
-        public DailyDungeonInfoJob(ILogger<DailyDungeonInfoJob> logger, DiscordSocketClient client, AppDbContext appDbContext, ImgurHelper imgurHelper)
+        public DailyDungeonInfoJob(ILogger<DailyDungeonInfoJob> logger, DiscordSocketClient client, AppDbContext appDbContext, ImgurHelper imgurHelper, DiscordApiHelper discordApiHelper)
         {
             _logger = logger;
             _client = client;
             _appDbContext = appDbContext;
             _imgurHelper = imgurHelper;
+            _discordApiHelper = discordApiHelper;
         }
 
         public async Task Execute(IJobExecutionContext context)
         {
-            Embed ember = EmbedUtil.GetTodayDungeonInfoEmbed(_imgurHelper, out DailyDungeonInfo todayDungeonInfo);
-            var applicationInfo = await _client.GetApplicationInfoAsync();
+            Embed embed = EmbedUtil.GetTodayDungeonInfoEmbed(_imgurHelper, out DailyDungeonInfo todayDungeonInfo);
             var guildSettings = _appDbContext.GuildSettings.ToList();
+
             foreach (GuildSetting guildSetting in guildSettings)
             {
-                var guild = _client.GetGuild(guildSetting.GuildId);
-                if (guild == null) continue;
-
-                SocketTextChannel textChannel = guild.GetTextChannel(guildSetting.DailyDungeonInfoChannelId ?? 0);
-                if (textChannel == null) continue;
-
-                string newName = $"今日老手-{todayDungeonInfo.Name}";
-                if (textChannel.Name != newName)
-                {
-                    string oldName = textChannel.Name;
-                    await textChannel.ModifyAsync(x => x.Name = newName);
-                }
-
-                if (guildSetting.DailyDungeonInfoMessageId == null)
-                {
-                    await CreateNewMessage(guildSetting, textChannel, ember);
-                    continue;
-                }
-
-                var message = await textChannel.GetMessageAsync(guildSetting.DailyDungeonInfoMessageId ?? 0);
-                if (message == null)
-                {
-                    await CreateNewMessage(guildSetting, textChannel, ember);
-                    continue;
-                };
-
-                if (message.Author.Id != applicationInfo.Id)
-                {
-                    await CreateNewMessage(guildSetting, textChannel, ember);
-                    continue;
-                }
-
-                if (message is RestUserMessage userMessage)
-                {
-                    await userMessage.ModifyAsync(x =>
-                    {
-                        x.Embed = ember;
-                    });
-                    continue;
-                }
-
-                _logger.LogError("message is not RestUserMessage");
+                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.DailyDungeonInfoChannelId), nameof(GuildSetting.DailyDungeonInfoMessageId), channelName: $"今日老手-{todayDungeonInfo.Name}", embed: embed);
             }
-        }
-
-        private async Task CreateNewMessage(GuildSetting guildSetting, SocketTextChannel textChannel, Embed ember)
-        {
-            var message = await textChannel.SendMessageAsync(embed: ember);
-            guildSetting.DailyDungeonInfoMessageId = message.Id;
-            await _appDbContext.SaveChangesAsync();
         }
     }
 }

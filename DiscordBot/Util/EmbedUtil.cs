@@ -8,6 +8,7 @@ using Discord;
 using DiscordBot.Configuration;
 using DiscordBot.DataEntity;
 using DiscordBot.Helper;
+using Newtonsoft.Json.Linq;
 using Quartz;
 using Color = Discord.Color;
 
@@ -56,7 +57,7 @@ namespace DiscordBot.Util
 
         public static Embed GetTodayDungeonInfoEmbed(ImgurHelper imgurHelper)
         {
-            return GetTodayDungeonInfoEmbed(imgurHelper, out DailyDungeonInfo todayDungeonInfo);
+            return GetTodayDungeonInfoEmbed(imgurHelper, out _);
         }
 
         public static Embed GetTodayDungeonInfoEmbed(ImgurHelper imgurHelper, out DailyDungeonInfo ouputTodayDungeonInfo)
@@ -89,6 +90,30 @@ namespace DiscordBot.Util
                 .WithCurrentTimestamp()
                 ;
             if (!string.IsNullOrEmpty(imageUrl)) embed = embed.WithImageUrl(imageUrl);
+
+            return embed.Build();
+        }
+
+        public static Embed GetResetReminderEmbed(string description, Color color, IEnumerable<InstanceReset> instanceResets, bool useNextDateTime = true)
+        {
+            List<EmbedFieldBuilder> embedFieldBuilders = new();
+
+            foreach (var item in instanceResets)
+            {
+                EmbedFieldBuilder embedField = new EmbedFieldBuilder()
+                    .WithName(item.Name)
+                    .WithIsInline(true)
+                    .WithValue($"<t:{DateTimeUtil.ConvertToTimestamp(useNextDateTime ? item.NextResetDateTime : item.LastResetDateTime)}:R>")
+                    ;
+                embedFieldBuilders.Add(embedField);
+            }
+
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(color)
+                .WithTitle("重置時間表")
+                .WithDescription(description)
+                .WithFields(embedFieldBuilders)
+                ;
 
             return embed.Build();
         }
