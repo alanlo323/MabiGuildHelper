@@ -81,7 +81,7 @@ namespace DiscordBot
                 .AddScoped<DailyEffectJob>()
                 .AddScoped<ErinnTimeJob>()
                 .AddScoped<InstanceResetReminderJob>()
-                .AddScoped<IBaseButtonHandler, AddReminderButtonHandler>()
+                .AddScoped<IBaseButtonHandler, ManageReminderButtonHandler>()
                 .AddScoped<IBaseSelectMenuHandler, AddReminderSelectMenuHandler>()
                 ;
 

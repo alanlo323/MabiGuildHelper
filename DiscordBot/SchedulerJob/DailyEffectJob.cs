@@ -46,7 +46,7 @@ namespace DiscordBot.SchedulerJob
 
             foreach (GuildSetting guildSetting in guildSettings)
             {
-                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.ErinnTimeChannelId), nameof(GuildSetting.ErinnTimeMessageId), channelName: channelName, embed: EmbedUtil.GetDailyEffectEmbed(_gameConfig));
+                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.DailyEffectChannelId), nameof(GuildSetting.DailyEffectMessageId), channelName: channelName, embed: EmbedUtil.GetDailyEffectEmbed(_gameConfig));
             }
         }
     }

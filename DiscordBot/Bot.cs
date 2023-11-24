@@ -79,7 +79,6 @@ namespace DiscordBot
             _logger.LogInformation("Starting Discord Bot");
             _logger.LogInformation($"Running in {EnvironmentUtil.GetEnvironment()} mode");
 
-            //await _appDbContext.Database.EnsureDeletedAsync();
             await _appDbContext.Database.EnsureCreatedAsync();
 
             await _client.LoginAsync(TokenType.Bot, EnvironmentUtil.IsProduction() ? _discordBotConfig.Token : _discordBotConfig.BetaToken);

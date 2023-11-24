@@ -20,9 +20,9 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.ButtonHandler
 {
-    public class AddReminderButtonHandler : IBaseButtonHandler
+    public class ManageReminderButtonHandler : IBaseButtonHandler
     {
-        ILogger<AddReminderButtonHandler> _logger;
+        ILogger<ManageReminderButtonHandler> _logger;
         DiscordSocketClient _client;
         AppDbContext _appDbContext;
         IServiceProvider _serviceProvider;
@@ -30,9 +30,9 @@ namespace DiscordBot.ButtonHandler
         SelectMenuHandlerHelper _selectMenuHandlerHelper;
 
         public string Lable { get; set; } = "管理重置提醒";
-        public string Id { get; set; } = "AddReminderButton";
+        public string Id { get; set; } = "ManageReminderButton";
 
-        public AddReminderButtonHandler(ILogger<AddReminderButtonHandler> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper, SelectMenuHandlerHelper selectMenuHandlerHelper)
+        public ManageReminderButtonHandler(ILogger<ManageReminderButtonHandler> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper, SelectMenuHandlerHelper selectMenuHandlerHelper)
         {
             _logger = logger;
             _client = client;

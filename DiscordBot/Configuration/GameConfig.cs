@@ -52,6 +52,15 @@ namespace DiscordBot.Configuration
         public string Type { get; set; }
         public string Name { get; set; }
         public string ResetOn { get; set; }
+        public DayOfWeek ResetOnDayOfWeek
+        {
+            get
+            {
+                string resetOnDayOfWeekStr = ResetOn.Split(' ')[0];
+                DayOfWeek resetOnDayOfWeek = Enum.Parse<DayOfWeek>(resetOnDayOfWeekStr);
+                return resetOnDayOfWeek;
+            }
+        }
         public DateTime ResetOnTime
         {
             get
@@ -70,10 +79,7 @@ namespace DiscordBot.Configuration
             {
                 DateTime resetOn = ResetOnTime;
 
-                string resetOnDayOfWeekStr = ResetOn.Split(' ')[0];
-                DayOfWeek resetOnDayOfWeek = Enum.Parse<DayOfWeek>(resetOnDayOfWeekStr);
-
-                while (resetOn.DayOfWeek != resetOnDayOfWeek)
+                while (resetOn.DayOfWeek != ResetOnDayOfWeek)
                 {
                     resetOn = resetOn.AddDays(1);
                 }
