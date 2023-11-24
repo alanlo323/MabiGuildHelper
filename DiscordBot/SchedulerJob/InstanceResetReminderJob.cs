@@ -15,6 +15,7 @@ using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Helper;
 using DiscordBot.Util;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Quartz;
@@ -75,8 +76,7 @@ namespace DiscordBot.SchedulerJob
         {
             DateTime now = DateTime.Now;
             var instanceResetList = _gameConfig.InstanceReset.ToDictionary(x => x.Id);
-            var guildUserSettings = _appDbContext.GuildUserSettings.ToList();
-            var temp = _appDbContext.InstanceReminderSettings.ToList();
+            var guildUserSettings = _appDbContext.GuildUserSettings.Include(x => x.InstanceReminderSettings).ToList();
             foreach (GuildUserSetting guildUserSetting in guildUserSettings)
             {
                 try

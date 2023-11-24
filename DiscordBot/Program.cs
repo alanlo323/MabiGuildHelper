@@ -40,6 +40,8 @@ namespace DiscordBot
 
             builder.Services.AddLogging(loggingBuilder =>
             {
+                IConfigurationSection section = builder.Configuration.GetSection(NLogConstant.SectionName);
+
                 loggingBuilder.ClearProviders();
                 loggingBuilder.SetMinimumLevel(LogLevel.Trace);
 
@@ -48,9 +50,9 @@ namespace DiscordBot
                 config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, new ConsoleTarget());
                 config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, new FileTarget
                 {
-                    FileName = builder.Configuration.GetSection(NLogConstant.SectionName).GetValue<string>(NLogConstant.FileName),
-                    Layout = builder.Configuration.GetSection(NLogConstant.SectionName).GetValue<string>(NLogConstant.Layout),
-                }); ; ;
+                    FileName = section.GetValue<string>(NLogConstant.FileName),
+                    Layout = section.GetValue<string>(NLogConstant.Layout),
+                });
 
                 loggingBuilder.AddNLog(config);
             });
