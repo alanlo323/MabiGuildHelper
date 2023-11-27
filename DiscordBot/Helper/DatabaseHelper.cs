@@ -12,6 +12,7 @@ using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Extension;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -98,34 +99,43 @@ namespace DiscordBot.Helper
             return await _appDbContext.SaveChangesAsync();
         }
 
-        private async Task<T> GetOrCreateEntity<T>(Expression<Func<T, bool>> whereExpression, Dictionary<string, object> defaultPropertyValues = null) where T : class, new()
+        private async Task<T> GetOrCreateEntity<T>(Expression<Func<T, bool>> whereExpression, Dictionary<string, object> defaultPropertyValues = null, List<Expression<Func<T, object>>>? includeExpressions = null) where T : class, new()
         {
-            T? t = await _appDbContext
+            IQueryable<T> query = _appDbContext
                 .Set<T>()
-                .Where(whereExpression)
-                .SingleOrDefaultAsync()
                 ;
-
-            if (t == null)
+            if (includeExpressions != null && includeExpressions.Count > 0)
             {
-                t = new T();
-                if (defaultPropertyValues != null)
+                foreach (var includeExpression in includeExpressions)
                 {
-                    foreach (KeyValuePair<string, object> item in defaultPropertyValues)
-                    {
-                        t.SetProperty(item.Key, item.Value);
-                    }
+                    query = query.Include(includeExpression);
                 }
-                await _appDbContext.AddAsync(t);
+                _ = query.ToList(); //  Work around for include not working
             }
-
+            T? t = query.Where(whereExpression).SingleOrDefault();
+            t ??= await CreateEntity<T>(defaultPropertyValues);
             return t;
         }
 
-        public async Task<T> GetOrCreateEntityByKeys<T>(Dictionary<string, object> primaryKeys) where T : class, new()
+        private async Task<T> CreateEntity<T>(Dictionary<string, object> defaultPropertyValues) where T : class, new()
         {
-            var expression = BuildWhereEqualExpression<T>(primaryKeys);
-            var entity = await GetOrCreateEntity(expression, primaryKeys);
+            T t = new();
+            if (defaultPropertyValues != null)
+            {
+                foreach (KeyValuePair<string, object> item in defaultPropertyValues)
+                {
+                    t.SetProperty(item.Key, item.Value);
+                }
+            }
+            await _appDbContext.AddAsync(t);
+            return t;
+        }
+
+        public async Task<T> GetOrCreateEntityByKeys<T>(Dictionary<string, object> primaryKeys, List<string>? includeProperties = null) where T : class, new()
+        {
+            var whereExpression = BuildWhereEqualExpression<T>(primaryKeys);
+            var includeExpressions = BuildIncludeExpression<T>(includeProperties);
+            var entity = await GetOrCreateEntity(whereExpression, primaryKeys, includeExpressions: includeExpressions);
             await SaveChange();
             return entity;
         }
@@ -148,6 +158,24 @@ namespace DiscordBot.Helper
             }
             var lambda = Expression.Lambda<Func<T, bool>>(whereClause, parameter);
             return lambda;
+        }
+
+        public List<Expression<Func<T, object>>> BuildIncludeExpression<T>(List<string>? includeProperties)
+        {
+            List<Expression<Func<T, object>>> expressions = new();
+            if (includeProperties == null || includeProperties.Count == 0)
+            {
+                return expressions;
+            }
+
+            var parameter = Expression.Parameter(typeof(T), "x");
+            foreach (var item in includeProperties)
+            {
+                var property = Expression.Property(parameter, item);
+                var lambda = Expression.Lambda<Func<T, object>>(property, parameter);
+                expressions.Add(lambda);
+            }
+            return expressions;
         }
     }
 }

@@ -51,7 +51,7 @@ namespace DiscordBot.ButtonHandler
 
         public async Task Excute(SocketMessageComponent component)
         {
-            var userSetting = await _databaseHelper.GetOrCreateEntityByKeys<GuildUserSetting>(new() { { nameof(GuildUserSetting.GuildId), component.GuildId }, { nameof(GuildUserSetting.UserId), component.User.Id } });
+            var userSetting = await _databaseHelper.GetOrCreateEntityByKeys<GuildUserSetting>(new() { { nameof(GuildUserSetting.GuildId), component.GuildId }, { nameof(GuildUserSetting.UserId), component.User.Id } }, includeProperties: new() { nameof(GuildUserSetting.InstanceReminderSettings) });
             MessageComponent messageComponent = _selectMenuHandlerHelper.GetSelectMenuHandler<AddReminderSelectMenuHandler>().GetMessageComponent(userSetting.InstanceReminderSettings);
             await component.RespondAsync(text: "請選擇想要接收的提醒", ephemeral: true, components: messageComponent);
         }
