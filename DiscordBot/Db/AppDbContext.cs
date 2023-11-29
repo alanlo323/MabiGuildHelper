@@ -44,6 +44,27 @@ namespace DiscordBot.Db
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<GuildSetting>()
+                .HasKey(e => e.GuildId)
+                ;
+
+            modelBuilder.Entity<GuildUserSetting>()
+                .HasKey(e => new { e.GuildId, e.UserId })
+                ;
+            modelBuilder.Entity<GuildUserSetting>()
+                .HasMany(e => e.InstanceReminderSettings)
+                .WithOne(e => e.GuildUserSetting)
+                .HasForeignKey(e => new { e.GuildId, e.UserId })
+                ;
+
+            modelBuilder.Entity<InstanceReminderSetting>()
+                .HasKey(e => new { e.GuildId, e.UserId, e.InstanceReminderId })
+                ;
+            modelBuilder.Entity<InstanceReminderSetting>()
+                .HasOne(e => e.GuildUserSetting)
+                .WithMany(e => e.InstanceReminderSettings)
+                .HasForeignKey(e => new { e.GuildId, e.UserId })
+                ;
         }
     }
 }

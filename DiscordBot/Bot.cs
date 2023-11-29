@@ -22,6 +22,7 @@ using DiscordBot.Util;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using DiscordBot.ButtonHandler;
 using DiscordBot.SelectMenuHandler;
+using DiscordBot.MessageHandler;
 
 namespace DiscordBot
 {
@@ -35,10 +36,11 @@ namespace DiscordBot
         CommandHelper _commandHelper;
         ButtonHandlerHelper _buttonHandlerHelper;
         SelectMenuHandlerHelper _selectMenuHandlerHelper;
+        MessageReceivedHandler _messageReceivedHandler;
 
         bool isReady = false;
 
-        public Bot(ILogger<Bot> logger, DiscordSocketClient client, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, IOptionsSnapshot<GameConfig> gameConfig, AppDbContext appDbContext, CommandHelper commandHelper, ButtonHandlerHelper buttonHandlerHelper, SelectMenuHandlerHelper selectMenuHandlerHelper)
+        public Bot(ILogger<Bot> logger, DiscordSocketClient client, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, IOptionsSnapshot<GameConfig> gameConfig, AppDbContext appDbContext, CommandHelper commandHelper, ButtonHandlerHelper buttonHandlerHelper, SelectMenuHandlerHelper selectMenuHandlerHelper, MessageReceivedHandler messageReceivedHandler)
         {
             _logger = logger;
             _client = client;
@@ -48,6 +50,7 @@ namespace DiscordBot
             _commandHelper = commandHelper;
             _buttonHandlerHelper = buttonHandlerHelper;
             _selectMenuHandlerHelper = selectMenuHandlerHelper;
+            _messageReceivedHandler = messageReceivedHandler;
 
             _client.Log += LogAsync;
             _client.Ready += Client_Ready;
@@ -55,6 +58,7 @@ namespace DiscordBot
             _client.SlashCommandExecuted += SlashCommandHandler;
             _client.ButtonExecuted += ButtonHandler;
             _client.SelectMenuExecuted += MenuHandler;
+            _client.MessageReceived += MessageHandler;
         }
 
         private Task LogAsync(LogMessage msg)
@@ -191,6 +195,12 @@ namespace DiscordBot
 
             }
             await instance.Excute(component);
+        }
+
+        private async Task MessageHandler(SocketMessage message)
+        {
+            MessageReceivedHandler handler = _messageReceivedHandler;
+            await handler.Excute(message);
         }
 
     }

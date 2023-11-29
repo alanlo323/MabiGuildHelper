@@ -7,6 +7,7 @@ using DiscordBot.Constant;
 using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Helper;
+using DiscordBot.MessageHandler;
 using DiscordBot.SchedulerJob;
 using DiscordBot.SelectMenuHandler;
 using DiscordBot.Util;
@@ -69,7 +70,7 @@ namespace DiscordBot
                 .AddSingleton<ButtonHandlerHelper>()
                 .AddSingleton<CommandHelper>()
                 .AddSingleton<DatabaseHelper>()
-                .AddSingleton<DiscordSocketClient>()
+                .AddSingleton<DiscordSocketClient>(x => new DiscordSocketClient(new DiscordSocketConfig { GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent }))
                 .AddSingleton<DiscordApiHelper>()
                 .AddSingleton<ImgurHelper>()
                 .AddSingleton<SelectMenuHandlerHelper>()
@@ -85,6 +86,7 @@ namespace DiscordBot
                 .AddScoped<InstanceResetReminderJob>()
                 .AddScoped<IBaseButtonHandler, ManageReminderButtonHandler>()
                 .AddScoped<IBaseSelectMenuHandler, AddReminderSelectMenuHandler>()
+                .AddScoped<MessageReceivedHandler>()
                 ;
 
             builder.Services

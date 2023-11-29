@@ -104,15 +104,15 @@ namespace DiscordBot.Helper
             IQueryable<T> query = _appDbContext
                 .Set<T>()
                 ;
-            if (includeExpressions != null && includeExpressions.Count > 0)
+            if (includeExpressions?.Count > 0)
             {
                 foreach (var includeExpression in includeExpressions)
                 {
                     query = query.Include(includeExpression);
                 }
-                _ = query.ToList(); //  Work around for include not working
+                //_ = query.ToList(); //  Work around for include not working
             }
-            T? t = query.Where(whereExpression).SingleOrDefault();
+            T? t = query.Where(whereExpression).FirstOrDefault();
             t ??= await CreateEntity<T>(defaultPropertyValues);
             return t;
         }
@@ -151,8 +151,8 @@ namespace DiscordBot.Helper
             var parameter = Expression.Parameter(typeof(T), "x");
             foreach (var item in primaryKeys)
             {
-                var property = Expression.Property(parameter, item.Key);
-                var constant = Expression.Constant(item.Value);
+                var property = Expression.PropertyOrField(parameter, item.Key);
+                var constant = Expression.Constant(item.Value, item.Value.GetType());
                 var equal = Expression.Equal(property, constant);
                 whereClause = whereClause == null ? equal : Expression.And(whereClause, equal);
             }

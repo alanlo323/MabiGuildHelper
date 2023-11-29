@@ -10,11 +10,9 @@ using Microsoft.Extensions.Hosting;
 
 namespace DiscordBot.Db.Entity
 {
-    [PrimaryKey(nameof(GuildId), nameof(UserId))]
     public class GuildUserSetting : BaseEntity
     {
         // Parent
-        [ForeignKey(nameof(GuildId))]
         public GuildSetting GuildSetting { get; set; }
 
         public ulong GuildId { get; set; }
