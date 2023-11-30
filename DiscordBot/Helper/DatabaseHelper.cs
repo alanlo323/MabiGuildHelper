@@ -94,6 +94,18 @@ namespace DiscordBot.Helper
             }
         }
 
+        public async Task EnsureDatabase()
+        {
+            try
+            {
+                await _appDbContext.Database.MigrateAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+        }
+
         public async Task<int> SaveChange()
         {
             return await _appDbContext.SaveChangesAsync();
