@@ -23,6 +23,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using DiscordBot.ButtonHandler;
 using DiscordBot.SelectMenuHandler;
 using DiscordBot.MessageHandler;
+using Microsoft.EntityFrameworkCore;
 
 namespace DiscordBot
 {
@@ -83,7 +84,7 @@ namespace DiscordBot
             _logger.LogInformation("Starting Discord Bot");
             _logger.LogInformation($"Running in {EnvironmentUtil.GetEnvironment()} mode");
 
-            await _appDbContext.Database.EnsureCreatedAsync();
+            await _appDbContext.Database.MigrateAsync();
 
             await _client.LoginAsync(TokenType.Bot, EnvironmentUtil.IsProduction() ? _discordBotConfig.Token : _discordBotConfig.BetaToken);
             await _client.StartAsync();

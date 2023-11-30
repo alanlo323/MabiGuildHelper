@@ -12,6 +12,7 @@ using DiscordBot.SchedulerJob;
 using DiscordBot.SelectMenuHandler;
 using DiscordBot.Util;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -108,7 +109,7 @@ namespace DiscordBot
                                 .WithIntervalInSeconds(15)
                                 .RepeatForever()
                             ));
-
+                        
                         q.ScheduleJob<DailyEffectJob>(trigger => trigger
                             .WithIdentity(DailyEffectJob.Key.Name)
                             .StartAt((DateTimeOffset)DateTimeUtil.GetNextGivenTime(0, 0, 0))
@@ -140,10 +141,6 @@ namespace DiscordBot
                 });
 
             using IHost host = builder.Build();
-            if (EnvironmentUtil.IsLocal())
-            {
-                await host.Services.GetRequiredService<DatabaseHelper>().ResetDatabase();
-            }
             await host.Services.GetRequiredService<Bot>().Start();
             host.Run();
         }
