@@ -7,10 +7,12 @@ using DiscordBot.Constant;
 using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Helper;
+using DiscordBot.MessageHandler;
 using DiscordBot.SchedulerJob;
 using DiscordBot.SelectMenuHandler;
 using DiscordBot.Util;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -37,16 +39,15 @@ namespace DiscordBot
             builder.Services.AddOptions<DiscordBotConfig>().Bind(builder.Configuration.GetSection(DiscordBotConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<GameConfig>().Bind(builder.Configuration.GetSection(GameConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<ImgurConfig>().Bind(builder.Configuration.GetSection(ImgurConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
+            builder.Services.AddOptions<FunnyResponseConfig>().Bind(builder.Configuration.GetSection(FunnyResponseConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
 
             builder.Services.AddLogging(loggingBuilder =>
             {
-                IConfigurationSection section = builder.Configuration.GetSection(NLogConstant.SectionName);
-
                 loggingBuilder.ClearProviders();
                 loggingBuilder.SetMinimumLevel(LogLevel.Trace);
 
+                IConfigurationSection section = builder.Configuration.GetSection(NLogConstant.SectionName);
                 var config = new LoggingConfiguration(new NLog.LogFactory());
-                var logconsole = new ConsoleTarget();
                 config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, new ConsoleTarget());
                 config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, new FileTarget
                 {
@@ -69,7 +70,7 @@ namespace DiscordBot
                 .AddSingleton<ButtonHandlerHelper>()
                 .AddSingleton<CommandHelper>()
                 .AddSingleton<DatabaseHelper>()
-                .AddSingleton<DiscordSocketClient>()
+                .AddSingleton<DiscordSocketClient>(x => new DiscordSocketClient(new DiscordSocketConfig { GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent }))
                 .AddSingleton<DiscordApiHelper>()
                 .AddSingleton<ImgurHelper>()
                 .AddSingleton<SelectMenuHandlerHelper>()
@@ -85,6 +86,7 @@ namespace DiscordBot
                 .AddScoped<InstanceResetReminderJob>()
                 .AddScoped<IBaseButtonHandler, ManageReminderButtonHandler>()
                 .AddScoped<IBaseSelectMenuHandler, AddReminderSelectMenuHandler>()
+                .AddScoped<MessageReceivedHandler>()
                 ;
 
             builder.Services
@@ -106,7 +108,7 @@ namespace DiscordBot
                                 .WithIntervalInSeconds(15)
                                 .RepeatForever()
                             ));
-
+                        
                         q.ScheduleJob<DailyEffectJob>(trigger => trigger
                             .WithIdentity(DailyEffectJob.Key.Name)
                             .StartAt((DateTimeOffset)DateTimeUtil.GetNextGivenTime(0, 0, 0))
@@ -138,10 +140,7 @@ namespace DiscordBot
                 });
 
             using IHost host = builder.Build();
-            if (EnvironmentUtil.IsLocal())
-            {
-                await host.Services.GetRequiredService<DatabaseHelper>().ResetDatabase();
-            }
+            await host.Services.GetRequiredService<DatabaseHelper>().EnsureDatabaseReady();
             await host.Services.GetRequiredService<Bot>().Start();
             host.Run();
         }

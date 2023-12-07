@@ -32,16 +32,31 @@
     <None Update="AppData\DailyDungeonsHtmlStyle.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="appsettings.json">
+    <None Update="AppData\FunnyResponseImage\001.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="MabiDb.db">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    <None Update="AppData\FunnyResponseImage\31431891f7fd578b.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="AppData\FunnyResponseImage\eaf43efbed5c718c.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="AppData\FunnyResponseImage\imaEEge.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="AppData\FunnyResponseImage\imGGage.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="AppData\FunnyResponseImage\mabinogi_2023_09_24_233152.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="AppData\" />
+    <Folder Include="AppData\FunnyResponseImage\" />
     <Folder Include="DB Backup\" />
   </ItemGroup>
 

@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DiscordBot.Db.Entity
 {
-    [PrimaryKey(nameof(GuildId))]
     public class GuildSetting : BaseEntity
     {
         public ulong GuildId { get; set; }

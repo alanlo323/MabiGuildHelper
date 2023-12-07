@@ -9,10 +9,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DiscordBot.Db.Entity
 {
-    [PrimaryKey(nameof(GuildId), nameof(UserId), nameof(InstanceReminderId))]
     public class InstanceReminderSetting : BaseEntity
     {
-        [ForeignKey($"{nameof(GuildId)}, {nameof(UserId)}")]
         public GuildUserSetting GuildUserSetting { get; set; }
 
         public ulong GuildId { get; set; }
