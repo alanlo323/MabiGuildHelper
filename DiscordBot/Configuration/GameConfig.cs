@@ -19,7 +19,7 @@ namespace DiscordBot.Configuration
 
         public bool Validate()
         {
-            return !string.IsNullOrEmpty(DisplayName);
+            return !string.IsNullOrEmpty(DisplayName) && DailyEffect != null && DailyBankGift != null && InstanceReset != null;
         }
     }
 

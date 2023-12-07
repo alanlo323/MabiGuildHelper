@@ -94,7 +94,7 @@ namespace DiscordBot.Helper
             }
         }
 
-        public async Task EnsureDatabase()
+        public async Task EnsureDatabaseReady()
         {
             try
             {

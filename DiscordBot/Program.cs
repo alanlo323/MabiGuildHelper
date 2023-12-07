@@ -39,16 +39,15 @@ namespace DiscordBot
             builder.Services.AddOptions<DiscordBotConfig>().Bind(builder.Configuration.GetSection(DiscordBotConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<GameConfig>().Bind(builder.Configuration.GetSection(GameConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<ImgurConfig>().Bind(builder.Configuration.GetSection(ImgurConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
+            builder.Services.AddOptions<FunnyResponseConfig>().Bind(builder.Configuration.GetSection(FunnyResponseConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
 
             builder.Services.AddLogging(loggingBuilder =>
             {
-                IConfigurationSection section = builder.Configuration.GetSection(NLogConstant.SectionName);
-
                 loggingBuilder.ClearProviders();
                 loggingBuilder.SetMinimumLevel(LogLevel.Trace);
 
+                IConfigurationSection section = builder.Configuration.GetSection(NLogConstant.SectionName);
                 var config = new LoggingConfiguration(new NLog.LogFactory());
-                var logconsole = new ConsoleTarget();
                 config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, new ConsoleTarget());
                 config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, new FileTarget
                 {
@@ -141,7 +140,7 @@ namespace DiscordBot
                 });
 
             using IHost host = builder.Build();
-            await host.Services.GetRequiredService<DatabaseHelper>().EnsureDatabase();
+            await host.Services.GetRequiredService<DatabaseHelper>().EnsureDatabaseReady();
             await host.Services.GetRequiredService<Bot>().Start();
             host.Run();
         }
