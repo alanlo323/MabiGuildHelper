@@ -70,7 +70,7 @@ namespace DiscordBot
                 .AddSingleton<ButtonHandlerHelper>()
                 .AddSingleton<CommandHelper>()
                 .AddSingleton<DatabaseHelper>()
-                .AddSingleton<DiscordSocketClient>(x => new DiscordSocketClient(new DiscordSocketConfig { GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent }))
+                .AddSingleton<DiscordSocketClient>(x => new(new DiscordSocketConfig { GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent }))
                 .AddSingleton<DiscordApiHelper>()
                 .AddSingleton<ImgurHelper>()
                 .AddSingleton<SelectMenuHandlerHelper>()
@@ -108,7 +108,7 @@ namespace DiscordBot
                                 .WithIntervalInSeconds(15)
                                 .RepeatForever()
                             ));
-                        
+
                         q.ScheduleJob<DailyEffectJob>(trigger => trigger
                             .WithIdentity(DailyEffectJob.Key.Name)
                             .StartAt((DateTimeOffset)DateTimeUtil.GetNextGivenTime(0, 0, 0))
