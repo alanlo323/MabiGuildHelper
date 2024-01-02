@@ -35,6 +35,12 @@
     <None Update="AppData\FunnyResponseImage\001.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="AppData\FunnyResponseImage\2023-12-12 194424.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="AppData\FunnyResponseImage\2023-12-12 195123.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="AppData\FunnyResponseImage\31431891f7fd578b.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -48,6 +54,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="AppData\FunnyResponseImage\mabinogi_2023_09_24_233152.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="AppData\FunnyResponseImage\螢幕擷取畫面 2023-12-12 194424.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="AppData\FunnyResponseImage\螢幕擷取畫面 2023-12-12 195123.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="appsettings.json">
