@@ -14,22 +14,11 @@ using Microsoft.Extensions.Logging;
 
 namespace DiscordBot.Helper
 {
-    public class DiscordApiHelper
+    public class DiscordApiHelper(ILogger<DiscordApiHelper> logger, DiscordSocketClient client, AppDbContext appDbContext)
     {
-        private ILogger<DiscordApiHelper> _logger;
-        DiscordSocketClient _client;
-        private AppDbContext _appDbContext;
-
-        public DiscordApiHelper(ILogger<DiscordApiHelper> logger, DiscordSocketClient client, AppDbContext appDbContext)
-        {
-            _logger = logger;
-            _client = client;
-            _appDbContext = appDbContext;
-        }
-
         public async Task UpdateOrCreateMeesage(GuildSetting guildSetting, string channelIdPropertyName, string messageIdPropertyName, string channelName = null, string content = null, Embed embed = null, MessageComponent messageComponent = null)
         {
-            var guild = _client.GetGuild(guildSetting.GuildId);
+            var guild = client.GetGuild(guildSetting.GuildId);
             if (guild == null) return;
 
             var channelId = guildSetting.GetProperty<ulong?>(channelIdPropertyName);
@@ -48,7 +37,7 @@ namespace DiscordBot.Helper
 
             var messageId = guildSetting.GetProperty<ulong?>(messageIdPropertyName);
             var message = messageId.HasValue ? await textChannel.GetMessageAsync((ulong)messageId) : null;
-            var applicationInfo = await _client.GetApplicationInfoAsync();
+            var applicationInfo = await client.GetApplicationInfoAsync();
             if (!messageId.HasValue || message == null || message.Author.Id != applicationInfo.Id)
             {
                 await CreateNewMessage(guildSetting, textChannel, messageIdPropertyName, content: content, embed, messageComponent);
@@ -66,14 +55,14 @@ namespace DiscordBot.Helper
                 return;
             }
 
-            _logger.LogError("message is not RestUserMessage");
+            logger.LogError("message is not RestUserMessage");
         }
 
         private async Task CreateNewMessage(GuildSetting guildSetting, SocketTextChannel textChannel, string messageIdPropertyName, string content = null, Embed embed = null, MessageComponent messageComponent = null)
         {
             var message = await textChannel.SendMessageAsync(text: content, embed: embed, components: messageComponent);
             guildSetting.SetProperty(messageIdPropertyName, message.Id);
-            await _appDbContext.SaveChangesAsync();
+            await appDbContext.SaveChangesAsync();
         }
     }
 }

@@ -18,28 +18,17 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.SchedulerJob
 {
-    public class ErinnTimeJob : IJob
+    public class ErinnTimeJob(ILogger<ErinnTimeJob> logger, AppDbContext appDbContext, DiscordApiHelper discordApiHelper) : IJob
     {
         public static readonly JobKey Key = new(nameof(ErinnTimeJob));
 
-        ILogger<ErinnTimeJob> _logger;
-        AppDbContext _appDbContext;
-        DiscordApiHelper _discordApiHelper;
-
-        public ErinnTimeJob(ILogger<ErinnTimeJob> logger, AppDbContext appDbContext, DiscordApiHelper discordApiHelper)
-        {
-            _logger = logger;
-            _appDbContext = appDbContext;
-            _discordApiHelper = discordApiHelper;
-        }
-
         public async Task Execute(IJobExecutionContext context)
         {
-            var guildSettings = _appDbContext.GuildSettings.ToList();
+            var guildSettings = appDbContext.GuildSettings.ToList();
 
             foreach (GuildSetting guildSetting in guildSettings)
             {
-                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.ErinnTimeChannelId), nameof(GuildSetting.ErinnTimeMessageId), channelName: "愛爾琳時間", embed: EmbedUtil.GetErinnTimeEmbed(true));
+                await discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.ErinnTimeChannelId), nameof(GuildSetting.ErinnTimeMessageId), channelName: "愛爾琳時間", embed: EmbedUtil.GetErinnTimeEmbed(true));
             }
         }
     }

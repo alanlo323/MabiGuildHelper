@@ -21,7 +21,7 @@ namespace DiscordBot.Util
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Orange)
                 .WithTitle("⏱愛爾琳時間⏱")
-                .WithDescription($"{GameUtil.GetErinnTime(roundToTenMins).ToString(@"tt h:mm")}")
+                .WithDescription($"{GameUtil.GetErinnTime(roundToTenMins):tt h:mm}")
                 .WithFooter("現實時間")
                 .WithCurrentTimestamp();
             return embed.Build();
@@ -34,7 +34,7 @@ namespace DiscordBot.Util
             DailyEffect todayEffect = gameConfig.DailyEffect.First(x => x.DayOfWeek == todayOfWeek);
             DailyBankGift todayBankGift = gameConfig.DailyBankGift.First(x => x.DayOfWeek == todayOfWeek);
 
-            List<EmbedFieldBuilder> embedFieldBuilders = new();
+            List<EmbedFieldBuilder> embedFieldBuilders = [];
 
             EmbedFieldBuilder embedFieldEffect = new EmbedFieldBuilder()
                 .WithName(today.ToString("yyyy/MM/dd"))
@@ -62,7 +62,7 @@ namespace DiscordBot.Util
 
         public static Embed GetTodayDungeonInfoEmbed(ImgurHelper imgurHelper, out DailyDungeonInfo ouputTodayDungeonInfo)
         {
-            List<EmbedFieldBuilder> embedFieldBuilders = new();
+            List<EmbedFieldBuilder> embedFieldBuilders = [];
             var cultureInfo = new CultureInfo("zh-tw");
             var dateTimeInfo = cultureInfo.DateTimeFormat;
             var dungeonInfoContain = GameUtil.GetDailyDungeons().Result;
@@ -96,7 +96,7 @@ namespace DiscordBot.Util
 
         public static Embed GetResetReminderEmbed(string description, Color color, IEnumerable<InstanceReset> instanceResets, bool useNextDateTime = true)
         {
-            List<EmbedFieldBuilder> embedFieldBuilders = new();
+            List<EmbedFieldBuilder> embedFieldBuilders = [];
 
             foreach (var item in instanceResets)
             {

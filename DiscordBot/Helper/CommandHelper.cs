@@ -9,23 +9,16 @@ using Microsoft.Extensions.Hosting;
 
 namespace DiscordBot.Helper
 {
-    public class CommandHelper
+    public class CommandHelper(IServiceProvider serviceProvider)
     {
-        private IServiceProvider _serviceProvider;
-
-        public CommandHelper(IServiceProvider serviceProvider)
-        {
-            _serviceProvider = serviceProvider;
-        }
-
         public List<IBaseCommand> GetCommandList()
         {
-            return _serviceProvider.GetServices<IBaseCommand>().ToList();
+            return serviceProvider.GetServices<IBaseCommand>().ToList();
         }
 
         public IBaseCommand GetCommand(string name)
         {
-            return _serviceProvider.GetServices<IBaseCommand>().Single(x => x.Name == name);
+            return serviceProvider.GetServices<IBaseCommand>().Single(x => x.Name == name);
         }
     }
 }

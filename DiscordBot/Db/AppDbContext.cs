@@ -10,15 +10,13 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace DiscordBot.Db
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext(DbContextOptions option) : DbContext(option)
     {
         public static readonly string ConnectionStringName = "MabiDb";
 
         public DbSet<GuildSetting> GuildSettings { get; set; }
         public DbSet<GuildUserSetting> GuildUserSettings { get; set; }
         public DbSet<InstanceReminderSetting> InstanceReminderSettings { get; set; }
-
-        public AppDbContext(DbContextOptions option) : base(option) { }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {

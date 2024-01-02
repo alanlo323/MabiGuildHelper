@@ -23,26 +23,10 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.SchedulerJob
 {
-    public class InstanceResetReminderJob : IJob
+    public class InstanceResetReminderJob(ILogger<InstanceResetReminderJob> logger, DiscordSocketClient client, AppDbContext appDbContext, IOptionsSnapshot<GameConfig> gameConfig, DiscordApiHelper discordApiHelper, ButtonHandlerHelper buttonHandlerHelper) : IJob
     {
         public static readonly JobKey Key = new(nameof(InstanceResetReminderJob));
-
-        ILogger<InstanceResetReminderJob> _logger;
-        DiscordSocketClient _client;
-        AppDbContext _appDbContext;
-        GameConfig _gameConfig;
-        DiscordApiHelper _discordApiHelper;
-        ButtonHandlerHelper _buttonHandlerHelper;
-
-        public InstanceResetReminderJob(ILogger<InstanceResetReminderJob> logger, DiscordSocketClient client, AppDbContext appDbContext, IOptionsSnapshot<GameConfig> gameConfig, DiscordApiHelper discordApiHelper, ButtonHandlerHelper buttonHandlerHelper)
-        {
-            _logger = logger;
-            _client = client;
-            _appDbContext = appDbContext;
-            _gameConfig = gameConfig.Value;
-            _discordApiHelper = discordApiHelper;
-            _buttonHandlerHelper = buttonHandlerHelper;
-        }
+        GameConfig _gameConfig = gameConfig.Value;
 
         public async Task Execute(IJobExecutionContext context)
         {
@@ -52,23 +36,23 @@ namespace DiscordBot.SchedulerJob
 
         public async Task RefreshTimeTable()
         {
-            MessageComponent addReminderButtonComponent = _buttonHandlerHelper.GetButtonHandler<ManageReminderButtonHandler>().GetMessageComponent();
-            List<InstanceReset> instanceResetList = _gameConfig.InstanceReset.ToList();
+            MessageComponent addReminderButtonComponent = buttonHandlerHelper.GetButtonHandler<ManageReminderButtonHandler>().GetMessageComponent();
+            List<InstanceReset> instanceResetList = [.. _gameConfig.InstanceReset];
             Embed resetInOneEmbed = EmbedUtil.GetResetReminderEmbed(InstanceReset.Constant.ResetInOneDay, Color.Red, instanceResetList.Where(x => x.ResetInOneDay));
             Embed battleEmbed = EmbedUtil.GetResetReminderEmbed(InstanceReset.Constant.Battle, Color.Blue, instanceResetList.Where(x => x.Type == InstanceReset.Constant.Battle));
             Embed lifeEmbed = EmbedUtil.GetResetReminderEmbed(InstanceReset.Constant.Life, Color.Blue, instanceResetList.Where(x => x.Type == InstanceReset.Constant.Life));
             Embed miscEmbed = EmbedUtil.GetResetReminderEmbed(InstanceReset.Constant.Misc, Color.Blue, instanceResetList.Where(x => x.Type == InstanceReset.Constant.Misc));
             Embed resetTodayEmbed = EmbedUtil.GetResetReminderEmbed(InstanceReset.Constant.ResetToday, Color.Green, instanceResetList.Where(x => x.ResetToday), useNextDateTime: false);
 
-            var guildSettings = _appDbContext.GuildSettings.ToList();
+            var guildSettings = appDbContext.GuildSettings.ToList();
 
             foreach (GuildSetting guildSetting in guildSettings)
             {
-                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.InstanceResetReminderChannelId), nameof(GuildSetting.InstanceResetReminderMessageIdBattle), embed: battleEmbed);
-                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.InstanceResetReminderChannelId), nameof(GuildSetting.InstanceResetReminderMessageIdLife), embed: lifeEmbed);
-                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.InstanceResetReminderChannelId), nameof(GuildSetting.InstanceResetReminderMessageIdMisc), embed: miscEmbed);
-                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.InstanceResetReminderChannelId), nameof(GuildSetting.InstanceResetReminderMessageIdToday), embed: resetTodayEmbed);
-                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.InstanceResetReminderChannelId), nameof(GuildSetting.InstanceResetReminderMessageIdOneDay), messageComponent: addReminderButtonComponent, embed: resetInOneEmbed);
+                await discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.InstanceResetReminderChannelId), nameof(GuildSetting.InstanceResetReminderMessageIdBattle), embed: battleEmbed);
+                await discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.InstanceResetReminderChannelId), nameof(GuildSetting.InstanceResetReminderMessageIdLife), embed: lifeEmbed);
+                await discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.InstanceResetReminderChannelId), nameof(GuildSetting.InstanceResetReminderMessageIdMisc), embed: miscEmbed);
+                await discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.InstanceResetReminderChannelId), nameof(GuildSetting.InstanceResetReminderMessageIdToday), embed: resetTodayEmbed);
+                await discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.InstanceResetReminderChannelId), nameof(GuildSetting.InstanceResetReminderMessageIdOneDay), messageComponent: addReminderButtonComponent, embed: resetInOneEmbed);
             }
         }
 
@@ -76,17 +60,17 @@ namespace DiscordBot.SchedulerJob
         {
             DateTime now = DateTime.Now;
             var instanceResetList = _gameConfig.InstanceReset.ToDictionary(x => x.Id);
-            var guildUserSettings = _appDbContext.GuildUserSettings.Include(x => x.InstanceReminderSettings).ToList();
+            var guildUserSettings = appDbContext.GuildUserSettings.Include(x => x.InstanceReminderSettings).ToList();
             foreach (GuildUserSetting guildUserSetting in guildUserSettings)
             {
                 try
                 {
                     if (guildUserSetting.InstanceReminderSettings == null || guildUserSetting.InstanceReminderSettings.Count == 0) continue;
 
-                    var user = await _client.GetUserAsync(guildUserSetting.UserId);
+                    var user = await client.GetUserAsync(guildUserSetting.UserId);
                     if (user == null) continue;
 
-                    List<string> reminders = new();
+                    List<string> reminders = [];
 
                     foreach (InstanceReminderSetting instanceReminderSetting in guildUserSetting.InstanceReminderSettings)
                     {
@@ -101,7 +85,7 @@ namespace DiscordBot.SchedulerJob
                         }
                         catch (Exception e2)
                         {
-                            _logger.LogError(e2, e2.Message);
+                            logger.LogError(e2, e2.Message);
                         }
                     }
 
@@ -113,7 +97,7 @@ namespace DiscordBot.SchedulerJob
                 }
                 catch (Exception e1)
                 {
-                    _logger.LogError(e1, e1.Message);
+                    logger.LogError(e1, e1.Message);
                 }
             }
         }

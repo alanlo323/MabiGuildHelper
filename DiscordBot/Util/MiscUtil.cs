@@ -14,7 +14,7 @@ namespace DiscordBot.Util
     {
         public async static Task<Image> ConvertHtmlToImage(string html)
         {
-            using BrowserFetcher _browserFetcher = new BrowserFetcher();
+            using BrowserFetcher _browserFetcher = new();
             // Download chrome (headless) browser (first time takes a while).
             await _browserFetcher.DownloadAsync();
 

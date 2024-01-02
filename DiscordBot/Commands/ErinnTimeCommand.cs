@@ -27,7 +27,7 @@ namespace DiscordBot.Commands
 
         public async Task Excute(SocketSlashCommand command)
         {
-            await command.RespondAsync($"愛爾琳時間⏱ {GameUtil.GetErinnTime().ToString(@"tt h:mm")}", ephemeral:true);
+            await command.RespondAsync($"愛爾琳時間⏱ {GameUtil.GetErinnTime():tt h:mm}", ephemeral: true);
         }
     }
 }

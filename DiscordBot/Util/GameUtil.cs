@@ -28,7 +28,7 @@ namespace DiscordBot.Util
 
         public async static Task<DailyDungeonContainer> GetDailyDungeons()
         {
-            List<DailyDungeonInfo> dungeonInfoList = new();
+            List<DailyDungeonInfo> dungeonInfoList = [];
             DateTime baseDate = new(2023, 10, 15);
             DateTime today = DateTime.Today;
             DateTime now = DateTime.Now;

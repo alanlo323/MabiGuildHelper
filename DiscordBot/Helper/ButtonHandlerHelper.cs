@@ -9,28 +9,21 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBot.Helper
 {
-    public class ButtonHandlerHelper
+    public class ButtonHandlerHelper(IServiceProvider serviceProvider)
     {
-        private IServiceProvider _serviceProvider;
-
-        public ButtonHandlerHelper(IServiceProvider serviceProvider)
-        {
-            _serviceProvider = serviceProvider;
-        }
-
         public List<IBaseButtonHandler> GetButtonHandlerList()
         {
-            return _serviceProvider.GetServices<IBaseButtonHandler>().ToList();
+            return serviceProvider.GetServices<IBaseButtonHandler>().ToList();
         }
 
         public IBaseButtonHandler GetButtonHandler(string id)
         {
-            return _serviceProvider.GetServices<IBaseButtonHandler>().Single(x => x.Id == id);
+            return serviceProvider.GetServices<IBaseButtonHandler>().Single(x => x.Id == id);
         }
 
         public IBaseButtonHandler GetButtonHandler<T>() where T : IBaseButtonHandler
         {
-            return _serviceProvider.GetServices<IBaseButtonHandler>().Single(x => x.GetType() == typeof(T));
+            return serviceProvider.GetServices<IBaseButtonHandler>().Single(x => x.GetType() == typeof(T));
         }
     }
 }

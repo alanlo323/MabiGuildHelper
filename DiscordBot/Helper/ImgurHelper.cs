@@ -15,7 +15,7 @@ using Image = System.Drawing.Image;
 
 namespace DiscordBot.Helper
 {
-    public class ImgurHelper
+    public class ImgurHelper(ILogger<ImgurHelper> logger, IOptionsSnapshot<ImgurConfig> imgurConfig)
     {
         public class ImgurTokenResponse
         {
@@ -66,9 +66,6 @@ namespace DiscordBot.Helper
         }
 
         public static readonly string BaseUrl = "https://api.imgur.com";
-
-        ILogger<ImgurHelper> _logger;
-        IOptionsSnapshot<ImgurConfig> _imgurConfig;
         string _accessToken;
 
         private string AccessToken
@@ -77,17 +74,11 @@ namespace DiscordBot.Helper
             {
                 if (string.IsNullOrEmpty(_accessToken))
                 {
-                    _accessToken = GetAccessToken(_imgurConfig.Value.ClientId, _imgurConfig.Value.ClientSecret, _imgurConfig.Value.RefreshToken).Result;
+                    _accessToken = GetAccessToken(imgurConfig.Value.ClientId, imgurConfig.Value.ClientSecret, imgurConfig.Value.RefreshToken).Result;
                 }
                 return _accessToken;
             }
             set => _accessToken = value;
-        }
-
-        public ImgurHelper(ILogger<ImgurHelper> logger, IOptionsSnapshot<ImgurConfig> imgurConfig)
-        {
-            _logger = logger;
-            _imgurConfig = imgurConfig;
         }
 
         public async Task<string> GetAccessToken(string clientId, string clientSecret, string refreshToken)
@@ -114,7 +105,7 @@ namespace DiscordBot.Helper
             }
             else
             {
-                _logger.LogError($"GetAccessToken failed: {response.Content}");
+                logger.LogError($"GetAccessToken failed: {response.Content}");
                 return null;
             }
         }
@@ -131,7 +122,7 @@ namespace DiscordBot.Helper
             {
                 AlwaysMultipartFormData = true
             };
-            byte[] asd = new byte[0];
+
             // image to byte[]
             using var ms = new MemoryStream();
             image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
@@ -149,7 +140,7 @@ namespace DiscordBot.Helper
             }
             else
             {
-                _logger.LogError($"UploadImage failed: {response.Content}");
+                logger.LogError($"UploadImage failed: {response.Content}");
                 return null;
             }
 

@@ -8,7 +8,7 @@ namespace DiscordBot.DataEntity
 {
     public class DailyDungeonInfo
     {
-        public static readonly string[] veteran = { "高爾", "倫達", "貝卡", "艾菲", "賽維爾", "萊比", "瑪斯", "菲歐納", "巴里" };
+        public static readonly string[] veteran = ["高爾", "倫達", "貝卡", "艾菲", "賽維爾", "萊比", "瑪斯", "菲歐納", "巴里"];
 
         public string Name { get; set; }
         public DateTime Date { get; set; }

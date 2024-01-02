@@ -17,20 +17,10 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Commands
 {
-    public class DebugCommand : IBaseCommand
+    public class DebugCommand(ILogger<DebugCommand> logger, ImgurHelper imgurHelper) : IBaseCommand
     {
-        ILogger<DebugCommand> _logger;
-        ImgurHelper _imgurHelper;
-
         public string Name { get; set; } = "debug";
         public string Description { get; set; } = "測試";
-
-
-        public DebugCommand(ILogger<DebugCommand> logger, ImgurHelper imgurHelper)
-        {
-            _logger = logger;
-            _imgurHelper = imgurHelper;
-        }
 
         public SlashCommandProperties GetSlashCommandProperties()
         {
@@ -45,7 +35,7 @@ namespace DiscordBot.Commands
         public async Task Excute(SocketSlashCommand command)
         {
             await command.DeferAsync();
-            await command.FollowupAsync(ephemeral: true, embed: EmbedUtil.GetTodayDungeonInfoEmbed(_imgurHelper));
+            await command.FollowupAsync(ephemeral: true, embed: EmbedUtil.GetTodayDungeonInfoEmbed(imgurHelper));
         }
     }
 }
