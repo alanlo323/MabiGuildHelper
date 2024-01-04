@@ -8,6 +8,7 @@ namespace DiscordBot.Util
 {
     public class RuntimeDbUtil
     {
-        public static Dictionary<object, object> RuntimeDb { get; set; } = [];
+        public static Dictionary<object, object> DefaultRuntimeDb { get; set; } = [];
+        public static Dictionary<T1, T2> CreateRuntimeDb<T1, T2>() where T1 : notnull => [];
     }
 }

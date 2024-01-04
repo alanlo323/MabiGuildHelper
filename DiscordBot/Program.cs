@@ -74,6 +74,7 @@ namespace DiscordBot
                 .AddSingleton<DiscordApiHelper>()
                 .AddSingleton<ImgurHelper>()
                 .AddSingleton<SelectMenuHandlerHelper>()
+                .AddSingleton<DataScrapingHelper>()
                 .AddScoped<IBaseCommand, DebugCommand>()
                 .AddScoped<IBaseCommand, AboutCommand>()
                 .AddScoped<IBaseCommand, HelpCommand>()
@@ -141,7 +142,8 @@ namespace DiscordBot
 
             using IHost host = builder.Build();
             await host.Services.GetRequiredService<DatabaseHelper>().EnsureDatabaseReady();
-            await host.Services.GetRequiredService<Bot>().Start();
+            //await host.Services.GetRequiredService<Bot>().Start();
+            await host.Services.GetRequiredService<DataScrapingHelper>().GetNews();
             host.Run();
         }
     }

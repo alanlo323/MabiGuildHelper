@@ -17,6 +17,7 @@ namespace DiscordBot.Db
         public DbSet<GuildSetting> GuildSettings { get; set; }
         public DbSet<GuildUserSetting> GuildUserSettings { get; set; }
         public DbSet<InstanceReminderSetting> InstanceReminderSettings { get; set; }
+        public DbSet<News> News { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -62,6 +63,10 @@ namespace DiscordBot.Db
                 .HasOne(e => e.GuildUserSetting)
                 .WithMany(e => e.InstanceReminderSettings)
                 .HasForeignKey(e => new { e.GuildId, e.UserId })
+                ;
+
+            modelBuilder.Entity<News>()
+                .HasKey(e => e.Url)
                 ;
         }
     }
