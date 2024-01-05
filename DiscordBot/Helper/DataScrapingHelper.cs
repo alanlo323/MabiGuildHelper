@@ -15,29 +15,28 @@ namespace DiscordBot.Helper
 {
     public class DataScrapingHelper(ILogger<DataScrapingHelper> logger, AppDbContext appDbContext, DatabaseHelper databaseHelper)
     {
-        public const string MabinogiNewsUrl = "https://mabinogi.beanfun.com/News";
+        public const string MabinogiBaseUrl = "https://mabinogi.beanfun.com";
+        public const string MabinogiNewsPath = $"{MabinogiBaseUrl}/News";
 
         public async Task<List<News>> GetNews(string type = null)
         {
-            logger.LogInformation("Start GetNews");
             using BrowserFetcher _browserFetcher = new();
             // Download chrome (headless) browser (first time takes a while).
             await _browserFetcher.DownloadAsync();
 
             // Launch the browser and set the given html.
             await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
-            await using var page = await browser.NewPageAsync();
+            await using var newsPage = await browser.NewPageAsync();
             // get from MabinogiTW official website
-            await page.GoToAsync(MabinogiNewsUrl, WaitUntilNavigation.Networkidle0);
-            logger.LogInformation("News page loaded");
+            await newsPage.GoToAsync(MabinogiNewsPath, WaitUntilNavigation.Networkidle0);
 
-            var elementQuery = ".activity";
-            await page.WaitForSelectorAsync(elementQuery); // Wait for the selector to load.
+            var activityElementQuery = ".activity";
+            await newsPage.WaitForSelectorAsync(activityElementQuery); // Wait for the selector to load.
 
-            var elementHandle = await page.QuerySelectorAsync(elementQuery);
-            var innerHTML = await elementHandle.GetPropertyAsync("innerHTML");
+            var activityElementHandle = await newsPage.QuerySelectorAsync(activityElementQuery);
+            var activityInnerHTML = await activityElementHandle.GetPropertyAsync("innerHTML");
             List<string> activitiesHtml = [];
-            foreach (string html in innerHTML.RemoteObject.Value.ToString().Split("</a>"))
+            foreach (string html in activityInnerHTML.RemoteObject.Value.ToString().Split("</a>"))
             {
                 if (!string.IsNullOrWhiteSpace(html)) activitiesHtml.Add($"{html.Trim()}</a>");
             }
@@ -49,19 +48,35 @@ namespace DiscordBot.Helper
                 firstPageNews.Add(new()
                 {
                     Title = activityHtml.Split("item-title\">")[1].Split("</")[0].Trim(),
-                    Url = activityHtml.Split("href=\"")[1].Split("\"")[0].Trim(),
+                    Url = activityHtml.Split("href=\"")[1].Split("\"")[0].Trim().Replace("&amp;", "&"),
                     ImageUrl = activityHtml.Split("background-image: url(&quot;")[1].Split(");")[0].Trim(),
                     PublishDate = DateTime.Parse(activityHtml.Split("item-time\">")[1].Split("</")[0].Trim()),
                 });
             }
 
+            await Parallel.ForEachAsync(firstPageNews, async (news, cancellationToken) =>
+              {
+                  if(cancellationToken.IsCancellationRequested) return;
+
+                  await using var newsContentPage = await browser.NewPageAsync();
+                  await newsContentPage.GoToAsync($"{MabinogiBaseUrl}/{news.Url}", WaitUntilNavigation.Networkidle0);
+
+                  var contentElementQuery = ".news-inside-content";
+                  await newsContentPage.WaitForSelectorAsync(contentElementQuery);
+
+                  var contentElementHandle = await newsContentPage.QuerySelectorAsync(contentElementQuery);
+                  var contentInnerText = await contentElementHandle.GetPropertyAsync("innerText");
+
+                  news.Content = contentInnerText.RemoteObject.Value.ToString();
+              });
+
             News tempNews = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), firstPageNews[0].Url } });
             tempNews.Content = $"{DateTime.Now}";
             await databaseHelper.SaveChange();
 
-            var sameKeyNews = appDbContext.News.ToList().Where(x => firstPageNews.Any(y => y.Url == x.Url)).ToList();
-            var updatedNews = firstPageNews.Where(x => sameKeyNews.Any(y => y.Url == x.Url && !y.Equals(x))).ToList();
-            var newNews = firstPageNews.Where(x => !sameKeyNews.Any(y => y.Url == x.Url)).ToList();
+            var sameKeyNews = appDbContext.News.ToList().Where(x => firstPageNews.Any(y => y.Url == x.Url));
+            var updatedNews = firstPageNews.Where(x => sameKeyNews.Any(y => y.Url == x.Url && !y.Equals(x)));
+            var newNews = firstPageNews.Where(x => !sameKeyNews.Any(y => y.Url == x.Url));
 
             foreach (var news in updatedNews)
             {
@@ -71,13 +86,12 @@ namespace DiscordBot.Helper
                 newsToUpdate.PublishDate = news.PublishDate;
                 newsToUpdate.Content = news.Content;
             }
-
             await appDbContext.News.AddRangeAsync(newNews);
             await appDbContext.SaveChangesAsync();
 
             logger.LogInformation("News loaded");
 
-            var result = await elementHandle.ScreenshotDataAsync(
+            var result = await activityElementHandle.ScreenshotDataAsync(
                 new ScreenshotOptions
                 {
                     Type = ScreenshotType.Png,

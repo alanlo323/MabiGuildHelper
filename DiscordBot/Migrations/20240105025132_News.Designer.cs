@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DiscordBot.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240104090341_News")]
+    [Migration("20240105025132_News")]
     partial class News
     {
         /// <inheritdoc />
@@ -117,6 +117,9 @@ namespace DiscordBot.Migrations
             modelBuilder.Entity("DiscordBot.Db.Entity.News", b =>
                 {
                     b.Property<string>("Url")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Base64Snapshot")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Content")

@@ -116,6 +116,9 @@ namespace DiscordBot.Migrations
                     b.Property<string>("Url")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Base64Snapshot")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Content")
                         .HasColumnType("TEXT");
 
