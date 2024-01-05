@@ -143,8 +143,9 @@ namespace DiscordBot
             using IHost host = builder.Build();
             await host.Services.GetRequiredService<DatabaseHelper>().EnsureDatabaseReady();
             //await host.Services.GetRequiredService<Bot>().Start();
+            //host.Run();
+
             await host.Services.GetRequiredService<DataScrapingHelper>().GetNews();
-            host.Run();
         }
     }
 }
