@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DiscordBot.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240105025132_News")]
+    [Migration("20240105025537_News")]
     partial class News
     {
         /// <inheritdoc />
