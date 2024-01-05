@@ -130,7 +130,7 @@ namespace DiscordBot.Util
                 .WithFooter("最後更新時間")
                 .WithTimestamp((DateTimeOffset)news.UpdatedAt)
                 ;
-            if (!string.IsNullOrEmpty(imageUrl)) embed = embed.WithImageUrl(imageUrl);
+            if (!string.IsNullOrEmpty(imageUrl)) embed = embed.WithImageUrl(imageUrl); //https://discordjs.guide/popular-topics/embeds.html#using-the-embedbuilder
 
             return embed.Build();
         }
