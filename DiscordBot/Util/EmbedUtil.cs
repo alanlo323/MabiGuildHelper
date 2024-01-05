@@ -119,18 +119,17 @@ namespace DiscordBot.Util
             return embed.Build();
         }
 
-        public static Embed GetMainogiNewsEmbed(ImgurHelper imgurHelper, News news)
+        public static Embed GetMainogiNewsEmbed(News news)
         {
-            var imageUrl = imgurHelper.UploadImage(ImageUtil.Base64ToImage(news.Base64Snapshot)).Result;
-
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Orange)
                 .WithTitle(news.Title)
                 .WithDescription(news.Content)
-                .WithFooter("最後更新時間")
+                .WithFooter("更新時間")
+                .WithUrl($"{DataScrapingHelper.MabinogiBaseUrl}/{news.Url}")
                 .WithTimestamp((DateTimeOffset)news.UpdatedAt)
+                .WithImageUrl($"attachment://{news.GetSnapshotTempFile().Name}")
                 ;
-            if (!string.IsNullOrEmpty(imageUrl)) embed = embed.WithImageUrl(imageUrl); //https://discordjs.guide/popular-topics/embeds.html#using-the-embedbuilder
 
             return embed.Build();
         }

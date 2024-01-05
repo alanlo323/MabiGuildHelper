@@ -55,6 +55,12 @@ namespace DiscordBot.Commands
                         .WithType(ApplicationCommandOptionType.SubCommand)
                         .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
                     )
+                    .AddOption(new SlashCommandOptionBuilder()
+                        .WithName("news")
+                        .WithDescription("官網消息")
+                        .WithType(ApplicationCommandOptionType.SubCommand)
+                        .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
+                    )
                 )
                 .AddOption(new SlashCommandOptionBuilder()
                     .WithName("reminder")
@@ -103,6 +109,9 @@ namespace DiscordBot.Commands
                         break;
                     case "dailydungeoninfo":
                         await HandleDailyDungeonInfoCommand(command, subOption);
+                        break;
+                    case "news":
+                        await HandleNewsCommand(command, subOption);
                         break;
                     default:
                         break;
@@ -161,6 +170,15 @@ namespace DiscordBot.Commands
             await command.RespondAsync($"已設定{optionChannel.Mention}為老手地城頻道", ephemeral: true);
 
             DailyDungeonInfoJob job = serviceProvider.GetRequiredService<DailyDungeonInfoJob>();
+            await job.Execute(null);
+        }
+
+        private async Task HandleNewsCommand(SocketSlashCommand command, SocketSlashCommandDataOption option)
+        {
+            SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.DataScapingNewsChannelId));
+            await command.RespondAsync($"已設定{optionChannel.Mention}為官網消息頻道", ephemeral: true);
+
+            DataScrapingJob job = serviceProvider.GetRequiredService<DataScrapingJob>();
             await job.Execute(null);
         }
 

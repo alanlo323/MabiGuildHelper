@@ -14,11 +14,9 @@ namespace DiscordBot.Util
         public static Image Base64ToImage(string base64String)
         {
             byte[] imageBytes = Convert.FromBase64String(base64String);
-            using (MemoryStream ms = new MemoryStream(imageBytes))
-            {
-                Image image = Image.FromStream(ms);
-                return image;
-            }
+            using MemoryStream ms = new MemoryStream(imageBytes);
+            Image image = Image.FromStream(ms);
+            return image;
         }
 
     }

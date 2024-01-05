@@ -11,6 +11,12 @@ namespace DiscordBot.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<ulong>(
+                name: "DataScapingNewsChannelId",
+                table: "GuildSettings",
+                type: "INTEGER",
+                nullable: true);
+
             migrationBuilder.CreateTable(
                 name: "News",
                 columns: table => new
@@ -35,6 +41,10 @@ namespace DiscordBot.Migrations
         {
             migrationBuilder.DropTable(
                 name: "News");
+
+            migrationBuilder.DropColumn(
+                name: "DataScapingNewsChannelId",
+                table: "GuildSettings");
         }
     }
 }

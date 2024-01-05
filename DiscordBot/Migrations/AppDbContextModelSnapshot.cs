@@ -38,6 +38,9 @@ namespace DiscordBot.Migrations
                     b.Property<ulong?>("DailyEffectMessageId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<ulong?>("DataScapingNewsChannelId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<ulong?>("ErinnTimeChannelId")
                         .HasColumnType("INTEGER");
 

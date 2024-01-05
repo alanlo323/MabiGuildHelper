@@ -33,12 +33,18 @@ namespace DiscordBot.Helper
             // Launch the browser and set the given html.
             await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
-                Headless = true,
+                Headless = false,
                 DefaultViewport = null,
                 //Args = [$"--start-maximized"],
-                //Args = [$"--window-size=960,540 --force-device-scale-factor=1.5"],
                 Args = [$"--window-size=450,450"],
             });
+            await using var maximizedBrowser = await Puppeteer.LaunchAsync(new LaunchOptions
+            {
+                Headless = false,
+                DefaultViewport = null,
+                Args = [$"--start-maximized"],
+            });
+
             await using var newsPage = await browser.NewPageAsync();
             // get from MabinogiTW official website
             await newsPage.GoToAsync(MabinogiNewsPath, WaitUntilNavigation.Networkidle0);
@@ -54,10 +60,10 @@ namespace DiscordBot.Helper
             }
 
             // convert activitiesHtml to News
-            List<News> firstPageNews = [];
+            List<News> newsFromWebsite = [];
             foreach (string activityHtml in activitiesHtml)
             {
-                firstPageNews.Add(new()
+                newsFromWebsite.Add(new()
                 {
                     Title = activityHtml.Split("item-title\">")[1].Split("</")[0].Trim(),
                     Url = activityHtml.Split("href=\"")[1].Split("\"")[0].Trim().Replace("&amp;", "&"),
@@ -66,72 +72,56 @@ namespace DiscordBot.Helper
                 });
             }
 
-            await Parallel.ForEachAsync(firstPageNews, async (news, cancellationToken) =>
+            int totalNews = newsFromWebsite.Count;
+            int loadedNews = 0;
+
+            await Parallel.ForEachAsync(newsFromWebsite, async (news, cancellationToken) =>
               {
                   if (cancellationToken.IsCancellationRequested) return;
 
-                  try
+                  await using var newsContentPage = await browser.NewPageAsync();
+                  await UpdateContent(news, newsContentPage);
+
+                  if (news.Content.Length > 200)
                   {
-                      await using var newsContentPage = await browser.NewPageAsync();
-                      await newsContentPage.GoToAsync($"{MabinogiBaseUrl}/{news.Url}", WaitUntilNavigation.Networkidle0);
-
-                      try
+                      Thread newThread = new(async () =>
                       {
-                          var knowElementQuery = ".cookie-bar-know";
-                          await newsContentPage.WaitForSelectorAsync(knowElementQuery);
-                          var knowElementHandle = await newsContentPage.QuerySelectorAsync(knowElementQuery);
-                          await knowElementHandle.ClickAsync();
-                      }
-                      catch (Exception)
-                      {
-                      }
+                          await using var newsMaximizedContentPage = await maximizedBrowser.NewPageAsync();
+                          await UpdateContent(news, newsMaximizedContentPage);
 
-                      try
-                      {
-                          var navElementQuery = ".navigation-bar";
-                          await newsContentPage.WaitForSelectorAsync(navElementQuery);
-                          await newsContentPage.EvaluateExpressionAsync($"document.querySelector('{navElementQuery}').remove();");
-                      }
-                      catch (Exception)
-                      {
-                      }
-
-                      var contentElementQuery = ".news-inside-content";
-                      await newsContentPage.WaitForSelectorAsync(contentElementQuery);
-                      var contentElementHandle = await newsContentPage.QuerySelectorAsync(contentElementQuery);
-                      var contentInnerText = await contentElementHandle.GetPropertyAsync("innerText");
-
-                      news.Content = contentInnerText.RemoteObject.Value.ToString();
-
-                      var contentElementSreenshot = await contentElementHandle.ScreenshotDataAsync(
-                          new ScreenshotOptions
-                          {
-                              Type = ScreenshotType.Png,
-                          }
-                      );
-                      var contentElementImage = Image.FromStream(new MemoryStream(contentElementSreenshot));
-                      //string tempPath1 = Path.GetTempFileName().Replace("tmp", "jpg");
-                      //contentElementImage.Save(tempPath1);
-
-                      news.Base64Snapshot = ImageUtil.ImageToBase64(contentElementImage);
+                          loadedNews++;
+                      });
+                      newThread.Start();
                   }
-                  catch (Exception ex)
+                  else
                   {
-                      logger.LogError(ex, ex.Message);
+                      loadedNews++;
                   }
+                  logger.LogInformation($"News content updated: {news.Title}");
               });
 
-            News tempNews = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), firstPageNews[0].Url } });
+            while (loadedNews < totalNews)
+            {
+                Thread.Sleep(100);
+            }
+
+            logger.LogInformation($"All News content updated");
+
+            News tempNews = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), newsFromWebsite[0].Url } });
             tempNews.PublishDate = DateTime.Now;
+            News tempNews1 = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), newsFromWebsite[1].Url } });
+            tempNews1.PublishDate = DateTime.Now;
+            News tempNews2 = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), newsFromWebsite[2].Url } });
+            tempNews2.PublishDate = DateTime.Now;
             await databaseHelper.SaveChange();
 
-            var sameKeyNews = appDbContext.News.ToList().Where(x => firstPageNews.Any(y => y.Url == x.Url));
-            var updatedNews = sameKeyNews.Where(x => firstPageNews.Any(y => y.Url == x.Url && !y.Equals(x)));
-            var newNews = firstPageNews.Where(x => !sameKeyNews.Any(y => y.Url == x.Url));
+            var sameKeyNews = appDbContext.News.ToList().Where(x => newsFromWebsite.Any(y => y.Url == x.Url)).ToList();
+            var updatedNews = sameKeyNews.Where(x => newsFromWebsite.Any(y => y.Url == x.Url && !y.Equals(x))).ToList();
+            var newNews = newsFromWebsite.Where(x => !sameKeyNews.Any(y => y.Url == x.Url)).ToList();
 
-            foreach (var news in updatedNews)
+            foreach (var newsToUpdate in updatedNews)
             {
-                var newsToUpdate = sameKeyNews.Where(x => x.Url == news.Url).Single();
+                var news = newsFromWebsite.Where(x => x.Url == newsToUpdate.Url).Single();
                 newsToUpdate.Title = news.Title;
                 newsToUpdate.ImageUrl = news.ImageUrl;
                 newsToUpdate.PublishDate = news.PublishDate;
@@ -150,19 +140,65 @@ namespace DiscordBot.Helper
 
             await browser.CloseAsync();
 
-            //var image = Image.FromStream(new MemoryStream(result));
-            //// save image to file, for debug
-            //string tempPath = Path.GetTempFileName().Replace("tmp", "jpg");
-            //image.Save(tempPath);
-
             logger.LogInformation("News refreshed");
 
             return new()
             {
-                NewNews = newNews.ToList(),
-                UpdatedNews = updatedNews.ToList(),
-                LoadedNews = firstPageNews,
+                NewNews = newNews,
+                UpdatedNews = updatedNews,
+                LoadedNews = newsFromWebsite,
             };
+        }
+
+        private async Task UpdateContent(News news, IPage page)
+        {
+            try
+            {
+                await page.GoToAsync($"{MabinogiBaseUrl}/{news.Url}", WaitUntilNavigation.Networkidle0);
+
+                var knowElementQuery = ".cookie-bar-know";
+                await page.WaitForSelectorAsync(knowElementQuery);
+                var knowElementHandle = await page.QuerySelectorAsync(knowElementQuery);
+                await knowElementHandle.ClickAsync();
+            }
+            catch (Exception)
+            {
+            }
+
+            try
+            {
+                var navElementQuery = ".navigation-bar";
+                await page.WaitForSelectorAsync(navElementQuery);
+                await page.EvaluateExpressionAsync($"document.querySelector('{navElementQuery}').remove();");
+
+                var bfActionBarElementQuery = "#BF_divActionBar";
+                await page.WaitForSelectorAsync(bfActionBarElementQuery);
+                await page.EvaluateExpressionAsync($"document.querySelector('{bfActionBarElementQuery}').remove();");
+            }
+            catch (Exception)
+            {
+            }
+
+            var contentElementQuery = ".news-inside-content";
+            await page.WaitForSelectorAsync(contentElementQuery);
+            var contentElementHandle = await page.QuerySelectorAsync(contentElementQuery);
+            var contentInnerText = await contentElementHandle.GetPropertyAsync("innerText");
+
+            var contentElementSreenshot = await contentElementHandle.ScreenshotDataAsync(
+                new ScreenshotOptions
+                {
+                    Type = ScreenshotType.Png,
+                }
+            );
+            var contentElementImage = Image.FromStream(new MemoryStream(contentElementSreenshot));
+
+            news.Content = contentInnerText.RemoteObject.Value.ToString()
+                .Replace(news.Title, string.Empty)
+                .Replace($"{news.PublishDate:yyyy/MM/dd}", string.Empty)
+                ;
+            news.Base64Snapshot = ImageUtil.ImageToBase64(contentElementImage);
+
+            await page.CloseAsync();
         }
     }
 }

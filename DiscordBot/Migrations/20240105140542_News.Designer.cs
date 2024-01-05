@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DiscordBot.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240105025537_News")]
+    [Migration("20240105140542_News")]
     partial class News
     {
         /// <inheritdoc />
@@ -39,6 +39,9 @@ namespace DiscordBot.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<ulong?>("DailyEffectMessageId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<ulong?>("DataScapingNewsChannelId")
                         .HasColumnType("INTEGER");
 
                     b.Property<ulong?>("ErinnTimeChannelId")
