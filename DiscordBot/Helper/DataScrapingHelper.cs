@@ -22,7 +22,7 @@ namespace DiscordBot.Helper
         public const string MabinogiBaseUrl = "https://mabinogi.beanfun.com";
         public const string MabinogiNewsPath = $"{MabinogiBaseUrl}/News";
 
-        public async Task<MabinogiNewsResult> GetNews(string type = null)
+        public async Task<MabinogiNewsResult> GetMabinogiNews()
         {
             logger.LogInformation("Loading news");
 
@@ -110,8 +110,8 @@ namespace DiscordBot.Helper
                           }
                       );
                       var contentElementImage = Image.FromStream(new MemoryStream(contentElementSreenshot));
-                      string tempPath1 = Path.GetTempFileName().Replace("tmp", "jpg");
-                      contentElementImage.Save(tempPath1);
+                      //string tempPath1 = Path.GetTempFileName().Replace("tmp", "jpg");
+                      //contentElementImage.Save(tempPath1);
 
                       news.Base64Snapshot = ImageUtil.ImageToBase64(contentElementImage);
                   }
@@ -122,11 +122,11 @@ namespace DiscordBot.Helper
               });
 
             News tempNews = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), firstPageNews[0].Url } });
-            tempNews.Content = $"{DateTime.Now}";
+            tempNews.PublishDate = DateTime.Now;
             await databaseHelper.SaveChange();
 
             var sameKeyNews = appDbContext.News.ToList().Where(x => firstPageNews.Any(y => y.Url == x.Url));
-            var updatedNews = firstPageNews.Where(x => sameKeyNews.Any(y => y.Url == x.Url && !y.Equals(x)));
+            var updatedNews = sameKeyNews.Where(x => firstPageNews.Any(y => y.Url == x.Url && !y.Equals(x)));
             var newNews = firstPageNews.Where(x => !sameKeyNews.Any(y => y.Url == x.Url));
 
             foreach (var news in updatedNews)
@@ -161,6 +161,7 @@ namespace DiscordBot.Helper
             {
                 NewNews = newNews.ToList(),
                 UpdatedNews = updatedNews.ToList(),
+                LoadedNews = firstPageNews,
             };
         }
     }

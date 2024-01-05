@@ -11,5 +11,6 @@ namespace DiscordBot.DataObject
     {
         public List<News> NewNews { get; set; }
         public List<News> UpdatedNews { get; set; }
+        public List<News> LoadedNews { get; set; }
     }
 }

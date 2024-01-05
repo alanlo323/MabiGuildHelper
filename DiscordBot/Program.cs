@@ -134,6 +134,18 @@ namespace DiscordBot
                                 .RepeatForever()
                             ));
                     }
+
+                    if (EnvironmentUtil.IsLocal())
+                    {
+                        q.ScheduleJob<DataScrapingJob>(trigger => trigger
+                            .WithIdentity(DataScrapingJob.Key.Name)
+                            .StartAt(DateTime.Now)
+                            //.StartAt(DateBuilder.NextGivenMinuteDate(DateTime.Now, 5))
+                            .WithSimpleSchedule(x => x
+                                .WithIntervalInMinutes(5)
+                                .RepeatForever()
+                            ));
+                    }
                 })
                 .AddQuartzHostedService(options => { options.WaitForJobsToComplete = true; }).AddQuartzHostedService(options =>
                 {
@@ -143,9 +155,7 @@ namespace DiscordBot
             using IHost host = builder.Build();
             await host.Services.GetRequiredService<DatabaseHelper>().EnsureDatabaseReady();
             //await host.Services.GetRequiredService<Bot>().Start();
-            //host.Run();
-
-            await host.Services.GetRequiredService<DataScrapingHelper>().GetNews();
+            host.Run();
         }
     }
 }
