@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
 using DiscordBot.Commands;
@@ -17,21 +18,24 @@ using Quartz;
 
 namespace DiscordBot.SchedulerJob
 {
-    public class DataScrapingJob(ILogger<DataScrapingJob> logger, AppDbContext appDbContext, DiscordApiHelper discordApiHelper, DataScrapingHelper dataScrapingHelper) : IJob
+    public class DataScrapingJob(ILogger<DataScrapingJob> logger, AppDbContext appDbContext, DiscordApiHelper discordApiHelper, DataScrapingHelper dataScrapingHelper, ImgurHelper imgurHelper) : IJob
     {
         public static readonly JobKey Key = new(nameof(DataScrapingJob));
 
         public async Task Execute(IJobExecutionContext context)
         {
-            var result = await dataScrapingHelper.GetMabinogiNews();
+            var dataScrapingResult = await dataScrapingHelper.GetMabinogiNews();
             { }
 
-            //var guildSettings = appDbContext.GuildSettings.ToList();
+            var guildSettings = appDbContext.GuildSettings.ToList();
 
-            //foreach (GuildSetting guildSetting in guildSettings)
-            //{
-            //    await discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.ErinnTimeChannelId), nameof(GuildSetting.ErinnTimeMessageId), channelName: "愛爾琳時間", embed: EmbedUtil.GetErinnTimeEmbed(true));
-            //}
+            foreach (GuildSetting guildSetting in guildSettings)
+            {
+                foreach (News news in dataScrapingResult.NewNews)
+                {
+                    var message = await discordApiHelper.SendMessage(guildSetting.GuildId, guildSetting.DataScapingNewsChannelId, embed: EmbedUtil.GetMainogiNewsEmbed(imgurHelper, news));
+                }
+            }
         }
     }
 }

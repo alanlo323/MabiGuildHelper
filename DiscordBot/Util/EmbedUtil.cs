@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Discord;
 using DiscordBot.Configuration;
 using DiscordBot.DataEntity;
+using DiscordBot.Db.Entity;
 using DiscordBot.Helper;
 using Newtonsoft.Json.Linq;
 using Quartz;
@@ -114,6 +115,22 @@ namespace DiscordBot.Util
                 .WithDescription(description)
                 .WithFields(embedFieldBuilders)
                 ;
+
+            return embed.Build();
+        }
+
+        public static Embed GetMainogiNewsEmbed(ImgurHelper imgurHelper, News news)
+        {
+            var imageUrl = imgurHelper.UploadImage(ImageUtil.Base64ToImage(news.Base64Snapshot)).Result;
+
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Orange)
+                .WithTitle(news.Title)
+                .WithDescription(news.Content)
+                .WithFooter("最後更新時間")
+                .WithTimestamp((DateTimeOffset)news.UpdatedAt)
+                ;
+            if (!string.IsNullOrEmpty(imageUrl)) embed = embed.WithImageUrl(imageUrl);
 
             return embed.Build();
         }

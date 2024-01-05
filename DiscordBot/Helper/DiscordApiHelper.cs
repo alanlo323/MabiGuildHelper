@@ -31,7 +31,7 @@ namespace DiscordBot.Helper
 
             if (!guildSetting.GetProperty<ulong?>(channelIdPropertyName).HasValue)
             {
-                await CreateNewMessage(guildSetting, textChannel,  messageIdPropertyName, content: content, embed, messageComponent);
+                await CreateNewMessage(guildSetting, textChannel, messageIdPropertyName, content: content, embed, messageComponent);
                 return;
             }
 
@@ -58,11 +58,22 @@ namespace DiscordBot.Helper
             logger.LogError("message is not RestUserMessage");
         }
 
-        private async Task CreateNewMessage(GuildSetting guildSetting, SocketTextChannel textChannel, string messageIdPropertyName, string content = null, Embed embed = null, MessageComponent messageComponent = null)
+        public async Task CreateNewMessage(GuildSetting guildSetting, SocketTextChannel textChannel, string messageIdPropertyName, string content = null, Embed embed = null, MessageComponent messageComponent = null)
         {
             var message = await textChannel.SendMessageAsync(text: content, embed: embed, components: messageComponent);
             guildSetting.SetProperty(messageIdPropertyName, message.Id);
             await appDbContext.SaveChangesAsync();
+        }
+
+        public async Task<RestUserMessage?> SendMessage(ulong? guildId, ulong? textChannelId, string content = null, Embed embed = null, MessageComponent messageComponent = null)
+        {
+            var guild = client.GetGuild(guildId ?? 0);
+            if (guild == null) return null;
+
+            SocketTextChannel textChannel = guild.GetTextChannel(textChannelId ?? 0);
+            if (textChannel == null) return null;
+
+            return await textChannel.SendMessageAsync(text: content, embed: embed, components: messageComponent);
         }
     }
 }

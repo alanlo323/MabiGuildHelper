@@ -24,6 +24,7 @@ namespace DiscordBot.Db.Entity
         public ulong? InstanceResetReminderMessageIdMisc { get; set; }
         public ulong? InstanceResetReminderMessageIdOneDay { get; set; }
         public ulong? InstanceResetReminderMessageIdToday { get; set; }
+        public ulong? DataScapingNewsChannelId { get; set; }
 
         public ICollection<GuildUserSetting> GuildUserSettings { get; set; } = new List<GuildUserSetting>();
     }

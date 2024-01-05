@@ -10,5 +10,16 @@ namespace DiscordBot.Util
             image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
             return Convert.ToBase64String(ms.ToArray());
         }
+
+        public static Image Base64ToImage(string base64String)
+        {
+            byte[] imageBytes = Convert.FromBase64String(base64String);
+            using (MemoryStream ms = new MemoryStream(imageBytes))
+            {
+                Image image = Image.FromStream(ms);
+                return image;
+            }
+        }
+
     }
 }
