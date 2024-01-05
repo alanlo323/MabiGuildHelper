@@ -56,26 +56,18 @@ namespace DiscordBot.Util
             return embed.Build();
         }
 
-        public static Embed GetTodayDungeonInfoEmbed(ImgurHelper imgurHelper)
-        {
-            return GetTodayDungeonInfoEmbed(imgurHelper, out _);
-        }
-
-        public static Embed GetTodayDungeonInfoEmbed(ImgurHelper imgurHelper, out DailyDungeonInfo ouputTodayDungeonInfo)
+        public static Embed GetTodayDungeonInfoEmbed(DailyDungeonContainer dailyDungeonContainer)
         {
             List<EmbedFieldBuilder> embedFieldBuilders = [];
             var cultureInfo = new CultureInfo("zh-tw");
             var dateTimeInfo = cultureInfo.DateTimeFormat;
-            var dungeonInfoContain = GameUtil.GetDailyDungeons().Result;
-            var dungeonInfoList = dungeonInfoContain.Infos;
-            var imageUrl = imgurHelper.UploadImage(dungeonInfoContain.Image).Result;
+            var dungeonInfoList = dailyDungeonContainer.Infos;
 
             DateTime today = DateTime.Now.Date;
             var todayDungeonInfo = dungeonInfoList
                 .Where(x => x.IsTodayDungeon)
                 .First()
                 ;
-            ouputTodayDungeonInfo = todayDungeonInfo;
 
             EmbedFieldBuilder embedField = new EmbedFieldBuilder()
                 .WithName($"{todayDungeonInfo.Date:yyyy-MM-dd}")
@@ -89,8 +81,8 @@ namespace DiscordBot.Util
                 .WithFields(embedFieldBuilders)
                 .WithFooter("更新時間")
                 .WithCurrentTimestamp()
+                .WithImageUrl($"attachment://{dailyDungeonContainer.GetImageTempFile().Name}")
                 ;
-            if (!string.IsNullOrEmpty(imageUrl)) embed = embed.WithImageUrl(imageUrl);
 
             return embed.Build();
         }

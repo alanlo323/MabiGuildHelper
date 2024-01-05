@@ -35,7 +35,7 @@ namespace DiscordBot.SchedulerJob
 
                 foreach (News news in dataScrapingResult.UpdatedNews)
                 {
-                    var message = await discordApiHelper.SendFile(guildSetting.GuildId, guildSetting.DataScapingNewsChannelId, news.GetSnapshotTempFile().FullName, embed: EmbedUtil.GetMainogiNewsEmbed(news));
+                    await discordApiHelper.SendFile(guildSetting.GuildId, guildSetting.DataScapingNewsChannelId, news.GetSnapshotTempFile().FullName, embed: EmbedUtil.GetMainogiNewsEmbed(news));
                 }
             }
         }

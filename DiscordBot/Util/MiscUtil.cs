@@ -37,11 +37,7 @@ namespace DiscordBot.Util
 
             await browser.CloseAsync();
 
-            var image = Image.FromStream(new MemoryStream(result));
-            // save image to file, for debug
-            //string tempPath = Path.GetTempFileName().Replace("tmp", "jpg");
-            //image.Save(tempPath);
-            return image;
+            return Image.FromStream(new MemoryStream(result));
         }
     }
 }

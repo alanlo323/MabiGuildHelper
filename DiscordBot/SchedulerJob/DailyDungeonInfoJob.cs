@@ -26,12 +26,13 @@ namespace DiscordBot.SchedulerJob
 
         public async Task Execute(IJobExecutionContext context)
         {
-            Embed embed = EmbedUtil.GetTodayDungeonInfoEmbed(imgurHelper, out DailyDungeonInfo todayDungeonInfo);
+            DailyDungeonContainer dailyDungeonContainer = await GameUtil.GetDailyDungeons();
+            Embed embed = EmbedUtil.GetTodayDungeonInfoEmbed(dailyDungeonContainer);
             var guildSettings = appDbContext.GuildSettings.ToList();
 
             foreach (GuildSetting guildSetting in guildSettings)
             {
-                await discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.DailyDungeonInfoChannelId), nameof(GuildSetting.DailyDungeonInfoMessageId), channelName: $"今日老手-{todayDungeonInfo.Name}", embed: embed);
+                await discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.DailyDungeonInfoChannelId), nameof(GuildSetting.DailyDungeonInfoMessageId), channelName: $"今日老手-{dailyDungeonContainer.Infos.Where(x => x.IsTodayDungeon).Single().Name}", embed: embed, filePath: dailyDungeonContainer.GetImageTempFile().FullName);
             }
         }
     }

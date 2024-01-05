@@ -35,7 +35,6 @@ namespace DiscordBot.Commands
         public async Task Excute(SocketSlashCommand command)
         {
             await command.DeferAsync();
-            await command.FollowupAsync(ephemeral: true, embed: EmbedUtil.GetTodayDungeonInfoEmbed(imgurHelper));
         }
     }
 }

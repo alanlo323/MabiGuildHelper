@@ -33,14 +33,14 @@ namespace DiscordBot.Helper
             // Launch the browser and set the given html.
             await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
-                Headless = false,
+                Headless = true,
                 DefaultViewport = null,
                 //Args = [$"--start-maximized"],
                 Args = [$"--window-size=450,450"],
             });
             await using var maximizedBrowser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
-                Headless = false,
+                Headless = true,
                 DefaultViewport = null,
                 Args = [$"--start-maximized"],
             });
@@ -131,13 +131,6 @@ namespace DiscordBot.Helper
             await appDbContext.News.AddRangeAsync(newNews);
             await appDbContext.SaveChangesAsync();
 
-            var result = await activityElementHandle.ScreenshotDataAsync(
-                new ScreenshotOptions
-                {
-                    Type = ScreenshotType.Png,
-                }
-            );
-
             await browser.CloseAsync();
 
             logger.LogInformation("News refreshed");
@@ -184,19 +177,19 @@ namespace DiscordBot.Helper
             var contentElementHandle = await page.QuerySelectorAsync(contentElementQuery);
             var contentInnerText = await contentElementHandle.GetPropertyAsync("innerText");
 
-            var contentElementSreenshot = await contentElementHandle.ScreenshotDataAsync(
+            var contentElementSreenshot = await contentElementHandle.ScreenshotBase64Async(
                 new ScreenshotOptions
                 {
                     Type = ScreenshotType.Png,
+                    OmitBackground = true,
                 }
             );
-            var contentElementImage = Image.FromStream(new MemoryStream(contentElementSreenshot));
 
+            news.Base64Snapshot = contentElementSreenshot;
             news.Content = contentInnerText.RemoteObject.Value.ToString()
                 .Replace(news.Title, string.Empty)
                 .Replace($"{news.PublishDate:yyyy/MM/dd}", string.Empty)
                 ;
-            news.Base64Snapshot = ImageUtil.ImageToBase64(contentElementImage);
 
             await page.CloseAsync();
         }
