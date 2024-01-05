@@ -31,6 +31,8 @@ namespace DiscordBot.SchedulerJob
 
             foreach (GuildSetting guildSetting in guildSettings)
             {
+                if (!guildSetting.DataScapingNewsChannelId.HasValue) continue;
+
                 foreach (News news in dataScrapingResult.NewNews)
                 {
                     var message = await discordApiHelper.SendMessage(guildSetting.GuildId, guildSetting.DataScapingNewsChannelId, embed: EmbedUtil.GetMainogiNewsEmbed(imgurHelper, news));
