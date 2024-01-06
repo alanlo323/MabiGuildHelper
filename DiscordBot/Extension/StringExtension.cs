@@ -14,5 +14,14 @@ namespace DiscordBot.Extension
         {
             return $"```{input}```";
         }
+
+        public static string MarkDownEscape(this string input)
+        {
+            return input
+                .Replace("_", "\\_")
+                .Replace("*", "\\*")
+                .Replace("~", "\\~")
+                .Replace("`", "\\`");
+        }
     }
 }

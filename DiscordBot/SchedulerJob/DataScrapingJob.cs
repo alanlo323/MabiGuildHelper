@@ -18,7 +18,7 @@ using Quartz;
 
 namespace DiscordBot.SchedulerJob
 {
-    public class DataScrapingJob(ILogger<DataScrapingJob> logger, AppDbContext appDbContext, DiscordApiHelper discordApiHelper, DataScrapingHelper dataScrapingHelper, ImgurHelper imgurHelper) : IJob
+    public class DataScrapingJob(ILogger<DataScrapingJob> logger, AppDbContext appDbContext, DiscordApiHelper discordApiHelper, DataScrapingHelper dataScrapingHelper) : IJob
     {
         public static readonly JobKey Key = new(nameof(DataScrapingJob));
 

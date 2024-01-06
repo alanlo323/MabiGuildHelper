@@ -114,7 +114,14 @@ namespace DiscordBot.Util
         public static Embed GetMainogiNewsEmbed(News news)
         {
             EmbedBuilder embed = new EmbedBuilder()
-                .WithColor(Color.Orange)
+                .WithColor(news switch
+                {
+                    { ItemTag: ItemTag.act } => Color.Blue,
+                    { ItemTag: ItemTag.system } => Color.Orange,
+                    { ItemTag: ItemTag.important } => Color.Red,
+                    { ItemTag: ItemTag.update } => Color.Green,
+                    _ => Color.Default,
+                })
                 .WithTitle(news.Title)
                 .WithDescription(news.Content)
                 .WithFooter("更新時間")

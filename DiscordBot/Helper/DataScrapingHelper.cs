@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using DiscordBot.DataObject;
 using DiscordBot.Db;
 using DiscordBot.Db.Entity;
+using DiscordBot.Extension;
 using DiscordBot.Util;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -65,7 +66,8 @@ namespace DiscordBot.Helper
             {
                 newsFromWebsite.Add(new()
                 {
-                    Title = activityHtml.Split("item-title\">")[1].Split("</")[0].Trim(),
+                    Title = activityHtml.Split("item-title\">")[1].Split("</")[0].Trim().MarkDownEscape(),
+                    ItemTag = Enum.Parse<ItemTag>(activityHtml.Split("item-tag ")[1].Split("\"")[0].Trim()),
                     Url = activityHtml.Split("href=\"")[1].Split("\"")[0].Trim().Replace("&amp;", "&"),
                     ImageUrl = activityHtml.Split("background-image: url(&quot;")[1].Split(");")[0].Trim(),
                     PublishDate = DateTime.Parse(activityHtml.Split("item-time\">")[1].Split("</")[0].Trim()),
@@ -73,6 +75,7 @@ namespace DiscordBot.Helper
             }
 
             int totalNews = newsFromWebsite.Count;
+
             int loadedNews = 0;
 
             await Parallel.ForEachAsync(newsFromWebsite, async (news, cancellationToken) =>
@@ -107,13 +110,16 @@ namespace DiscordBot.Helper
 
             logger.LogInformation($"All News content updated");
 
-            News tempNews = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), newsFromWebsite[0].Url } });
-            tempNews.PublishDate = DateTime.Now;
-            News tempNews1 = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), newsFromWebsite[1].Url } });
-            tempNews1.PublishDate = DateTime.Now;
-            News tempNews2 = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), newsFromWebsite[2].Url } });
-            tempNews2.PublishDate = DateTime.Now;
-            await databaseHelper.SaveChange();
+            if (EnvironmentUtil.IsLocal())
+            {
+                News tempNews = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), newsFromWebsite[0].Url } });
+                tempNews.PublishDate = DateTime.Now;
+                News tempNews1 = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), newsFromWebsite[1].Url } });
+                tempNews1.PublishDate = DateTime.Now;
+                News tempNews2 = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), newsFromWebsite[2].Url } });
+                tempNews2.PublishDate = DateTime.Now;
+                await databaseHelper.SaveChange();
+            }
 
             var sameKeyNews = appDbContext.News.ToList().Where(x => newsFromWebsite.Any(y => y.Url == x.Url)).ToList();
             var updatedNews = sameKeyNews.Where(x => newsFromWebsite.Any(y => y.Url == x.Url && !y.Equals(x))).ToList();
@@ -123,6 +129,7 @@ namespace DiscordBot.Helper
             {
                 var news = newsFromWebsite.Where(x => x.Url == newsToUpdate.Url).Single();
                 newsToUpdate.Title = news.Title;
+                newsToUpdate.ItemTag = news.ItemTag;
                 newsToUpdate.ImageUrl = news.ImageUrl;
                 newsToUpdate.PublishDate = news.PublishDate;
                 newsToUpdate.Content = news.Content;
@@ -189,6 +196,7 @@ namespace DiscordBot.Helper
             news.Content = contentInnerText.RemoteObject.Value.ToString()
                 .Replace(news.Title, string.Empty)
                 .Replace($"{news.PublishDate:yyyy/MM/dd}", string.Empty)
+                .MarkDownEscape()
                 ;
 
             await page.CloseAsync();

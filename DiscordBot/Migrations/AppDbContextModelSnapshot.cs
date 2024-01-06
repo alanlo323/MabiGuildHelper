@@ -131,6 +131,9 @@ namespace DiscordBot.Migrations
                     b.Property<string>("ImageUrl")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("ItemTag")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("PublishDate")
                         .HasColumnType("TEXT");
 

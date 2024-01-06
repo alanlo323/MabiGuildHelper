@@ -24,6 +24,7 @@ namespace DiscordBot.Migrations
                     Url = table.Column<string>(type: "TEXT", nullable: false),
                     ImageUrl = table.Column<string>(type: "TEXT", nullable: true),
                     Title = table.Column<string>(type: "TEXT", nullable: true),
+                    ItemTag = table.Column<int>(type: "INTEGER", nullable: true),
                     Content = table.Column<string>(type: "TEXT", nullable: true),
                     PublishDate = table.Column<DateTime>(type: "TEXT", nullable: true),
                     Base64Snapshot = table.Column<string>(type: "TEXT", nullable: true),

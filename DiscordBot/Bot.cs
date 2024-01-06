@@ -24,6 +24,7 @@ using DiscordBot.ButtonHandler;
 using DiscordBot.SelectMenuHandler;
 using DiscordBot.MessageHandler;
 using Microsoft.EntityFrameworkCore;
+using DiscordBot.Migrations;
 
 namespace DiscordBot
 {
@@ -155,7 +156,12 @@ namespace DiscordBot
                 _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{command.Channel.Name}({command.Channel.Id})");
 
             }
-            await instance.Excute(command);
+
+            Thread newThread = new(async () =>
+            {
+                await instance.Excute(command);
+            });
+            newThread.Start();
         }
 
         private async Task ButtonHandler(SocketMessageComponent component)

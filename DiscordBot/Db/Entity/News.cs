@@ -8,11 +8,20 @@ using DiscordBot.Util;
 
 namespace DiscordBot.Db.Entity
 {
+    public enum ItemTag
+    {
+        act,
+        system,
+        important,
+        update,
+    }
+
     public class News : BaseEntity
     {
         public string Url { get; set; }
         public string? ImageUrl { get; set; }
         public string? Title { get; set; }
+        public ItemTag? ItemTag { get; set; }
         public string? Content { get; set; }
         public DateTime? PublishDate { get; set; }
         public string? Base64Snapshot { get; set; }
@@ -46,6 +55,7 @@ namespace DiscordBot.Db.Entity
                 if (Url != news.Url) return false;
                 if (ImageUrl != news.ImageUrl) return false;
                 if (Title != news.Title) return false;
+                if (ItemTag != news.ItemTag) return false;
                 if (Content != news.Content) return false;
                 if (PublishDate != news.PublishDate) return false;
                 return true;
