@@ -32,8 +32,8 @@ namespace DiscordBot.SchedulerJob
             foreach (GuildSetting guildSetting in guildSettings)
             {
                 if (!guildSetting.DataScapingNewsChannelId.HasValue) continue;
-
-                foreach (News news in dataScrapingResult.UpdatedNews)
+                
+                foreach (News news in dataScrapingResult.UpdatedNews.Concat(dataScrapingResult.NewNews))
                 {
                     await discordApiHelper.SendFile(guildSetting.GuildId, guildSetting.DataScapingNewsChannelId, news.GetSnapshotTempFile().FullName, embed: EmbedUtil.GetMainogiNewsEmbed(news));
                 }

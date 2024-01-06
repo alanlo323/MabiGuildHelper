@@ -135,26 +135,14 @@ namespace DiscordBot
                                 .RepeatForever()
                             ));
 
-                        //q.ScheduleJob<DataScrapingJob>(trigger => trigger
-                        //    .WithIdentity(DataScrapingJob.Key.Name)
-                        //    .StartAt(DateTime.Now)
-                        //    .StartAt(DateBuilder.NextGivenMinuteDate(DateTime.Now, 5))
-                        //    .WithSimpleSchedule(x => x
-                        //        .WithIntervalInMinutes(5)
-                        //        .RepeatForever()
-                        //    ));
-                    }
-
-                    if (EnvironmentUtil.IsLocal())
-                    {
-                        //q.ScheduleJob<DataScrapingJob>(trigger => trigger
-                        //    .WithIdentity(DataScrapingJob.Key.Name)
-                        //    .StartAt(DateTime.Now)
-                        //    .StartAt(DateBuilder.NextGivenMinuteDate(DateTime.Now, 5))
-                        //    .WithSimpleSchedule(x => x
-                        //        .WithIntervalInMinutes(5)
-                        //        .RepeatForever()
-                        //    ));
+                        q.ScheduleJob<DataScrapingJob>(trigger => trigger
+                            .WithIdentity(DataScrapingJob.Key.Name)
+                            .StartAt(DateTime.Now)
+                            .StartAt(DateBuilder.NextGivenMinuteDate(DateTime.Now, 5))
+                            .WithSimpleSchedule(x => x
+                                .WithIntervalInMinutes(5)
+                                .RepeatForever()
+                            ));
                     }
                 })
                 .AddQuartzHostedService(options => { options.WaitForJobsToComplete = true; }).AddQuartzHostedService(options =>

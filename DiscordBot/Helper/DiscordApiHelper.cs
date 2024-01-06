@@ -51,7 +51,7 @@ namespace DiscordBot.Helper
                     x.Content = content;
                     x.Embed = embed;
                     x.Components = messageComponent;
-                    x.Attachments = new List<FileAttachment>() { new(filePath) };
+                    if (!string.IsNullOrEmpty(filePath)) x.Attachments = new List<FileAttachment>() { new(filePath) };
                 });
                 return;
             }
