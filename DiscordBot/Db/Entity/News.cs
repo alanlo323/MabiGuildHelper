@@ -53,11 +53,11 @@ namespace DiscordBot.Db.Entity
             if (obj is News news)
             {
                 if (Url != news.Url) return false;
-                if (ImageUrl != news.ImageUrl) return false;
                 if (Title != news.Title) return false;
-                if (ItemTag != news.ItemTag) return false;
-                if (Content != news.Content) return false;
-                if (PublishDate != news.PublishDate) return false;
+                //if (ImageUrl != news.ImageUrl) return false;
+                //if (ItemTag != news.ItemTag) return false;
+                //if (Content != news.Content) return false;
+                //if (PublishDate != news.PublishDate) return false;
                 return true;
             }
             return base.Equals(obj);
