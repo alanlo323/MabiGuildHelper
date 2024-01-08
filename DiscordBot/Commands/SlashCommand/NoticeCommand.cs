@@ -17,14 +17,14 @@ using Microsoft.Extensions.Options;
 using Microsoft.VisualBasic.FileIO;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
-namespace DiscordBot.Commands
+namespace DiscordBot.Commands.SlashCommand
 {
-    public class NoticeCommand(ILogger<NoticeCommand> logger, DiscordSocketClient client) : IBaseCommand
+    public class NoticeCommand(ILogger<NoticeCommand> logger, DiscordSocketClient client) : IBaseSlashCommand
     {
         public string Name { get; set; } = "notice";
         public string Description { get; set; } = "在指定頻道發出通知";
 
-        public SlashCommandProperties GetSlashCommandProperties()
+        public ApplicationCommandProperties GetCommandProperties()
         {
             var command = new SlashCommandBuilder()
                 .WithName(Name)

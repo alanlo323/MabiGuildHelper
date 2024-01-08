@@ -1,7 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using DiscordBot.ButtonHandler;
-using DiscordBot.Commands;
+using DiscordBot.Commands.MessageCommand;
+using DiscordBot.Commands.SlashCommand;
 using DiscordBot.Configuration;
 using DiscordBot.Constant;
 using DiscordBot.Db;
@@ -68,19 +69,19 @@ namespace DiscordBot
                 })
                 .AddSingleton<Bot>()
                 .AddSingleton<ButtonHandlerHelper>()
-                .AddSingleton<CommandHelper>()
                 .AddSingleton<DatabaseHelper>()
                 .AddSingleton<DiscordSocketClient>(x => new(new DiscordSocketConfig { GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent }))
                 .AddSingleton<DiscordApiHelper>()
                 .AddSingleton<ImgurHelper>()
                 .AddSingleton<SelectMenuHandlerHelper>()
                 .AddSingleton<DataScrapingHelper>()
-                .AddScoped<IBaseCommand, DebugCommand>()
-                .AddScoped<IBaseCommand, AboutCommand>()
-                .AddScoped<IBaseCommand, HelpCommand>()
-                .AddScoped<IBaseCommand, SettingCommand>()
-                .AddScoped<IBaseCommand, ErinnTimeCommand>()
-                .AddScoped<IBaseCommand, NoticeCommand>()
+                .AddScoped<IBaseSlashCommand, DebugCommand>()
+                .AddScoped<IBaseSlashCommand, AboutCommand>()
+                .AddScoped<IBaseSlashCommand, HelpCommand>()
+                .AddScoped<IBaseSlashCommand, SettingCommand>()
+                .AddScoped<IBaseSlashCommand, ErinnTimeCommand>()
+                .AddScoped<IBaseSlashCommand, NoticeCommand>()
+                .AddScoped<IBaseMessageCommand, UpdateNewsCommand>()
                 .AddScoped<DailyDungeonInfoJob>()
                 .AddScoped<DailyEffectJob>()
                 .AddScoped<ErinnTimeJob>()

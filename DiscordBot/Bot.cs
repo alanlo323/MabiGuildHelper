@@ -16,7 +16,6 @@ using Microsoft.Extensions.Options;
 using DiscordBot.Configuration;
 using Discord.Net;
 using Newtonsoft.Json;
-using DiscordBot.Commands;
 using DiscordBot.Extension;
 using DiscordBot.Util;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
@@ -25,31 +24,36 @@ using DiscordBot.SelectMenuHandler;
 using DiscordBot.MessageHandler;
 using Microsoft.EntityFrameworkCore;
 using DiscordBot.Migrations;
+using DiscordBot.Commands.SlashCommand;
+using DiscordBot.Commands;
+using Microsoft.Extensions.DependencyInjection;
+using System.Xml.Linq;
+using DiscordBot.Commands.MessageCommand;
 
 namespace DiscordBot
 {
     public class Bot
     {
         ILogger<Bot> _logger;
+        IServiceProvider _serviceProvider;
         DiscordSocketClient _client;
         DiscordBotConfig _discordBotConfig;
         GameConfig _gameConfig;
         AppDbContext _appDbContext;
-        CommandHelper _commandHelper;
         ButtonHandlerHelper _buttonHandlerHelper;
         SelectMenuHandlerHelper _selectMenuHandlerHelper;
         MessageReceivedHandler _messageReceivedHandler;
 
         bool isReady = false;
 
-        public Bot(ILogger<Bot> logger, DiscordSocketClient client, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, IOptionsSnapshot<GameConfig> gameConfig, AppDbContext appDbContext, CommandHelper commandHelper, ButtonHandlerHelper buttonHandlerHelper, SelectMenuHandlerHelper selectMenuHandlerHelper, MessageReceivedHandler messageReceivedHandler)
+        public Bot(ILogger<Bot> logger, IServiceProvider serviceProvider, DiscordSocketClient client, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, IOptionsSnapshot<GameConfig> gameConfig, AppDbContext appDbContext, ButtonHandlerHelper buttonHandlerHelper, SelectMenuHandlerHelper selectMenuHandlerHelper, MessageReceivedHandler messageReceivedHandler)
         {
             _logger = logger;
+            _serviceProvider = serviceProvider;
             _client = client;
             _discordBotConfig = discordBotConfig.Value;
             _gameConfig = gameConfig.Value;
             _appDbContext = appDbContext;
-            _commandHelper = commandHelper;
             _buttonHandlerHelper = buttonHandlerHelper;
             _selectMenuHandlerHelper = selectMenuHandlerHelper;
             _messageReceivedHandler = messageReceivedHandler;
@@ -61,6 +65,7 @@ namespace DiscordBot
             _client.ButtonExecuted += ButtonHandler;
             _client.SelectMenuExecuted += MenuHandler;
             _client.MessageReceived += MessageHandler;
+            _client.MessageCommandExecuted += MessageCommandHandler;
         }
 
         private Task LogAsync(LogMessage msg)
@@ -107,13 +112,13 @@ namespace DiscordBot
         {
             _logger.LogInformation("Refreshing commands");
 
-            List<SlashCommandProperties> commandProperties = _commandHelper.GetCommandList().Select(x => x.GetSlashCommandProperties()).ToList();
+            ApplicationCommandProperties[] commandProperties = _serviceProvider.GetServices<IBaseCommand>().Select(x => x.GetCommandProperties()).ToArray();
 
             foreach (SocketGuild guild in _client.Guilds)
             {
                 try
                 {
-                    await guild.BulkOverwriteApplicationCommandAsync(commandProperties.ToArray());
+                    await guild.BulkOverwriteApplicationCommandAsync(commandProperties);
                 }
                 catch (Exception exception)
                 {
@@ -126,11 +131,12 @@ namespace DiscordBot
 
         private async Task RefreshCommandForGuild(SocketGuild guild)
         {
-            List<SlashCommandProperties> commandProperties = _commandHelper.GetCommandList().Select(x => x.GetSlashCommandProperties()).ToList();
+            ApplicationCommandProperties[] slashCommandProperties = _serviceProvider.GetServices<IBaseSlashCommand>().Select(x => x.GetCommandProperties()).ToArray();
+            ApplicationCommandProperties[] messageCommandProperties = _serviceProvider.GetServices<IBaseMessageCommand>().Select(x => x.GetCommandProperties()).ToArray();
 
             try
             {
-                await guild.BulkOverwriteApplicationCommandAsync(commandProperties.ToArray());
+                await guild.BulkOverwriteApplicationCommandAsync([.. slashCommandProperties, .. messageCommandProperties]);
             }
             catch (Exception exception)
             {
@@ -144,7 +150,31 @@ namespace DiscordBot
         {
             while (!isReady) await Task.Delay(100);
 
-            IBaseCommand instance = _commandHelper.GetCommand(command.CommandName);
+            IBaseSlashCommand instance = _serviceProvider.GetServices<IBaseSlashCommand>().Single(x => x.Name == command.CommandName);
+            SocketUser user = command.User;
+            if (command.IsDMInteraction)
+            {
+                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
+            }
+            else
+            {
+                SocketGuild guild = _client.GetGuild(command.GuildId.Value);
+                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{command.Channel.Name}({command.Channel.Id})");
+
+            }
+
+            Thread newThread = new(async () =>
+            {
+                await instance.Excute(command);
+            });
+            newThread.Start();
+        }
+
+        private async Task MessageCommandHandler(SocketMessageCommand command)
+        {
+            while (!isReady) await Task.Delay(100);
+
+            IBaseMessageCommand instance = _serviceProvider.GetServices<IBaseMessageCommand>().Single(x => x.Name == command.CommandName);
             SocketUser user = command.User;
             if (command.IsDMInteraction)
             {
@@ -180,7 +210,12 @@ namespace DiscordBot
                 _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{component.Channel.Name}({component.Channel.Id})");
 
             }
-            await instance.Excute(component);
+
+            Thread newThread = new(async () =>
+            {
+                await instance.Excute(component);
+            });
+            newThread.Start();
         }
 
         private async Task MenuHandler(SocketMessageComponent component)
@@ -199,13 +234,21 @@ namespace DiscordBot
                 _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{component.Channel.Name}({component.Channel.Id})");
 
             }
-            await instance.Excute(component);
+
+            Thread newThread = new(async () =>
+            {
+                await instance.Excute(component);
+            });
+            newThread.Start();
         }
 
         private async Task MessageHandler(SocketMessage message)
         {
-            MessageReceivedHandler handler = _messageReceivedHandler;
-            await handler.Excute(message);
+            Thread newThread = new(async () =>
+            {
+                await _messageReceivedHandler.Excute(message);
+            });
+            newThread.Start();
         }
 
     }

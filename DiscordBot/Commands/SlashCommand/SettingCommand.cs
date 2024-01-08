@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
+using DiscordBot.Commands.SlashCommand;
 using DiscordBot.Configuration;
 using DiscordBot.Db;
 using DiscordBot.Db.Entity;
@@ -20,14 +21,14 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
-namespace DiscordBot.Commands
+namespace DiscordBot.Commands.SlashCommand
 {
-    public class SettingCommand(ILogger<SettingCommand> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper) : IBaseCommand
+    public class SettingCommand(ILogger<SettingCommand> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper) : IBaseSlashCommand
     {
         public string Name { get; set; } = "setting";
         public string Description { get; set; } = "設定";
 
-        public SlashCommandProperties GetSlashCommandProperties()
+        public ApplicationCommandProperties GetCommandProperties()
         {
             var command = new SlashCommandBuilder()
                 .WithName(Name)

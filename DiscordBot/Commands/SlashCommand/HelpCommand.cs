@@ -9,14 +9,14 @@ using DiscordBot.Extension;
 using DiscordBot.Util;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
-namespace DiscordBot.Commands
+namespace DiscordBot.Commands.SlashCommand
 {
-    public class HelpCommand : IBaseCommand
+    public class HelpCommand : IBaseSlashCommand
     {
         public string Name { get; set; } = "help";
         public string Description { get; set; } = "顯示使用指南";
 
-        public SlashCommandProperties GetSlashCommandProperties()
+        public ApplicationCommandProperties GetCommandProperties()
         {
             var command = new SlashCommandBuilder()
                 .WithName(Name)

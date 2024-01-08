@@ -13,7 +13,6 @@ namespace DiscordBot.Commands
         public string Name { get; set; }
         public string Description { get; set; }
 
-        public SlashCommandProperties GetSlashCommandProperties();
-        public async Task Excute(SocketSlashCommand command) { }
+        public ApplicationCommandProperties GetCommandProperties();
     }
 }
