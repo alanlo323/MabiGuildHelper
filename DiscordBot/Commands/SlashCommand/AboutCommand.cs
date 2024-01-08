@@ -10,14 +10,14 @@ using DiscordBot.Extension;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using Color = Discord.Color;
 
-namespace DiscordBot.Commands
+namespace DiscordBot.Commands.SlashCommand
 {
-    public class AboutCommand : IBaseCommand
+    public class AboutCommand : IBaseSlashCommand
     {
         public string Name { get; set; } = "about";
         public string Description { get; set; } = "關於此機器人";
 
-        public SlashCommandProperties GetSlashCommandProperties()
+        public ApplicationCommandProperties GetCommandProperties()
         {
             var command = new SlashCommandBuilder()
                 .WithName(Name)

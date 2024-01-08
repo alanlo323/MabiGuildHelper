@@ -17,23 +17,14 @@ using Microsoft.Extensions.Options;
 
 namespace DiscordBot.MessageHandler
 {
-    public class MessageReceivedHandler
+    public class MessageReceivedHandler(ILogger<MessageReceivedHandler> logger, DiscordSocketClient client, IOptionsSnapshot<FunnyResponseConfig> funnyResponseConfig)
     {
-        ILogger<MessageReceivedHandler> _logger;
-        DiscordSocketClient _client;
-        FunnyResponseConfig _funnyResponseConfig;
-
-        public MessageReceivedHandler(ILogger<MessageReceivedHandler> logger, DiscordSocketClient client, IOptionsSnapshot<FunnyResponseConfig> funnyResponseConfig)
-        {
-            _logger = logger;
-            _client = client;
-            _funnyResponseConfig = funnyResponseConfig.Value;
-        }
+        FunnyResponseConfig _funnyResponseConfig = funnyResponseConfig.Value;
 
         public async Task Excute(SocketMessage socketMessage)
         {
             if (socketMessage is not SocketUserMessage message) return;
-            if (message.Author.Id == _client.CurrentUser.Id) return;
+            if (message.Author.Id == client.CurrentUser.Id) return;
 
             await CheckFunnyReponse(message);
         }
@@ -61,7 +52,7 @@ namespace DiscordBot.MessageHandler
                 FileAttachment[] fileAttachments = new[] { new FileAttachment(appDataHelper.GetFunnyResponseFile().FullName) };
 
                 await message.Channel.SendFilesAsync(fileAttachments, messageReference: replyMessage ? new(message.Id) : null);
-                _logger.LogInformation($"CheckFunnyReponse|${key}");
+                logger.LogInformation($"CheckFunnyReponse|${key}");
             }
         }
 
@@ -85,7 +76,7 @@ namespace DiscordBot.MessageHandler
                 ISticker[] stickers = message.Stickers.Where(x => x.Name == triggeredSticker).ToArray();
 
                 await message.Channel.SendMessageAsync(stickers: stickers, messageReference: replyMessage ? new(message.Id) : null);
-                _logger.LogInformation($"CheckFunnyReponse|{key}");
+                logger.LogInformation($"CheckFunnyReponse|{key}");
             }
         }
 
@@ -100,7 +91,7 @@ namespace DiscordBot.MessageHandler
 
                 bool replyMessage = true;
                 await message.Channel.SendMessageAsync(text: "2", messageReference: replyMessage ? new(message.Id) : null);
-                _logger.LogInformation($"CheckFunnyReponse|{key}");
+                logger.LogInformation($"CheckFunnyReponse|{key}");
             }
 
             if (message.Content == "3")
@@ -115,7 +106,7 @@ namespace DiscordBot.MessageHandler
 
                 bool replyMessage = true;
                 await message.Channel.SendMessageAsync(text: "4", messageReference: replyMessage ? new(message.Id) : null);
-                _logger.LogInformation($"CheckFunnyReponse|{key}");
+                logger.LogInformation($"CheckFunnyReponse|{key}");
             }
 
             if (message.Content == "5")
@@ -130,7 +121,7 @@ namespace DiscordBot.MessageHandler
 
                 bool replyMessage = true;
                 await message.Channel.SendMessageAsync(text: "6", messageReference: replyMessage ? new(message.Id) : null);
-                _logger.LogInformation($"CheckFunnyReponse|{key}");
+                logger.LogInformation($"CheckFunnyReponse|{key}");
             }
 
             if (message.Content == "7")
@@ -148,7 +139,7 @@ namespace DiscordBot.MessageHandler
                 FileAttachment[] fileAttachments = new[] { new FileAttachment(appDataHelper.GetFunnyResponseFile().FullName) };
 
                 await message.Channel.SendFilesAsync(fileAttachments, messageReference: replyMessage ? new(message.Id) : null);
-                _logger.LogInformation($"CheckFunnyReponse|{key}");
+                logger.LogInformation($"CheckFunnyReponse|{key}");
             }
         }
     }

@@ -15,14 +15,14 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
-namespace DiscordBot.Commands
+namespace DiscordBot.Commands.SlashCommand
 {
-    public class DebugCommand(ILogger<DebugCommand> logger, ImgurHelper imgurHelper) : IBaseCommand
+    public class DebugCommand(ILogger<DebugCommand> logger, ImgurHelper imgurHelper) : IBaseSlashCommand
     {
         public string Name { get; set; } = "debug";
         public string Description { get; set; } = "測試";
 
-        public SlashCommandProperties GetSlashCommandProperties()
+        public ApplicationCommandProperties GetCommandProperties()
         {
             var command = new SlashCommandBuilder()
                 .WithName(Name)
