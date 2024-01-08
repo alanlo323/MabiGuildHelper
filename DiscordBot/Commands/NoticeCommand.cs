@@ -19,27 +19,17 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Commands
 {
-    public class NoticeCommand : IBaseCommand
+    public class NoticeCommand(ILogger<NoticeCommand> logger, DiscordSocketClient client) : IBaseCommand
     {
-        ILogger<NoticeCommand> _logger;
-        DiscordSocketClient _client;
-
         public string Name { get; set; } = "notice";
         public string Description { get; set; } = "在指定頻道發出通知";
-
-
-        public NoticeCommand(ILogger<NoticeCommand> logger, DiscordSocketClient client)
-        {
-            _logger = logger;
-            _client = client;
-        }
 
         public SlashCommandProperties GetSlashCommandProperties()
         {
             var command = new SlashCommandBuilder()
                 .WithName(Name)
                 .WithDescription(Description)
-                .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: new List<ChannelType>() { ChannelType.Text })
+                .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
                 .AddOption("content", ApplicationCommandOptionType.String, "內容", isRequired: true, minLength: 1)
                 .AddOption("useembed", ApplicationCommandOptionType.Boolean, "使用Embed樣式", isRequired: false)
                 ;
@@ -48,7 +38,7 @@ namespace DiscordBot.Commands
 
         public async Task Excute(SocketSlashCommand command)
         {
-            ulong[] allowedUser = new ulong[] { 170721070976860161, 664004261998493697 };
+            ulong[] allowedUser = [170721070976860161, 664004261998493697];
             if (!allowedUser.Contains(command.User.Id))
             {
                 await command.RespondAsync("你沒有權限使用此指令", ephemeral: true);
@@ -61,7 +51,7 @@ namespace DiscordBot.Commands
             RestUserMessage message;
             if (useEmbed == true)
             {
-                SocketGuild guild = _client.GetGuild(command.GuildId.Value);
+                SocketGuild guild = client.GetGuild(command.GuildId.Value);
                 SocketGuildUser author = guild.GetUser(command.User.Id);
                 message = await channel.SendMessageAsync(embed: new EmbedBuilder().WithTitle($"{author.DisplayName}").WithDescription(content).WithImageUrl(command.User.GetAvatarUrl()).Build());
             }

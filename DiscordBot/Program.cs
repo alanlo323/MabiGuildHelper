@@ -70,10 +70,11 @@ namespace DiscordBot
                 .AddSingleton<ButtonHandlerHelper>()
                 .AddSingleton<CommandHelper>()
                 .AddSingleton<DatabaseHelper>()
-                .AddSingleton<DiscordSocketClient>(x => new DiscordSocketClient(new DiscordSocketConfig { GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent }))
+                .AddSingleton<DiscordSocketClient>(x => new(new DiscordSocketConfig { GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent }))
                 .AddSingleton<DiscordApiHelper>()
                 .AddSingleton<ImgurHelper>()
                 .AddSingleton<SelectMenuHandlerHelper>()
+                .AddSingleton<DataScrapingHelper>()
                 .AddScoped<IBaseCommand, DebugCommand>()
                 .AddScoped<IBaseCommand, AboutCommand>()
                 .AddScoped<IBaseCommand, HelpCommand>()
@@ -84,6 +85,7 @@ namespace DiscordBot
                 .AddScoped<DailyEffectJob>()
                 .AddScoped<ErinnTimeJob>()
                 .AddScoped<InstanceResetReminderJob>()
+                .AddScoped<DataScrapingJob>()
                 .AddScoped<IBaseButtonHandler, ManageReminderButtonHandler>()
                 .AddScoped<IBaseSelectMenuHandler, AddReminderSelectMenuHandler>()
                 .AddScoped<MessageReceivedHandler>()
@@ -108,7 +110,7 @@ namespace DiscordBot
                                 .WithIntervalInSeconds(15)
                                 .RepeatForever()
                             ));
-                        
+
                         q.ScheduleJob<DailyEffectJob>(trigger => trigger
                             .WithIdentity(DailyEffectJob.Key.Name)
                             .StartAt((DateTimeOffset)DateTimeUtil.GetNextGivenTime(0, 0, 0))
@@ -130,6 +132,14 @@ namespace DiscordBot
                             .StartAt((DateTimeOffset)DateTime.Today.AddHours(DateTime.Now.Hour + 1))
                             .WithSimpleSchedule(x => x
                                 .WithIntervalInHours(1)
+                                .RepeatForever()
+                            ));
+
+                        q.ScheduleJob<DataScrapingJob>(trigger => trigger
+                            .WithIdentity(DataScrapingJob.Key.Name)
+                            .StartAt(DateBuilder.NextGivenMinuteDate(DateTime.Now, 5))
+                            .WithSimpleSchedule(x => x
+                                .WithIntervalInMinutes(5)
                                 .RepeatForever()
                             ));
                     }

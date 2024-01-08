@@ -19,29 +19,18 @@ using Microsoft.Extensions.Logging;
 
 namespace DiscordBot.Helper
 {
-    public class DatabaseHelper
+    public class DatabaseHelper(ILogger<DatabaseHelper> logger, IServiceProvider serviceProvider, AppDbContext appDbContext)
     {
-        private ILogger<DatabaseHelper> _logger;
-        private IServiceProvider _serviceProvider;
-        private AppDbContext _appDbContext;
-
-        public DatabaseHelper(ILogger<DatabaseHelper> logger, IServiceProvider serviceProvider, AppDbContext appDbContext)
-        {
-            _logger = logger;
-            _serviceProvider = serviceProvider;
-            _appDbContext = appDbContext;
-        }
-
         public async Task ResetDatabase()
         {
             try
             {
-                await _appDbContext.Database.EnsureDeletedAsync();
-                await _appDbContext.Database.EnsureCreatedAsync();
+                await appDbContext.Database.EnsureDeletedAsync();
+                await appDbContext.Database.EnsureCreatedAsync();
 
                 //  erinntime
-                List<GuildSetting> settingList = new()
-                {
+                List<GuildSetting> settingList =
+                [
                     //// Information
                     new()
                     {
@@ -61,7 +50,7 @@ namespace DiscordBot.Helper
                     //    DailyEffectChannelId = 1166044497533214760,
                     //    DailyEffectMessageId = 1166050823772577864
                     //},
-                };
+                ];
 
                 List<GuildUserSetting> settingList2 = new()
                 {
@@ -82,15 +71,15 @@ namespace DiscordBot.Helper
                     //},
                 };
 
-                await _appDbContext.AddRangeAsync(settingList);
-                await _appDbContext.AddRangeAsync(settingList2);
+                await appDbContext.AddRangeAsync(settingList);
+                await appDbContext.AddRangeAsync(settingList2);
                 await SaveChange();
 
-                _logger.LogInformation($"Database re-created and inserted with base record");
+                logger.LogInformation($"Database re-created and inserted with base record");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, ex.Message);
+                logger.LogError(ex, ex.Message);
             }
         }
 
@@ -98,22 +87,22 @@ namespace DiscordBot.Helper
         {
             try
             {
-                await _appDbContext.Database.MigrateAsync();
+                await appDbContext.Database.MigrateAsync();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, ex.Message);
+                logger.LogError(ex, ex.Message);
             }
         }
 
         public async Task<int> SaveChange()
         {
-            return await _appDbContext.SaveChangesAsync();
+            return await appDbContext.SaveChangesAsync();
         }
 
         private async Task<T> GetOrCreateEntity<T>(Expression<Func<T, bool>> whereExpression, Dictionary<string, object> defaultPropertyValues = null, List<Expression<Func<T, object>>>? includeExpressions = null) where T : class, new()
         {
-            IQueryable<T> query = _appDbContext
+            IQueryable<T> query = appDbContext
                 .Set<T>()
                 ;
             if (includeExpressions?.Count > 0)
@@ -139,7 +128,7 @@ namespace DiscordBot.Helper
                     t.SetProperty(item.Key, item.Value);
                 }
             }
-            await _appDbContext.AddAsync(t);
+            await appDbContext.AddAsync(t);
             return t;
         }
 
@@ -174,7 +163,7 @@ namespace DiscordBot.Helper
 
         public List<Expression<Func<T, object>>> BuildIncludeExpression<T>(List<string>? includeProperties)
         {
-            List<Expression<Func<T, object>>> expressions = new();
+            List<Expression<Func<T, object>>> expressions = [];
             if (includeProperties == null || includeProperties.Count == 0)
             {
                 return expressions;

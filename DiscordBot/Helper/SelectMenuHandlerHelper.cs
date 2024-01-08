@@ -10,28 +10,21 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBot.Helper
 {
-    public class SelectMenuHandlerHelper
+    public class SelectMenuHandlerHelper(IServiceProvider serviceProvider)
     {
-        private IServiceProvider _serviceProvider;
-
-        public SelectMenuHandlerHelper(IServiceProvider serviceProvider)
-        {
-            _serviceProvider = serviceProvider;
-        }
-
         public List<IBaseSelectMenuHandler> GetSelectMenuHandlerList()
         {
-            return _serviceProvider.GetServices<IBaseSelectMenuHandler>().ToList();
+            return serviceProvider.GetServices<IBaseSelectMenuHandler>().ToList();
         }
 
         public IBaseSelectMenuHandler GetSelectMenuHandler(string id)
         {
-            return _serviceProvider.GetServices<IBaseSelectMenuHandler>().Single(x => x.Id == id);
+            return serviceProvider.GetServices<IBaseSelectMenuHandler>().Single(x => x.Id == id);
         }
 
         public IBaseSelectMenuHandler GetSelectMenuHandler<T>() where T : IBaseSelectMenuHandler
         {
-            return _serviceProvider.GetServices<IBaseSelectMenuHandler>().Single(x => x.GetType() == typeof(T));
+            return serviceProvider.GetServices<IBaseSelectMenuHandler>().Single(x => x.GetType() == typeof(T));
         }
     }
 }

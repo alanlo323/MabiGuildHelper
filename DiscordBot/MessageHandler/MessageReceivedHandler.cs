@@ -52,9 +52,9 @@ namespace DiscordBot.MessageHandler
             {
                 string triggeredWord = triggeredWords.First();
                 string key = $"FunnyReponse:text:{message.Channel.Id}:{triggeredWord}";
-                DateTime lastTriggerTime = (DateTime)RuntimeDbUtil.RuntimeDb.GetValueOrDefault(key, DateTime.MinValue);
+                DateTime lastTriggerTime = (DateTime)RuntimeDbUtil.DefaultRuntimeDb.GetValueOrDefault(key, DateTime.MinValue);
                 if (lastTriggerTime.AddMinutes(1) > DateTime.Now) return;   //  cooldown
-                RuntimeDbUtil.RuntimeDb[key] = DateTime.Now;
+                RuntimeDbUtil.DefaultRuntimeDb[key] = DateTime.Now;
 
                 bool replyMessage = false;
                 AppDataHelper appDataHelper = new();
@@ -72,14 +72,14 @@ namespace DiscordBot.MessageHandler
             {
                 string triggeredSticker = triggeredStickers.First();
                 string key = $"FunnyReponse:sticker:{message.Channel.Id}:{triggeredSticker}";
-                Tuple<DateTime, int> data = (Tuple<DateTime, int>)RuntimeDbUtil.RuntimeDb.GetValueOrDefault(key, Tuple.Create(DateTime.MinValue, 0));
+                Tuple<DateTime, int> data = (Tuple<DateTime, int>)RuntimeDbUtil.DefaultRuntimeDb.GetValueOrDefault(key, Tuple.Create(DateTime.MinValue, 0));
                 DateTime lastTriggerTime = data.Item1;
                 int count = data.Item2;
                 if (count == 0 && lastTriggerTime.AddMinutes(30) > DateTime.Now) return;    //  cooldown
                 if (lastTriggerTime.AddMinutes(5) < DateTime.Now) count = 0;    //  effective time
-                RuntimeDbUtil.RuntimeDb[key] = Tuple.Create(DateTime.Now, ++count);
+                RuntimeDbUtil.DefaultRuntimeDb[key] = Tuple.Create(DateTime.Now, ++count);
                 if (count < 2) return;
-                RuntimeDbUtil.RuntimeDb[key] = Tuple.Create(DateTime.Now, 0);
+                RuntimeDbUtil.DefaultRuntimeDb[key] = Tuple.Create(DateTime.Now, 0);
 
                 bool replyMessage = false;
                 ISticker[] stickers = message.Stickers.Where(x => x.Name == triggeredSticker).ToArray();
@@ -94,9 +94,9 @@ namespace DiscordBot.MessageHandler
             if (message.Content == "1")
             {
                 string key = $"FunnyReponse:countoff:1:{message.Channel.Id}";
-                DateTime lastTriggerTime = (DateTime)RuntimeDbUtil.RuntimeDb.GetValueOrDefault(key, DateTime.MinValue);
+                DateTime lastTriggerTime = (DateTime)RuntimeDbUtil.DefaultRuntimeDb.GetValueOrDefault(key, DateTime.MinValue);
                 if (lastTriggerTime.AddMinutes(30) > DateTime.Now) return;  //  cooldown
-                RuntimeDbUtil.RuntimeDb[key] = DateTime.Now;
+                RuntimeDbUtil.DefaultRuntimeDb[key] = DateTime.Now;
 
                 bool replyMessage = true;
                 await message.Channel.SendMessageAsync(text: "2", messageReference: replyMessage ? new(message.Id) : null);
@@ -106,12 +106,12 @@ namespace DiscordBot.MessageHandler
             if (message.Content == "3")
             {
                 string lastKey = $"FunnyReponse:countoff:1:{message.Channel.Id}";
-                DateTime lastKeyLastTriggerTime = (DateTime)RuntimeDbUtil.RuntimeDb.GetValueOrDefault(lastKey, DateTime.MinValue);
+                DateTime lastKeyLastTriggerTime = (DateTime)RuntimeDbUtil.DefaultRuntimeDb.GetValueOrDefault(lastKey, DateTime.MinValue);
                 if (lastKeyLastTriggerTime.AddMinutes(30) < DateTime.Now) return;   //  effective time
                 string key = $"FunnyReponse:countoff:3:{message.Channel.Id}";
-                DateTime lastTriggerTime = (DateTime)RuntimeDbUtil.RuntimeDb.GetValueOrDefault(key, DateTime.MinValue);
+                DateTime lastTriggerTime = (DateTime)RuntimeDbUtil.DefaultRuntimeDb.GetValueOrDefault(key, DateTime.MinValue);
                 if (lastTriggerTime.AddMinutes(30) > DateTime.Now) return;  //  cooldown
-                RuntimeDbUtil.RuntimeDb[key] = lastKeyLastTriggerTime;
+                RuntimeDbUtil.DefaultRuntimeDb[key] = lastKeyLastTriggerTime;
 
                 bool replyMessage = true;
                 await message.Channel.SendMessageAsync(text: "4", messageReference: replyMessage ? new(message.Id) : null);
@@ -121,12 +121,12 @@ namespace DiscordBot.MessageHandler
             if (message.Content == "5")
             {
                 string lastKey = $"FunnyReponse:countoff:3:{message.Channel.Id}";
-                DateTime lastKeyLastTriggerTime = (DateTime)RuntimeDbUtil.RuntimeDb.GetValueOrDefault(lastKey, DateTime.MinValue);
+                DateTime lastKeyLastTriggerTime = (DateTime)RuntimeDbUtil.DefaultRuntimeDb.GetValueOrDefault(lastKey, DateTime.MinValue);
                 if (lastKeyLastTriggerTime.AddMinutes(30) < DateTime.Now) return;   //  effective time
                 string key = $"FunnyReponse:countoff:5:{message.Channel.Id}";
-                DateTime lastTriggerTime = (DateTime)RuntimeDbUtil.RuntimeDb.GetValueOrDefault(key, DateTime.MinValue);
+                DateTime lastTriggerTime = (DateTime)RuntimeDbUtil.DefaultRuntimeDb.GetValueOrDefault(key, DateTime.MinValue);
                 if (lastTriggerTime.AddMinutes(30) > DateTime.Now) return;  //  cooldown
-                RuntimeDbUtil.RuntimeDb[key] = lastKeyLastTriggerTime;
+                RuntimeDbUtil.DefaultRuntimeDb[key] = lastKeyLastTriggerTime;
 
                 bool replyMessage = true;
                 await message.Channel.SendMessageAsync(text: "6", messageReference: replyMessage ? new(message.Id) : null);
@@ -136,12 +136,12 @@ namespace DiscordBot.MessageHandler
             if (message.Content == "7")
             {
                 string lastKey = $"FunnyReponse:countoff:5:{message.Channel.Id}";
-                DateTime lastKeyLastTriggerTime = (DateTime)RuntimeDbUtil.RuntimeDb.GetValueOrDefault(lastKey, DateTime.MinValue);
+                DateTime lastKeyLastTriggerTime = (DateTime)RuntimeDbUtil.DefaultRuntimeDb.GetValueOrDefault(lastKey, DateTime.MinValue);
                 if (lastKeyLastTriggerTime.AddMinutes(30) < DateTime.Now) return;   //  effective time
                 string key = $"FunnyReponse:countoff:7:{message.Channel.Id}";
-                DateTime lastTriggerTime = (DateTime)RuntimeDbUtil.RuntimeDb.GetValueOrDefault(key, DateTime.MinValue);
+                DateTime lastTriggerTime = (DateTime)RuntimeDbUtil.DefaultRuntimeDb.GetValueOrDefault(key, DateTime.MinValue);
                 if (lastTriggerTime.AddMinutes(30) > DateTime.Now) return;  //  cooldown
-                RuntimeDbUtil.RuntimeDb[key] = lastKeyLastTriggerTime;
+                RuntimeDbUtil.DefaultRuntimeDb[key] = lastKeyLastTriggerTime;
 
                 bool replyMessage = true;
                 AppDataHelper appDataHelper = new();

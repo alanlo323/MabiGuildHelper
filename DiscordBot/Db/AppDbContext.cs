@@ -10,15 +10,14 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace DiscordBot.Db
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext(DbContextOptions option) : DbContext(option)
     {
         public static readonly string ConnectionStringName = "MabiDb";
 
         public DbSet<GuildSetting> GuildSettings { get; set; }
         public DbSet<GuildUserSetting> GuildUserSettings { get; set; }
         public DbSet<InstanceReminderSetting> InstanceReminderSettings { get; set; }
-
-        public AppDbContext(DbContextOptions option) : base(option) { }
+        public DbSet<News> News { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -64,6 +63,10 @@ namespace DiscordBot.Db
                 .HasOne(e => e.GuildUserSetting)
                 .WithMany(e => e.InstanceReminderSettings)
                 .HasForeignKey(e => new { e.GuildId, e.UserId })
+                ;
+
+            modelBuilder.Entity<News>()
+                .HasKey(e => e.Url)
                 ;
         }
     }

@@ -18,35 +18,21 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.SchedulerJob
 {
-    public class DailyEffectJob : IJob
+    public class DailyEffectJob(ILogger<DailyEffectJob> logger, DiscordSocketClient client, AppDbContext appDbContext, IOptionsSnapshot<GameConfig> gameConfig, DiscordApiHelper discordApiHelper) : IJob
     {
         public static readonly JobKey Key = new(nameof(DailyEffectJob));
-
-        ILogger<DailyEffectJob> _logger;
-        DiscordSocketClient _client;
-        AppDbContext _appDbContext;
-        GameConfig _gameConfig;
-        DiscordApiHelper _discordApiHelper;
-
-        public DailyEffectJob(ILogger<DailyEffectJob> logger, DiscordSocketClient client, AppDbContext appDbContext, IOptionsSnapshot<GameConfig> gameConfig, DiscordApiHelper discordApiHelper)
-        {
-            _logger = logger;
-            _client = client;
-            _appDbContext = appDbContext;
-            _gameConfig = gameConfig.Value;
-            _discordApiHelper = discordApiHelper;
-        }
+        GameConfig _gameConfig = gameConfig.Value;
 
         public async Task Execute(IJobExecutionContext context)
         {
             var today = DateTime.Now.DayOfWeek.ToString();
             var todayEffect = _gameConfig.DailyEffect.First(x => x.DayOfWeek == today);
             string channelName = $"{todayEffect.ChannelName}";
-            var guildSettings = _appDbContext.GuildSettings.ToList();
+            var guildSettings = appDbContext.GuildSettings.ToList();
 
             foreach (GuildSetting guildSetting in guildSettings)
             {
-                await _discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.DailyEffectChannelId), nameof(GuildSetting.DailyEffectMessageId), channelName: channelName, embed: EmbedUtil.GetDailyEffectEmbed(_gameConfig));
+                await discordApiHelper.UpdateOrCreateMeesage(guildSetting, nameof(GuildSetting.DailyEffectChannelId), nameof(GuildSetting.DailyEffectMessageId), channelName: channelName, embed: EmbedUtil.GetDailyEffectEmbed(_gameConfig));
             }
         }
     }

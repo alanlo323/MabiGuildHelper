@@ -22,25 +22,10 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Commands
 {
-    public class SettingCommand : IBaseCommand
+    public class SettingCommand(ILogger<SettingCommand> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper) : IBaseCommand
     {
-        ILogger<SettingCommand> _logger;
-        DiscordSocketClient _client;
-        AppDbContext _appDbContext;
-        IServiceProvider _serviceProvider;
-        DatabaseHelper _databaseHelper;
-
         public string Name { get; set; } = "setting";
         public string Description { get; set; } = "設定";
-
-        public SettingCommand(ILogger<SettingCommand> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper)
-        {
-            _logger = logger;
-            _client = client;
-            _appDbContext = appDbContext;
-            _serviceProvider = serviceProvider;
-            _databaseHelper = databaseHelper;
-        }
 
         public SlashCommandProperties GetSlashCommandProperties()
         {
@@ -56,19 +41,25 @@ namespace DiscordBot.Commands
                         .WithName("erinntime")
                         .WithDescription("愛爾琳時間")
                         .WithType(ApplicationCommandOptionType.SubCommand)
-                        .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: new List<ChannelType>() { ChannelType.Text })
+                        .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
                     )
                     .AddOption(new SlashCommandOptionBuilder()
                         .WithName("dailyeffect")
                         .WithDescription("今日資訊")
                         .WithType(ApplicationCommandOptionType.SubCommand)
-                        .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: new List<ChannelType>() { ChannelType.Text })
+                        .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
                     )
                     .AddOption(new SlashCommandOptionBuilder()
                         .WithName("dailydungeoninfo")
                         .WithDescription("老手地城")
                         .WithType(ApplicationCommandOptionType.SubCommand)
-                        .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: new List<ChannelType>() { ChannelType.Text })
+                        .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
+                    )
+                    .AddOption(new SlashCommandOptionBuilder()
+                        .WithName("news")
+                        .WithDescription("官網消息")
+                        .WithType(ApplicationCommandOptionType.SubCommand)
+                        .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
                     )
                 )
                 .AddOption(new SlashCommandOptionBuilder()
@@ -79,7 +70,7 @@ namespace DiscordBot.Commands
                         .WithName("instanceresetreminder")
                         .WithDescription("重置提醒")
                         .WithType(ApplicationCommandOptionType.SubCommand)
-                        .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: new List<ChannelType>() { ChannelType.Text })
+                        .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
                     )
                 )
                 ;
@@ -119,6 +110,9 @@ namespace DiscordBot.Commands
                     case "dailydungeoninfo":
                         await HandleDailyDungeonInfoCommand(command, subOption);
                         break;
+                    case "news":
+                        await HandleNewsCommand(command, subOption);
+                        break;
                     default:
                         break;
                 }
@@ -143,11 +137,11 @@ namespace DiscordBot.Commands
         private async Task<SocketTextChannel> SetChannelId(ulong guildId, SocketSlashCommandDataOption option, string channelIdPropertyName)
         {
             SocketTextChannel optionChannel = option.Options.First(x => x.Name == "channel").Value as SocketTextChannel;
-            SocketGuild socketGuild = _client.GetGuild(guildId);
+            SocketGuild socketGuild = client.GetGuild(guildId);
 
-            var guildSetting = await _databaseHelper.GetOrCreateEntityByKeys<GuildSetting>(new() { { nameof(GuildSetting.GuildId), socketGuild.Id } });
+            var guildSetting = await databaseHelper.GetOrCreateEntityByKeys<GuildSetting>(new() { { nameof(GuildSetting.GuildId), socketGuild.Id } });
             guildSetting.SetProperty(channelIdPropertyName, optionChannel.Id);
-            _appDbContext.SaveChanges();
+            appDbContext.SaveChanges();
 
             return optionChannel;
         }
@@ -157,7 +151,7 @@ namespace DiscordBot.Commands
             SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.ErinnTimeChannelId));
             await command.RespondAsync($"已設定{optionChannel.Mention}為愛爾琳時間頻道", ephemeral: true);
 
-            ErinnTimeJob job = _serviceProvider.GetRequiredService<ErinnTimeJob>();
+            ErinnTimeJob job = serviceProvider.GetRequiredService<ErinnTimeJob>();
             await job.Execute(null);
         }
 
@@ -166,7 +160,7 @@ namespace DiscordBot.Commands
             SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.DailyEffectChannelId));
             await command.RespondAsync($"已設定{optionChannel.Mention}為今日資訊頻道", ephemeral: true);
 
-            DailyEffectJob job = _serviceProvider.GetRequiredService<DailyEffectJob>();
+            DailyEffectJob job = serviceProvider.GetRequiredService<DailyEffectJob>();
             await job.Execute(null);
         }
 
@@ -175,7 +169,16 @@ namespace DiscordBot.Commands
             SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.DailyDungeonInfoChannelId));
             await command.RespondAsync($"已設定{optionChannel.Mention}為老手地城頻道", ephemeral: true);
 
-            DailyDungeonInfoJob job = _serviceProvider.GetRequiredService<DailyDungeonInfoJob>();
+            DailyDungeonInfoJob job = serviceProvider.GetRequiredService<DailyDungeonInfoJob>();
+            await job.Execute(null);
+        }
+
+        private async Task HandleNewsCommand(SocketSlashCommand command, SocketSlashCommandDataOption option)
+        {
+            SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.DataScapingNewsChannelId));
+            await command.RespondAsync($"已設定{optionChannel.Mention}為官網消息頻道", ephemeral: true);
+
+            DataScrapingJob job = serviceProvider.GetRequiredService<DataScrapingJob>();
             await job.Execute(null);
         }
 
@@ -184,7 +187,7 @@ namespace DiscordBot.Commands
             SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.InstanceResetReminderChannelId));
             await command.RespondAsync($"已設定{optionChannel.Mention}為重置提醒頻道", ephemeral: true);
 
-            InstanceResetReminderJob job = _serviceProvider.GetRequiredService<InstanceResetReminderJob>();
+            InstanceResetReminderJob job = serviceProvider.GetRequiredService<InstanceResetReminderJob>();
             await job.Execute(null);
         }
     }

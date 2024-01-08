@@ -74,7 +74,7 @@ namespace DiscordBot.Migrations
                         name: "FK_InstanceReminderSettings_GuildUserSettings_GuildId_UserId",
                         columns: x => new { x.GuildId, x.UserId },
                         principalTable: "GuildUserSettings",
-                        principalColumns: new[] { "GuildId", "UserId" },
+                        principalColumns: ["GuildId", "UserId"],
                         onDelete: ReferentialAction.Cascade);
                 });
         }

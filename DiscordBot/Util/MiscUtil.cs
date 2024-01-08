@@ -14,7 +14,7 @@ namespace DiscordBot.Util
     {
         public async static Task<Image> ConvertHtmlToImage(string html)
         {
-            using BrowserFetcher _browserFetcher = new BrowserFetcher();
+            using BrowserFetcher _browserFetcher = new();
             // Download chrome (headless) browser (first time takes a while).
             await _browserFetcher.DownloadAsync();
 
@@ -37,11 +37,7 @@ namespace DiscordBot.Util
 
             await browser.CloseAsync();
 
-            var image = Image.FromStream(new MemoryStream(result));
-            // save image to file, for debug
-            //string tempPath = Path.GetTempFileName().Replace("tmp", "jpg");
-            //image.Save(tempPath);
-            return image;
+            return Image.FromStream(new MemoryStream(result));
         }
     }
 }

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Discord;
 using DiscordBot.Configuration;
 using DiscordBot.DataEntity;
+using DiscordBot.Db.Entity;
 using DiscordBot.Helper;
 using Newtonsoft.Json.Linq;
 using Quartz;
@@ -21,7 +22,7 @@ namespace DiscordBot.Util
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Orange)
                 .WithTitle("⏱愛爾琳時間⏱")
-                .WithDescription($"{GameUtil.GetErinnTime(roundToTenMins).ToString(@"tt h:mm")}")
+                .WithDescription($"{GameUtil.GetErinnTime(roundToTenMins):tt h:mm}")
                 .WithFooter("現實時間")
                 .WithCurrentTimestamp();
             return embed.Build();
@@ -34,7 +35,7 @@ namespace DiscordBot.Util
             DailyEffect todayEffect = gameConfig.DailyEffect.First(x => x.DayOfWeek == todayOfWeek);
             DailyBankGift todayBankGift = gameConfig.DailyBankGift.First(x => x.DayOfWeek == todayOfWeek);
 
-            List<EmbedFieldBuilder> embedFieldBuilders = new();
+            List<EmbedFieldBuilder> embedFieldBuilders = [];
 
             EmbedFieldBuilder embedFieldEffect = new EmbedFieldBuilder()
                 .WithName(today.ToString("yyyy/MM/dd"))
@@ -55,26 +56,18 @@ namespace DiscordBot.Util
             return embed.Build();
         }
 
-        public static Embed GetTodayDungeonInfoEmbed(ImgurHelper imgurHelper)
+        public static Embed GetTodayDungeonInfoEmbed(DailyDungeonContainer dailyDungeonContainer)
         {
-            return GetTodayDungeonInfoEmbed(imgurHelper, out _);
-        }
-
-        public static Embed GetTodayDungeonInfoEmbed(ImgurHelper imgurHelper, out DailyDungeonInfo ouputTodayDungeonInfo)
-        {
-            List<EmbedFieldBuilder> embedFieldBuilders = new();
+            List<EmbedFieldBuilder> embedFieldBuilders = [];
             var cultureInfo = new CultureInfo("zh-tw");
             var dateTimeInfo = cultureInfo.DateTimeFormat;
-            var dungeonInfoContain = GameUtil.GetDailyDungeons().Result;
-            var dungeonInfoList = dungeonInfoContain.Infos;
-            var imageUrl = imgurHelper.UploadImage(dungeonInfoContain.Image).Result;
+            var dungeonInfoList = dailyDungeonContainer.Infos;
 
             DateTime today = DateTime.Now.Date;
             var todayDungeonInfo = dungeonInfoList
                 .Where(x => x.IsTodayDungeon)
                 .First()
                 ;
-            ouputTodayDungeonInfo = todayDungeonInfo;
 
             EmbedFieldBuilder embedField = new EmbedFieldBuilder()
                 .WithName($"{todayDungeonInfo.Date:yyyy-MM-dd}")
@@ -88,15 +81,15 @@ namespace DiscordBot.Util
                 .WithFields(embedFieldBuilders)
                 .WithFooter("更新時間")
                 .WithCurrentTimestamp()
+                .WithImageUrl($"attachment://{dailyDungeonContainer.GetImageTempFile().Name}")
                 ;
-            if (!string.IsNullOrEmpty(imageUrl)) embed = embed.WithImageUrl(imageUrl);
 
             return embed.Build();
         }
 
         public static Embed GetResetReminderEmbed(string description, Color color, IEnumerable<InstanceReset> instanceResets, bool useNextDateTime = true)
         {
-            List<EmbedFieldBuilder> embedFieldBuilders = new();
+            List<EmbedFieldBuilder> embedFieldBuilders = [];
 
             foreach (var item in instanceResets)
             {
@@ -113,6 +106,28 @@ namespace DiscordBot.Util
                 .WithTitle("重置時間表")
                 .WithDescription(description)
                 .WithFields(embedFieldBuilders)
+                ;
+
+            return embed.Build();
+        }
+
+        public static Embed GetMainogiNewsEmbed(News news)
+        {
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(news switch
+                {
+                    { ItemTag: ItemTag.act } => Color.Blue,
+                    { ItemTag: ItemTag.system } => Color.Orange,
+                    { ItemTag: ItemTag.important } => Color.Red,
+                    { ItemTag: ItemTag.update } => Color.Green,
+                    _ => Color.Default,
+                })
+                .WithTitle(news.Title)
+                .WithDescription(news.Content)
+                .WithFooter("更新時間")
+                .WithUrl($"{DataScrapingHelper.MabinogiBaseUrl}/{news.Url}")
+                .WithTimestamp((DateTimeOffset)news.UpdatedAt)
+                .WithImageUrl($"attachment://{news.GetSnapshotTempFile().Name}")
                 ;
 
             return embed.Build();

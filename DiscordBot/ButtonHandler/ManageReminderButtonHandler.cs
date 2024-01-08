@@ -20,27 +20,10 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.ButtonHandler
 {
-    public class ManageReminderButtonHandler : IBaseButtonHandler
+    public class ManageReminderButtonHandler(ILogger<ManageReminderButtonHandler> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper, SelectMenuHandlerHelper selectMenuHandlerHelper) : IBaseButtonHandler
     {
-        ILogger<ManageReminderButtonHandler> _logger;
-        DiscordSocketClient _client;
-        AppDbContext _appDbContext;
-        IServiceProvider _serviceProvider;
-        DatabaseHelper _databaseHelper;
-        SelectMenuHandlerHelper _selectMenuHandlerHelper;
-
         public string Lable { get; set; } = "管理重置提醒";
         public string Id { get; set; } = "ManageReminderButton";
-
-        public ManageReminderButtonHandler(ILogger<ManageReminderButtonHandler> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper, SelectMenuHandlerHelper selectMenuHandlerHelper)
-        {
-            _logger = logger;
-            _client = client;
-            _appDbContext = appDbContext;
-            _serviceProvider = serviceProvider;
-            _databaseHelper = databaseHelper;
-            _selectMenuHandlerHelper = selectMenuHandlerHelper;
-        }
 
         public MessageComponent GetMessageComponent()
         {
@@ -51,8 +34,8 @@ namespace DiscordBot.ButtonHandler
 
         public async Task Excute(SocketMessageComponent component)
         {
-            var userSetting = await _databaseHelper.GetOrCreateEntityByKeys<GuildUserSetting>(new() { { nameof(GuildUserSetting.GuildId), component.GuildId }, { nameof(GuildUserSetting.UserId), component.User.Id } }, includeProperties: new() { nameof(GuildUserSetting.InstanceReminderSettings) });
-            MessageComponent messageComponent = _selectMenuHandlerHelper.GetSelectMenuHandler<AddReminderSelectMenuHandler>().GetMessageComponent(userSetting.InstanceReminderSettings);
+            var userSetting = await databaseHelper.GetOrCreateEntityByKeys<GuildUserSetting>(new() { { nameof(GuildUserSetting.GuildId), component.GuildId }, { nameof(GuildUserSetting.UserId), component.User.Id } }, includeProperties: [nameof(GuildUserSetting.InstanceReminderSettings)]);
+            MessageComponent messageComponent = selectMenuHandlerHelper.GetSelectMenuHandler<AddReminderSelectMenuHandler>().GetMessageComponent(userSetting.InstanceReminderSettings);
             await component.RespondAsync(text: "請選擇想要接收的提醒", ephemeral: true, components: messageComponent);
         }
     }
