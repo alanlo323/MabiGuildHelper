@@ -123,11 +123,11 @@ namespace DiscordBot.Util
                     _ => Color.Default,
                 })
                 .WithTitle(news.Title)
-                .WithDescription(news.Content)
+                .WithDescription(news.IsUrgent ? $"{news.Content}{Environment.NewLine}<@here>" : news.Content)
                 .WithFooter("更新時間")
                 .WithUrl($"{DataScrapingHelper.MabinogiBaseUrl}/{news.Url}")
                 .WithTimestamp((DateTimeOffset)news.UpdatedAt)
-                .WithImageUrl($"attachment://{news.GetSnapshotTempFile().Name}")
+                .WithImageUrl($"attachment://{news.SnapshotTempFile.Name}")
                 ;
 
             return embed.Build();

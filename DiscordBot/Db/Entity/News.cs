@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,26 +27,34 @@ namespace DiscordBot.Db.Entity
         public DateTime? PublishDate { get; set; }
         public string? Base64Snapshot { get; set; }
 
+        [NotMapped]
+        public bool IsUrgent => Title?.Contains("臨時維護") ?? false;
+
+        [NotMapped]
         private FileInfo _snapshotTempFile;
 
-        public FileInfo GetSnapshotTempFile()
+        [NotMapped]
+        public FileInfo SnapshotTempFile
         {
-            if (_snapshotTempFile == null)
+            get
             {
-                string tempFilePath = Path.GetTempFileName().Replace("tmp", "png");
-                _snapshotTempFile = new FileInfo(tempFilePath);
-            }
+                if (_snapshotTempFile == null)
+                {
+                    string tempFilePath = Path.GetTempFileName().Replace("tmp", "png");
+                    _snapshotTempFile = new FileInfo(tempFilePath);
+                }
 
-            try
-            {
-                var image = ImageUtil.Base64ToImage(Base64Snapshot);
-                image.Save(_snapshotTempFile.FullName);
-            }
-            catch (Exception)
-            {
-            }
+                try
+                {
+                    var image = ImageUtil.Base64ToImage(Base64Snapshot);
+                    image.Save(_snapshotTempFile.FullName);
+                }
+                catch (Exception)
+                {
+                }
 
-            return _snapshotTempFile;
+                return _snapshotTempFile;
+            }
         }
 
         public override bool Equals(object? obj)
