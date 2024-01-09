@@ -53,7 +53,7 @@ namespace DiscordBot.SelectMenuHandler
 
         public async Task Excute(SocketMessageComponent component)
         {
-            await component.DeferAsync();
+            //await component.DeferAsync();
 
             List<InstanceReset> selectedItems = _gameConfig.InstanceReset.Where(x => component.Data.Values.Contains($"{x.Id}")).ToList();
             IEnumerable<InstanceReminderSetting> existingSettings = appDbContext.InstanceReminderSettings.Where(x => x.GuildId == component.GuildId && x.UserId == component.User.Id).ToList();
@@ -77,7 +77,11 @@ namespace DiscordBot.SelectMenuHandler
             string text = selectedItems.Count > 0
                 ? $"設定已更新, 小幫手會在下方的事件重置時通知你喔! {Environment.NewLine}> {selectedItems.Select(x => x.Name).Aggregate((s1, s2) => $"{s1}{Environment.NewLine}> {s2}")}"
                 : $"已經取消所有通知! 你不會再收到重置提醒囉!";
-            await component.FollowupAsync(text: text, ephemeral: true);
+            await component.UpdateAsync(x =>
+            {
+                x.Content = text;
+                x.Components = null;
+            });
         }
     }
 }

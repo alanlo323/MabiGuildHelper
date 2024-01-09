@@ -27,5 +27,6 @@ namespace DiscordBot.Db.Entity
         public ulong? DataScapingNewsChannelId { get; set; }
 
         public ICollection<GuildUserSetting> GuildUserSettings { get; set; } = new List<GuildUserSetting>();
+        public ICollection<GuildNewsOverride> GuildNewsOverrides { get; set; } = new List<GuildNewsOverride>();
     }
 }
