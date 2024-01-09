@@ -81,7 +81,7 @@ namespace DiscordBot
                 .AddScoped<IBaseSlashCommand, SettingCommand>()
                 .AddScoped<IBaseSlashCommand, ErinnTimeCommand>()
                 .AddScoped<IBaseSlashCommand, NoticeCommand>()
-                .AddScoped<IBaseMessageCommand, UpdateNewsCommand>()
+                .AddScoped<IBaseMessageCommand, EditNewsCommand>()
                 .AddScoped<DailyDungeonInfoJob>()
                 .AddScoped<DailyEffectJob>()
                 .AddScoped<ErinnTimeJob>()
