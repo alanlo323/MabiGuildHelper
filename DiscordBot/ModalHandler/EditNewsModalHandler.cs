@@ -62,7 +62,7 @@ namespace DiscordBot.ButtonHandler
                         x.Embed = embedBuilder.Build();
                         x.Attachments = new List<FileAttachment>();
                     });
-                    await modal.RespondAsync("通告編輯成功", ephemeral: true);
+                    await modal.RespondAsync($"通告編輯成功: {userMessage.GetJumpUrl()}", ephemeral: true);
                 }
             }
             catch (Exception ex)
