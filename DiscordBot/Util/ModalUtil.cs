@@ -44,7 +44,7 @@ namespace DiscordBot.Util
                     .WithLabel("連結Url")
                     .WithPlaceholder("在這裡輸入要連結的訊息Url")
                     .WithValue(guildNewsOverride.ReleatedMessageUrl)
-                    .WithMinLength(1)
+                    .WithMinLength(0)
                     .WithMaxLength(100)
                     .WithStyle(TextInputStyle.Short)
                     .WithCustomId(EditNewsModalHandler.EditNewsModalReleatedMessageUrlPrefix)
