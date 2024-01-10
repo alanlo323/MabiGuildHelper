@@ -116,7 +116,6 @@ namespace DiscordBot
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, ex.Message);
-                throw;
             }
         }
 
@@ -186,7 +185,6 @@ namespace DiscordBot
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, ex.Message);
-                throw;
             }
         }
 
@@ -218,7 +216,6 @@ namespace DiscordBot
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, ex.Message);
-                throw;
             }
         }
 
@@ -250,7 +247,6 @@ namespace DiscordBot
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, ex.Message);
-                throw;
             }
         }
 
@@ -282,7 +278,6 @@ namespace DiscordBot
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, ex.Message);
-                throw;
             }
         }
 
@@ -299,7 +294,6 @@ namespace DiscordBot
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, ex.Message);
-                throw;
             }
         }
 
@@ -332,7 +326,6 @@ namespace DiscordBot
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, ex.Message);
-                throw;
             }
         }
     }
