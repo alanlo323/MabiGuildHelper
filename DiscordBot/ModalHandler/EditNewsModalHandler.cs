@@ -23,9 +23,13 @@ namespace DiscordBot.ButtonHandler
 {
     public class EditNewsModalHandler(ILogger<EditNewsModalHandler> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper, SelectMenuHandlerHelper selectMenuHandlerHelper) : IBaseModalHandler
     {
-        public static string CustomIdPrefix { get; set; } = "EditNewsModal";
+        public static readonly string EditNewsModalMasterIdPrefix = "EditNewsModal";
+        public static readonly string EditNewsModalTitleIdPrefix = $"{EditNewsModalMasterIdPrefix}_Title";
+        public static readonly string EditNewsModaItemTagPrefix = $"{EditNewsModalMasterIdPrefix}_ItemTag";
+        public static readonly string EditNewsModalContentIdPrefix = $"{EditNewsModalMasterIdPrefix}_Content";
+        public static readonly string EditNewsModalReleatedMessageUrlPrefix = $"{EditNewsModalMasterIdPrefix}_ReleatedMessageUrl";
 
-        public string CustomId { get; set; } = CustomIdPrefix;
+        public string CustomId { get; set; } = EditNewsModalMasterIdPrefix;
 
         public async Task Excute(SocketModal modal)
         {
@@ -36,9 +40,9 @@ namespace DiscordBot.ButtonHandler
                 IMessage message = await modal.Channel.GetMessageAsync(messageId);
                 if (message is RestUserMessage userMessage)
                 {
-                    var title = modal.Data.Components.Where(x => x.CustomId == ModalUtil.EditNewsModalTitleIdPrefix).Single().Value;
-                    var content = modal.Data.Components.Where(x => x.CustomId == ModalUtil.EditNewsModalContentIdPrefix).Single().Value;
-                    var releatedMessageUrl = modal.Data.Components.Where(x => x.CustomId == ModalUtil.EditNewsModalReleatedMessageUrlPrefix).Single().Value;
+                    var title = modal.Data.Components.Where(x => x.CustomId == EditNewsModalTitleIdPrefix).Single().Value;
+                    var content = modal.Data.Components.Where(x => x.CustomId == EditNewsModalContentIdPrefix).Single().Value;
+                    var releatedMessageUrl = modal.Data.Components.Where(x => x.CustomId == EditNewsModalReleatedMessageUrlPrefix).Single().Value;
                     var embedBuilder = userMessage.Embeds.Single().ToEmbedBuilder();
 
                     var guildNewsOverride = await databaseHelper.GetOrCreateEntityByKeys<GuildNewsOverride>(new() { { nameof(GuildNewsOverride.GuildId), modal.GuildId }, { nameof(GuildNewsOverride.Url), newsUrl } });
