@@ -16,15 +16,17 @@ namespace DiscordBot.Migrations
                 columns: table => new
                 {
                     GuildId = table.Column<ulong>(type: "INTEGER", nullable: false),
-                    NewsUrl = table.Column<string>(type: "TEXT", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
-                    Content = table.Column<string>(type: "TEXT", nullable: false),
+                    Url = table.Column<string>(type: "TEXT", nullable: false),
+                    ItemTag = table.Column<int>(type: "INTEGER", nullable: true),
+                    Title = table.Column<string>(type: "TEXT", nullable: true),
+                    Content = table.Column<string>(type: "TEXT", nullable: true),
+                    ReleatedMessageUrl = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_GuildNewsOverrides", x => new { x.GuildId, x.NewsUrl });
+                    table.PrimaryKey("PK_GuildNewsOverrides", x => new { x.GuildId, x.Url });
                     table.ForeignKey(
                         name: "FK_GuildNewsOverrides_GuildSettings_GuildId",
                         column: x => x.GuildId,

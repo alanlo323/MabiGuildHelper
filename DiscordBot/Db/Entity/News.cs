@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
@@ -11,19 +12,23 @@ namespace DiscordBot.Db.Entity
 {
     public enum ItemTag
     {
+        [Description("活動")]
         act,
+        [Description("系統")]
         system,
+        [Description("重要")]
         important,
+        [Description("更新")]
         update,
     }
 
     public class News : BaseEntity
     {
         public string Url { get; set; }
-        public string? ImageUrl { get; set; }
-        public string? Title { get; set; }
         public ItemTag? ItemTag { get; set; }
+        public string? Title { get; set; }
         public string? Content { get; set; }
+        public string? ImageUrl { get; set; }
         public DateTime? PublishDate { get; set; }
         public string? Base64Snapshot { get; set; }
 

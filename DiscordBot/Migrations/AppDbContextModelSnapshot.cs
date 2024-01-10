@@ -22,24 +22,28 @@ namespace DiscordBot.Migrations
                     b.Property<ulong>("GuildId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("NewsUrl")
+                    b.Property<string>("Url")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Content")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("ItemTag")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ReleatedMessageUrl")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Title")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
-                    b.HasKey("GuildId", "NewsUrl");
+                    b.HasKey("GuildId", "Url");
 
                     b.ToTable("GuildNewsOverrides");
                 });

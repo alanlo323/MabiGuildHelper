@@ -59,7 +59,7 @@ namespace DiscordBot.Helper
             logger.LogError("message is not RestUserMessage");
         }
 
-        public async Task CreateNewMessage(GuildSetting guildSetting, SocketTextChannel textChannel, string messageIdPropertyName, string content = null, string filePath = null, Embed embed = null, MessageComponent messageComponent = null)
+        public async Task CreateNewMessage(BaseEntity entity, SocketTextChannel textChannel, string messageIdPropertyName, string content = null, string filePath = null, Embed embed = null, MessageComponent messageComponent = null)
         {
             RestUserMessage message;
             if (string.IsNullOrWhiteSpace(filePath))
@@ -70,7 +70,7 @@ namespace DiscordBot.Helper
             {
                 message = await textChannel.SendFileAsync(filePath: filePath, text: content, embed: embed, components: messageComponent);
             }
-            guildSetting.SetProperty(messageIdPropertyName, message.Id);
+            entity.SetProperty(messageIdPropertyName, message.Id);
             await appDbContext.SaveChangesAsync();
         }
 

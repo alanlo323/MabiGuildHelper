@@ -68,7 +68,7 @@ namespace DiscordBot.Db
                 ;
 
             modelBuilder.Entity<GuildNewsOverride>()
-                .HasKey(e => new { e.GuildId, e.NewsUrl })
+                .HasKey(e => new { e.GuildId, e.Url })
                 ;
             modelBuilder.Entity<GuildNewsOverride>()
                 .HasOne(e => e.GuildSetting)

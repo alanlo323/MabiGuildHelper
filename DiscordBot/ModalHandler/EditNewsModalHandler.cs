@@ -29,18 +29,44 @@ namespace DiscordBot.ButtonHandler
 
         public async Task Excute(SocketModal modal)
         {
-            ulong messageId = ulong.Parse(modal.Data.CustomId.Split("_")[1]);
-            IMessage message = await modal.Channel.GetMessageAsync(messageId);
-            if (message is RestUserMessage userMessage)
+            try
             {
-                await userMessage.ModifyAsync(x =>
+                ulong messageId = ulong.Parse(modal.Data.CustomId.Split("_")[1]);
+                string newsUrl = modal.Data.CustomId.Split("_")[2];
+                IMessage message = await modal.Channel.GetMessageAsync(messageId);
+                if (message is RestUserMessage userMessage)
                 {
-                    var title = modal.Data.Components.Where(x => x.CustomId.StartsWith(ModalUtil.EditNewsModalTitleIdPrefix)).Single();
-                    var content = modal.Data.Components.Where(x => x.CustomId.StartsWith(ModalUtil.EditNewsModalContentIdPrefix)).Single();
-                    var releatedMessageUrl = modal.Data.Components.Where(x => x.CustomId.StartsWith(ModalUtil.EditNewsModalReleatedMessageUrlPrefix)).Single();
-                    x.Embed = embed;
-                });
-                return;
+                    var title = modal.Data.Components.Where(x => x.CustomId == ModalUtil.EditNewsModalTitleIdPrefix).Single().Value;
+                    var content = modal.Data.Components.Where(x => x.CustomId == ModalUtil.EditNewsModalContentIdPrefix).Single().Value;
+                    var releatedMessageUrl = modal.Data.Components.Where(x => x.CustomId == ModalUtil.EditNewsModalReleatedMessageUrlPrefix).Single().Value;
+                    var embedBuilder = userMessage.Embeds.Single().ToEmbedBuilder();
+
+                    var guildNewsOverride = await databaseHelper.GetOrCreateEntityByKeys<GuildNewsOverride>(new() { { nameof(GuildNewsOverride.GuildId), modal.GuildId }, { nameof(GuildNewsOverride.Url), newsUrl } });
+                    guildNewsOverride.Title = title;
+                    guildNewsOverride.Content = content;
+                    guildNewsOverride.ReleatedMessageUrl = releatedMessageUrl;
+                    await appDbContext.SaveChangesAsync();
+
+                    embedBuilder.Title = title;
+                    embedBuilder.Description = content;
+                    if (!string.IsNullOrWhiteSpace(releatedMessageUrl))
+                    {
+                        embedBuilder.Description += $"{Environment.NewLine}{Environment.NewLine}維護資訊:{releatedMessageUrl}";
+                    }
+                    embedBuilder.WithCurrentTimestamp();
+
+                    await userMessage.ModifyAsync(x =>
+                    {
+                        x.Embed = embedBuilder.Build();
+                        x.Attachments = new List<FileAttachment>();
+                    });
+                    await modal.RespondAsync("通告編輯成功", ephemeral: true);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, ex.Message);
+                await modal.RespondAsync("小幫手發生未知錯誤, 請通知作者!", ephemeral: true);
             }
         }
     }
