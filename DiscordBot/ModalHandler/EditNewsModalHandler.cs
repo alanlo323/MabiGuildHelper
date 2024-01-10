@@ -47,13 +47,10 @@ namespace DiscordBot.ButtonHandler
                     guildNewsOverride.ReleatedMessageUrl = releatedMessageUrl;
                     await appDbContext.SaveChangesAsync();
 
-                    embedBuilder.Title = title;
-                    embedBuilder.Description = content;
-                    if (!string.IsNullOrWhiteSpace(releatedMessageUrl))
-                    {
-                        embedBuilder.Description += $"{Environment.NewLine}{Environment.NewLine}維護資訊:{releatedMessageUrl}";
-                    }
-                    embedBuilder.WithCurrentTimestamp();
+                    embedBuilder = embedBuilder
+                        .WithTitle(title)
+                        .WithDescription(string.IsNullOrWhiteSpace(releatedMessageUrl) ? content : $"{content}{Environment.NewLine}{Environment.NewLine}維護資訊:{releatedMessageUrl}")
+                        .WithCurrentTimestamp();
 
                     await userMessage.ModifyAsync(x =>
                     {
