@@ -108,8 +108,16 @@ namespace DiscordBot
 
         public async Task Client_GuildAvailable(SocketGuild guild)
         {
-            await RefreshCommandForGuild(guild);
-            await _databaseHelper.GetOrCreateEntityByKeys<GuildSetting>(new Dictionary<string, object>() { { nameof(GuildSetting.GuildId), guild.Id } });
+            try
+            {
+                await RefreshCommandForGuild(guild);
+                await _databaseHelper.GetOrCreateEntityByKeys<GuildSetting>(new Dictionary<string, object>() { { nameof(GuildSetting.GuildId), guild.Id } });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, ex.Message);
+                throw;
+            }
         }
 
         private async Task RefreshCommand()
@@ -152,132 +160,180 @@ namespace DiscordBot
 
         private async Task SlashCommandHandler(SocketSlashCommand command)
         {
-            while (!isReady) await Task.Delay(100);
-
-            IBaseSlashCommand instance = _serviceProvider.GetServices<IBaseSlashCommand>().Single(x => x.Name == command.CommandName);
-            SocketUser user = command.User;
-            if (command.IsDMInteraction)
+            try
             {
-                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
+                while (!isReady) await Task.Delay(100);
+
+                IBaseSlashCommand instance = _serviceProvider.GetServices<IBaseSlashCommand>().Single(x => x.Name == command.CommandName);
+                SocketUser user = command.User;
+                if (command.IsDMInteraction)
+                {
+                    _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
+                }
+                else
+                {
+                    SocketGuild guild = _client.GetGuild(command.GuildId.Value);
+                    _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{command.Channel.Name}({command.Channel.Id})");
+
+                }
+
+                Thread newThread = new(async () =>
+                {
+                    await instance.Excute(command);
+                });
+                newThread.Start();
             }
-            else
+            catch (Exception ex)
             {
-                SocketGuild guild = _client.GetGuild(command.GuildId.Value);
-                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{command.Channel.Name}({command.Channel.Id})");
-
+                _logger.LogCritical(ex, ex.Message);
+                throw;
             }
-
-            Thread newThread = new(async () =>
-            {
-                await instance.Excute(command);
-            });
-            newThread.Start();
         }
 
         private async Task MessageCommandHandler(SocketMessageCommand command)
         {
-            while (!isReady) await Task.Delay(100);
-
-            IBaseMessageCommand instance = _serviceProvider.GetServices<IBaseMessageCommand>().Single(x => x.Name == command.CommandName);
-            SocketUser user = command.User;
-            if (command.IsDMInteraction)
+            try
             {
-                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
+                while (!isReady) await Task.Delay(100);
+
+                IBaseMessageCommand instance = _serviceProvider.GetServices<IBaseMessageCommand>().Single(x => x.Name == command.CommandName);
+                SocketUser user = command.User;
+                if (command.IsDMInteraction)
+                {
+                    _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
+                }
+                else
+                {
+                    SocketGuild guild = _client.GetGuild(command.GuildId.Value);
+                    _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{command.Channel.Name}({command.Channel.Id})");
+
+                }
+
+                Thread newThread = new(async () =>
+                {
+                    await instance.Excute(command);
+                });
+                newThread.Start();
             }
-            else
+            catch (Exception ex)
             {
-                SocketGuild guild = _client.GetGuild(command.GuildId.Value);
-                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{command.Channel.Name}({command.Channel.Id})");
-
+                _logger.LogCritical(ex, ex.Message);
+                throw;
             }
-
-            Thread newThread = new(async () =>
-            {
-                await instance.Excute(command);
-            });
-            newThread.Start();
         }
 
         private async Task ButtonHandler(SocketMessageComponent component)
         {
-            while (!isReady) await Task.Delay(100);
-
-            IBaseButtonHandler instance = _buttonHandlerHelper.GetButtonHandler(component.Data.CustomId);
-            SocketUser user = component.User;
-            if (component.IsDMInteraction)
+            try
             {
-                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
+                while (!isReady) await Task.Delay(100);
+
+                IBaseButtonHandler instance = _buttonHandlerHelper.GetButtonHandler(component.Data.CustomId);
+                SocketUser user = component.User;
+                if (component.IsDMInteraction)
+                {
+                    _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
+                }
+                else
+                {
+                    SocketGuild guild = _client.GetGuild(component.GuildId.Value);
+                    _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{component.Channel.Name}({component.Channel.Id})");
+
+                }
+
+                Thread newThread = new(async () =>
+                {
+                    await instance.Excute(component);
+                });
+                newThread.Start();
             }
-            else
+            catch (Exception ex)
             {
-                SocketGuild guild = _client.GetGuild(component.GuildId.Value);
-                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{component.Channel.Name}({component.Channel.Id})");
-
+                _logger.LogCritical(ex, ex.Message);
+                throw;
             }
-
-            Thread newThread = new(async () =>
-            {
-                await instance.Excute(component);
-            });
-            newThread.Start();
         }
 
         private async Task MenuHandler(SocketMessageComponent component)
         {
-            while (!isReady) await Task.Delay(100);
-
-            IBaseSelectMenuHandler instance = _selectMenuHandlerHelper.GetSelectMenuHandler(component.Data.CustomId);
-            SocketUser user = component.User;
-            if (component.IsDMInteraction)
+            try
             {
-                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
+                while (!isReady) await Task.Delay(100);
+
+                IBaseSelectMenuHandler instance = _selectMenuHandlerHelper.GetSelectMenuHandler(component.Data.CustomId);
+                SocketUser user = component.User;
+                if (component.IsDMInteraction)
+                {
+                    _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
+                }
+                else
+                {
+                    SocketGuild guild = _client.GetGuild(component.GuildId.Value);
+                    _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{component.Channel.Name}({component.Channel.Id})");
+
+                }
+
+                Thread newThread = new(async () =>
+                {
+                    await instance.Excute(component);
+                });
+                newThread.Start();
             }
-            else
+            catch (Exception ex)
             {
-                SocketGuild guild = _client.GetGuild(component.GuildId.Value);
-                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{component.Channel.Name}({component.Channel.Id})");
-
+                _logger.LogCritical(ex, ex.Message);
+                throw;
             }
-
-            Thread newThread = new(async () =>
-            {
-                await instance.Excute(component);
-            });
-            newThread.Start();
         }
 
         private async Task MessageHandler(SocketMessage message)
         {
-            Thread newThread = new(async () =>
+            try
             {
-                await _messageReceivedHandler.Excute(message);
-            });
-            newThread.Start();
+                Thread newThread = new(async () =>
+                {
+                    await _messageReceivedHandler.Excute(message);
+                });
+                newThread.Start();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, ex.Message);
+                throw;
+            }
         }
 
         private async Task ModalSubmittedHandler(SocketModal modal)
         {
-            while (!isReady) await Task.Delay(100);
-
-            IBaseModalHandler instance = _serviceProvider.GetServices<IBaseModalHandler>().Single(x => modal.Data.CustomId.StartsWith(x.CustomId));
-            SocketUser user = modal.User;
-            if (modal.IsDMInteraction)
+            try
             {
-                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
+
+                while (!isReady) await Task.Delay(100);
+
+                IBaseModalHandler instance = _serviceProvider.GetServices<IBaseModalHandler>().Single(x => modal.Data.CustomId.StartsWith(x.CustomId));
+                SocketUser user = modal.User;
+                if (modal.IsDMInteraction)
+                {
+                    _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
+                }
+                else
+                {
+                    SocketGuild guild = _client.GetGuild(modal.GuildId.Value);
+                    _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{modal.Channel.Name}({modal.Channel.Id})");
+
+                }
+
+                Thread newThread = new(async () =>
+                {
+                    await instance.Excute(modal);
+                });
+                newThread.Start();
             }
-            else
+            catch (Exception ex)
             {
-                SocketGuild guild = _client.GetGuild(modal.GuildId.Value);
-                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{modal.Channel.Name}({modal.Channel.Id})");
-
+                _logger.LogCritical(ex, ex.Message);
+                throw;
             }
-
-            Thread newThread = new(async () =>
-            {
-                await instance.Excute(modal);
-            });
-            newThread.Start();
         }
-
     }
 }
