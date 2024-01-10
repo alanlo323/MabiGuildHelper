@@ -45,7 +45,7 @@ namespace DiscordBot.ButtonHandler
                     var releatedMessageUrl = modal.Data.Components.Where(x => x.CustomId == EditNewsModalReleatedMessageUrlPrefix).Single().Value;
                     var embedBuilder = userMessage.Embeds.Single().ToEmbedBuilder();
 
-                    var guildNewsOverride = await databaseHelper.GetOrCreateEntityByKeys<GuildNewsOverride>(new() { { nameof(GuildNewsOverride.GuildId), modal.GuildId }, { nameof(GuildNewsOverride.Url), newsUrl } });
+                    GuildNewsOverride guildNewsOverride = await databaseHelper.GetOrCreateEntityByKeys<GuildNewsOverride>(new() { { nameof(GuildNewsOverride.GuildId), modal.GuildId }, { nameof(GuildNewsOverride.Url), newsUrl } });
                     guildNewsOverride.Title = title;
                     guildNewsOverride.Content = content;
                     guildNewsOverride.ReleatedMessageUrl = releatedMessageUrl;
