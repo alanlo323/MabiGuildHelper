@@ -82,14 +82,15 @@ namespace DiscordBot
                 .AddScoped<IBaseSlashCommand, ErinnTimeCommand>()
                 .AddScoped<IBaseSlashCommand, NoticeCommand>()
                 .AddScoped<IBaseMessageCommand, EditNewsCommand>()
+                .AddScoped<IBaseButtonHandler, ManageReminderButtonHandler>()
+                .AddScoped<IBaseSelectMenuHandler, AddReminderSelectMenuHandler>()
+                .AddScoped<IBaseModalHandler, EditNewsModalHandler>()
+                .AddScoped<MessageReceivedHandler>()
                 .AddScoped<DailyDungeonInfoJob>()
                 .AddScoped<DailyEffectJob>()
                 .AddScoped<ErinnTimeJob>()
                 .AddScoped<InstanceResetReminderJob>()
                 .AddScoped<DataScrapingJob>()
-                .AddScoped<IBaseButtonHandler, ManageReminderButtonHandler>()
-                .AddScoped<IBaseSelectMenuHandler, AddReminderSelectMenuHandler>()
-                .AddScoped<MessageReceivedHandler>()
                 ;
 
             builder.Services

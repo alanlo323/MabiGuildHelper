@@ -36,12 +36,8 @@ namespace DiscordBot.Commands.MessageCommand
                 await command.RespondAsync("此指令只能對小幫手轉載的官方通告使用", ephemeral: true);
                 return;
             }
-            Embed embed = message.Embeds.Single();
-            News news = appDbContext.News.Where(x => x.Title == embed.Title).Single();
-            news.Title = embed.Title;
-            news.Content = embed.Description;
 
-            Modal modal = ModalUtil.GetEditNewsModal(news, Name);
+            Modal modal = ModalUtil.GetEditNewsModal(message, Name);
             await command.RespondWithModalAsync(modal);
         }
     }
