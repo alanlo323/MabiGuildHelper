@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DiscordBot.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240109083021_GuildNewsOverride")]
+    [Migration("20240110062210_GuildNewsOverride")]
     partial class GuildNewsOverride
     {
         /// <inheritdoc />
@@ -25,24 +25,28 @@ namespace DiscordBot.Migrations
                     b.Property<ulong>("GuildId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("NewsUrl")
+                    b.Property<string>("Url")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Content")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("ItemTag")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ReleatedMessageUrl")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Title")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
-                    b.HasKey("GuildId", "NewsUrl");
+                    b.HasKey("GuildId", "Url");
 
                     b.ToTable("GuildNewsOverrides");
                 });

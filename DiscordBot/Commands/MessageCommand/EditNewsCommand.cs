@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,7 +15,7 @@ using DiscordBot.Util;
 
 namespace DiscordBot.Commands.MessageCommand
 {
-    public class EditNewsCommand(DiscordSocketClient client, AppDbContext appDbContext) : IBaseMessageCommand
+    public class EditNewsCommand(DiscordSocketClient client, AppDbContext appDbContext, DatabaseHelper databaseHelper) : IBaseMessageCommand
     {
         public string Name { get; set; } = "編輯官方通告";
         public string Description { get; set; }
@@ -37,7 +38,21 @@ namespace DiscordBot.Commands.MessageCommand
                 return;
             }
 
-            Modal modal = ModalUtil.GetEditNewsModal(message, Name);
+            Embed embed = message.Embeds.Single();
+            News? news = appDbContext.News.Where(x => x.Url == embed.Url).SingleOrDefault() ?? new()
+            {
+                Url = embed.Url,
+                Title = embed.Title,
+                Content = embed.Description,
+            };
+            GuildNewsOverride newsOverride = appDbContext.GuildNewsOverrides.Where(x => x.GuildId == command.GuildId && x.Url == news.Url).SingleOrDefault() ?? GuildNewsOverride.CloneFromNews(news);
+            if (newsOverride.GuildId == default)
+            {
+                newsOverride.GuildId = (ulong)command.GuildId;
+                await appDbContext.AddAsync(newsOverride);
+                await appDbContext.SaveChangesAsync();
+            }
+            Modal modal = ModalUtil.GetEditNewsModal(newsOverride, message, Name);
             await command.RespondWithModalAsync(modal);
         }
     }

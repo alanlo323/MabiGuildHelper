@@ -40,13 +40,14 @@ namespace DiscordBot
         DiscordBotConfig _discordBotConfig;
         GameConfig _gameConfig;
         AppDbContext _appDbContext;
+        DatabaseHelper _databaseHelper;
         ButtonHandlerHelper _buttonHandlerHelper;
         SelectMenuHandlerHelper _selectMenuHandlerHelper;
         MessageReceivedHandler _messageReceivedHandler;
 
         bool isReady = false;
 
-        public Bot(ILogger<Bot> logger, IServiceProvider serviceProvider, DiscordSocketClient client, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, IOptionsSnapshot<GameConfig> gameConfig, AppDbContext appDbContext, ButtonHandlerHelper buttonHandlerHelper, SelectMenuHandlerHelper selectMenuHandlerHelper, MessageReceivedHandler messageReceivedHandler)
+        public Bot(ILogger<Bot> logger, IServiceProvider serviceProvider, DiscordSocketClient client, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, IOptionsSnapshot<GameConfig> gameConfig, AppDbContext appDbContext, DatabaseHelper databaseHelper, ButtonHandlerHelper buttonHandlerHelper, SelectMenuHandlerHelper selectMenuHandlerHelper, MessageReceivedHandler messageReceivedHandler)
         {
             _logger = logger;
             _serviceProvider = serviceProvider;
@@ -54,6 +55,7 @@ namespace DiscordBot
             _discordBotConfig = discordBotConfig.Value;
             _gameConfig = gameConfig.Value;
             _appDbContext = appDbContext;
+            _databaseHelper = databaseHelper;
             _buttonHandlerHelper = buttonHandlerHelper;
             _selectMenuHandlerHelper = selectMenuHandlerHelper;
             _messageReceivedHandler = messageReceivedHandler;
@@ -107,6 +109,7 @@ namespace DiscordBot
         public async Task Client_GuildAvailable(SocketGuild guild)
         {
             await RefreshCommandForGuild(guild);
+            await _databaseHelper.GetOrCreateEntityByKeys<GuildSetting>(new Dictionary<string, object>() { { nameof(GuildSetting.GuildId), guild.Id } });
         }
 
         private async Task RefreshCommand()
@@ -256,7 +259,7 @@ namespace DiscordBot
         {
             while (!isReady) await Task.Delay(100);
 
-            IBaseModalHandler instance = _serviceProvider.GetServices<IBaseModalHandler>().Single(x=> modal.Data.CustomId.StartsWith(x.CustomId));
+            IBaseModalHandler instance = _serviceProvider.GetServices<IBaseModalHandler>().Single(x => modal.Data.CustomId.StartsWith(x.CustomId));
             SocketUser user = modal.User;
             if (modal.IsDMInteraction)
             {

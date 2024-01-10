@@ -28,15 +28,12 @@ namespace DiscordBot.Helper
             logger.LogInformation("Loading news");
 
             using BrowserFetcher _browserFetcher = new();
-            // Download chrome (headless) browser (first time takes a while).
             await _browserFetcher.DownloadAsync();
 
-            // Launch the browser and set the given html.
             await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
                 Headless = true,
                 DefaultViewport = null,
-                //Args = [$"--start-maximized"],
                 Args = [$"--window-size=450,450"],
             });
             await using var maximizedBrowser = await Puppeteer.LaunchAsync(new LaunchOptions
@@ -47,10 +44,9 @@ namespace DiscordBot.Helper
             });
 
             await using var newsPage = await browser.NewPageAsync();
-            // get from MabinogiTW official website
             await newsPage.GoToAsync(MabinogiNewsPath, WaitUntilNavigation.Networkidle0);
             var activityElementQuery = ".activity";
-            await newsPage.WaitForSelectorAsync(activityElementQuery); // Wait for the selector to load.
+            await newsPage.WaitForSelectorAsync(activityElementQuery);
 
             var activityElementHandle = await newsPage.QuerySelectorAsync(activityElementQuery);
             var activityInnerHTML = await activityElementHandle.GetPropertyAsync("innerHTML");
@@ -60,7 +56,6 @@ namespace DiscordBot.Helper
                 if (!string.IsNullOrWhiteSpace(html)) activitiesHtml.Add($"{html.Trim()}</a>");
             }
 
-            // convert activitiesHtml to News
             List<News> newsFromWebsite = [];
             foreach (string activityHtml in activitiesHtml)
             {
@@ -85,20 +80,24 @@ namespace DiscordBot.Helper
                   await using var newsContentPage = await browser.NewPageAsync();
                   await UpdateContent(news, newsContentPage);
 
-                  if (news.Content.Length > 200)
+                  switch (news.Content.Length)
                   {
-                      Thread newThread = new(async () =>
-                      {
-                          await using var newsMaximizedContentPage = await maximizedBrowser.NewPageAsync();
-                          await UpdateContent(news, newsMaximizedContentPage);
+                      case > 200:
+                          {
+                              Thread newThread = new(async () =>
+                              {
+                                  await using var newsMaximizedContentPage = await maximizedBrowser.NewPageAsync();
+                                  await UpdateContent(news, newsMaximizedContentPage);
 
+                                  loadedNews++;
+                              });
+                              newThread.Start();
+                              break;
+                          }
+
+                      default:
                           loadedNews++;
-                      });
-                      newThread.Start();
-                  }
-                  else
-                  {
-                      loadedNews++;
+                          break;
                   }
                   logger.LogInformation($"News content updated: {news.Title}");
               });
