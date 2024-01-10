@@ -66,6 +66,7 @@ namespace DiscordBot
             _client.SelectMenuExecuted += MenuHandler;
             _client.MessageReceived += MessageHandler;
             _client.MessageCommandExecuted += MessageCommandHandler;
+            _client.ModalSubmitted += ModalSubmittedHandler;
         }
 
         private Task LogAsync(LogMessage msg)
@@ -247,6 +248,30 @@ namespace DiscordBot
             Thread newThread = new(async () =>
             {
                 await _messageReceivedHandler.Excute(message);
+            });
+            newThread.Start();
+        }
+
+        private async Task ModalSubmittedHandler(SocketModal modal)
+        {
+            while (!isReady) await Task.Delay(100);
+
+            IBaseModalHandler instance = _serviceProvider.GetServices<IBaseModalHandler>().Single(x=> modal.Data.CustomId.StartsWith(x.CustomId));
+            SocketUser user = modal.User;
+            if (modal.IsDMInteraction)
+            {
+                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} with DM");
+            }
+            else
+            {
+                SocketGuild guild = _client.GetGuild(modal.GuildId.Value);
+                _logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name} in [{guild.Name}({guild.Id})] #{modal.Channel.Name}({modal.Channel.Id})");
+
+            }
+
+            Thread newThread = new(async () =>
+            {
+                await instance.Excute(modal);
             });
             newThread.Start();
         }

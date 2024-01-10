@@ -16,6 +16,7 @@ namespace DiscordBot.Db
 
         public DbSet<GuildSetting> GuildSettings { get; set; }
         public DbSet<GuildUserSetting> GuildUserSettings { get; set; }
+        public DbSet<GuildNewsOverride> GuildNewsOverrides { get; set; }
         public DbSet<InstanceReminderSetting> InstanceReminderSettings { get; set; }
         public DbSet<News> News { get; set; }
 
@@ -46,6 +47,16 @@ namespace DiscordBot.Db
             modelBuilder.Entity<GuildSetting>()
                 .HasKey(e => e.GuildId)
                 ;
+            modelBuilder.Entity<GuildSetting>()
+                .HasMany(e => e.GuildUserSettings)
+                .WithOne(e => e.GuildSetting)
+                .HasForeignKey(e => e.GuildId)
+                ;
+            modelBuilder.Entity<GuildSetting>()
+                .HasMany(e => e.GuildNewsOverrides)
+                .WithOne(e => e.GuildSetting)
+                .HasForeignKey(e => e.GuildId)
+                ;
 
             modelBuilder.Entity<GuildUserSetting>()
                 .HasKey(e => new { e.GuildId, e.UserId })
@@ -54,6 +65,15 @@ namespace DiscordBot.Db
                 .HasMany(e => e.InstanceReminderSettings)
                 .WithOne(e => e.GuildUserSetting)
                 .HasForeignKey(e => new { e.GuildId, e.UserId })
+                ;
+
+            modelBuilder.Entity<GuildNewsOverride>()
+                .HasKey(e => new { e.GuildId, e.NewsUrl })
+                ;
+            modelBuilder.Entity<GuildNewsOverride>()
+                .HasOne(e => e.GuildSetting)
+                .WithMany(e => e.GuildNewsOverrides)
+                .HasForeignKey(e => e.GuildId)
                 ;
 
             modelBuilder.Entity<InstanceReminderSetting>()

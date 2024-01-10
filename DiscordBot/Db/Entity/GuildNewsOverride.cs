@@ -16,7 +16,9 @@ namespace DiscordBot.Db.Entity
         public GuildSetting GuildSetting { get; set; }
 
         public ulong GuildId { get; set; }
-        public ulong NewsUrl { get; set; }
+        public string NewsUrl { get; set; }
+        public string Title { get; set; }
+        public string Content { get; set; }
 
     }
 }
