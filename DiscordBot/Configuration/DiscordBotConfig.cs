@@ -12,10 +12,11 @@ namespace DiscordBot.Configuration
 
         public string Token { get; set; }
         public string BetaToken { get; set; }
+        public string AdminServerId { get; set; }
 
         public bool Validate()
         {
-            return !string.IsNullOrEmpty(Token);
+            return !string.IsNullOrEmpty(Token) && !string.IsNullOrEmpty(AdminServerId);
         }
     }
 }

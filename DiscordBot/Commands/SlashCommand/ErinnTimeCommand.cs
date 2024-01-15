@@ -7,6 +7,7 @@ using Discord;
 using Discord.WebSocket;
 using DiscordBot.Extension;
 using DiscordBot.Util;
+using static DiscordBot.Commands.IBaseCommand;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Commands.SlashCommand
@@ -15,6 +16,7 @@ namespace DiscordBot.Commands.SlashCommand
     {
         public string Name { get; set; } = "erinntime";
         public string Description { get; set; } = "顯示目前愛爾琳時間";
+        public CommandAvailability Availability { get; set; } = CommandAvailability.Global;
 
         public ApplicationCommandProperties GetCommandProperties()
         {

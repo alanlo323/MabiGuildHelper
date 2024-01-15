@@ -23,5 +23,16 @@ namespace DiscordBot.Extension
                 .Replace("~", "\\~")
                 .Replace("`", "\\`");
         }
+
+        public static string TrimToDiscordEmbedLimited(this string input)
+        {
+            int maxLength = 3900;
+            if (input.Length > maxLength)
+            {
+                return $"{input[..maxLength]}...";
+            }
+
+            return input;
+        }
     }
 }

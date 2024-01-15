@@ -14,6 +14,7 @@ using DiscordBot.Extension;
 using DiscordBot.Helper;
 using DiscordBot.Util;
 using Microsoft.Extensions.Logging;
+using static DiscordBot.Commands.IBaseCommand;
 
 namespace DiscordBot.Commands.MessageCommand
 {
@@ -21,6 +22,7 @@ namespace DiscordBot.Commands.MessageCommand
     {
         public string Name { get; set; } = "編輯官方通告";
         public string Description { get; set; }
+        public CommandAvailability Availability { get; set; } = CommandAvailability.Global;
 
         public ApplicationCommandProperties GetCommandProperties()
         {

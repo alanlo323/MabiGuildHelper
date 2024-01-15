@@ -19,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using static DiscordBot.Commands.IBaseCommand;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Commands.SlashCommand
@@ -27,6 +28,7 @@ namespace DiscordBot.Commands.SlashCommand
     {
         public string Name { get; set; } = "setting";
         public string Description { get; set; } = "設定";
+        public CommandAvailability Availability { get; set; } = CommandAvailability.Global;
 
         public ApplicationCommandProperties GetCommandProperties()
         {

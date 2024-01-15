@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualBasic.FileIO;
+using static DiscordBot.Commands.IBaseCommand;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Commands.SlashCommand
@@ -23,6 +24,7 @@ namespace DiscordBot.Commands.SlashCommand
     {
         public string Name { get; set; } = "notice";
         public string Description { get; set; } = "在指定頻道發出通知";
+        public CommandAvailability Availability { get; set; } = CommandAvailability.Global;
 
         public ApplicationCommandProperties GetCommandProperties()
         {

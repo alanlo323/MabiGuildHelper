@@ -7,6 +7,7 @@ using Discord;
 using Discord.WebSocket;
 using DiscordBot.Configuration;
 using DiscordBot.Extension;
+using static DiscordBot.Commands.IBaseCommand;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using Color = Discord.Color;
 
@@ -16,6 +17,7 @@ namespace DiscordBot.Commands.SlashCommand
     {
         public string Name { get; set; } = "about";
         public string Description { get; set; } = "關於此機器人";
+        public CommandAvailability Availability { get; set; } = CommandAvailability.Global;
 
         public ApplicationCommandProperties GetCommandProperties()
         {

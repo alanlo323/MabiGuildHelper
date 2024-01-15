@@ -21,7 +21,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.ButtonHandler
 {
-    public class EditNewsModalHandler(ILogger<EditNewsModalHandler> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper, SelectMenuHandlerHelper selectMenuHandlerHelper) : IBaseModalHandler
+    public class EditNewsModalHandler(ILogger<EditNewsModalHandler> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper, SelectMenuHandlerHelper selectMenuHandlerHelper, DiscordApiHelper discordApiHelper) : IBaseModalHandler
     {
         public static readonly string EditNewsModalMasterIdPrefix = "EditNewsModal";
         public static readonly string EditNewsModalTitleIdPrefix = $"{EditNewsModalMasterIdPrefix}_Title";
@@ -33,6 +33,7 @@ namespace DiscordBot.ButtonHandler
 
         public async Task Excute(SocketModal modal)
         {
+            await modal.DeferLoadingAsync(ephemeral: true);
             try
             {
                 ulong messageId = ulong.Parse(modal.Data.CustomId.Split("_")[1]);
@@ -51,9 +52,15 @@ namespace DiscordBot.ButtonHandler
                     guildNewsOverride.ReleatedMessageUrl = releatedMessageUrl;
                     await appDbContext.SaveChangesAsync();
 
+                    var attachmenUrl = await discordApiHelper.UploadAttachment(guildNewsOverride.SnapshotTempFile.FullName, $"{EditNewsModalMasterIdPrefix}: {userMessage.GetJumpUrl()}");
+
+                    var urlOri = embedBuilder.ImageUrl;
+                    var urlNew = createNewAttachmentResult.Attachments.Single().Url.Split("?")[0];
+
                     embedBuilder = embedBuilder
                         .WithTitle(title)
-                        .WithImageUrl(embedBuilder.ImageUrl.Split("?")[0])
+                        .WithImageUrl(createNewAttachmentResult.Attachments.Single().Url.Split("?")[0])
+                        //.WithImageUrl("https://discord.com/assets/2087c4210e4723cc26ac1b265940c499.png")
                         .WithDescription(string.IsNullOrWhiteSpace(releatedMessageUrl) ? content : $"{content}{Environment.NewLine}{Environment.NewLine}維護資訊:{releatedMessageUrl}")
                         .WithCurrentTimestamp();
 
@@ -62,13 +69,13 @@ namespace DiscordBot.ButtonHandler
                         x.Embed = embedBuilder.Build();
                         x.Attachments = new List<FileAttachment>();
                     });
-                    await modal.RespondAsync($"通告編輯成功: {userMessage.GetJumpUrl()}", ephemeral: true);
+                    await modal.FollowupAsync($"通告編輯成功: {userMessage.GetJumpUrl()}", ephemeral: true);
                 }
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, ex.Message);
-                await modal.RespondAsync("小幫手發生未知錯誤, 請通知作者!", ephemeral: true);
+                await modal.FollowupAsync("小幫手發生未知錯誤, 請通知作者!", ephemeral: true);
             }
         }
     }

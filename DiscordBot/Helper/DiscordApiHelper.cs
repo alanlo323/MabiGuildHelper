@@ -11,6 +11,7 @@ using DiscordBot.Db;
 using DiscordBot.Extension;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using DiscordBot.Migrations;
 
 namespace DiscordBot.Helper
 {
@@ -94,6 +95,20 @@ namespace DiscordBot.Helper
             if (textChannel == null) return null;
 
             return await textChannel.SendFileAsync(filePath: filePath, text: content, embed: embed, components: messageComponent);
+        }
+
+        public async Task<string?> UploadAttachment(string filePath, string sourceFunction)
+        {
+            try
+            {
+                var createNewAttachmentResult = await userMessage.Channel.SendFileAsync(filePath, text: $"New attachment from {sourceFunction}");
+                return createNewAttachmentResult.Attachments.Single().Url.Split("?")[0];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, ex.Message);
+                return null;
+            }
         }
     }
 }

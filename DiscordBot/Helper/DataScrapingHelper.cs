@@ -196,6 +196,8 @@ namespace DiscordBot.Helper
                 .Replace(news.Title, string.Empty)
                 .Replace($"{news.PublishDate:yyyy/MM/dd}", string.Empty)
                 .MarkDownEscape()
+                .Trim()
+                .TrimToDiscordEmbedLimited()
                 ;
 
             await page.CloseAsync();

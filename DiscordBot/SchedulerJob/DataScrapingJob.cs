@@ -25,7 +25,6 @@ namespace DiscordBot.SchedulerJob
         public async Task Execute(IJobExecutionContext context)
         {
             var dataScrapingResult = await dataScrapingHelper.GetMabinogiNews();
-            { }
 
             var guildSettings = appDbContext.GuildSettings.ToList();
 

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DiscordBot.Extension;
+using DiscordBot.Util;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 
@@ -21,7 +22,35 @@ namespace DiscordBot.Db.Entity
         public ItemTag? ItemTag { get; set; }
         public string? Title { get; set; }
         public string? Content { get; set; }
+        public string? Base64Snapshot { get; set; }
         public string? ReleatedMessageUrl { get; set; }
+
+        [NotMapped]
+        private FileInfo _snapshotTempFile;
+
+        [NotMapped]
+        public FileInfo SnapshotTempFile
+        {
+            get
+            {
+                if (_snapshotTempFile == null)
+                {
+                    string tempFilePath = Path.GetTempFileName().Replace("tmp", "png");
+                    _snapshotTempFile = new FileInfo(tempFilePath);
+                }
+
+                try
+                {
+                    var image = ImageUtil.Base64ToImage(Base64Snapshot);
+                    image.Save(_snapshotTempFile.FullName);
+                }
+                catch (Exception)
+                {
+                }
+
+                return _snapshotTempFile;
+            }
+        }
 
         public static GuildNewsOverride CloneFromNews(News news)
         {

@@ -29,6 +29,7 @@ using DiscordBot.Commands;
 using Microsoft.Extensions.DependencyInjection;
 using System.Xml.Linq;
 using DiscordBot.Commands.MessageCommand;
+using static DiscordBot.Commands.IBaseCommand;
 
 namespace DiscordBot
 {
@@ -119,31 +120,18 @@ namespace DiscordBot
             }
         }
 
-        private async Task RefreshCommand()
-        {
-            _logger.LogInformation("Refreshing commands");
-
-            ApplicationCommandProperties[] commandProperties = _serviceProvider.GetServices<IBaseCommand>().Select(x => x.GetCommandProperties()).ToArray();
-
-            foreach (SocketGuild guild in _client.Guilds)
-            {
-                try
-                {
-                    await guild.BulkOverwriteApplicationCommandAsync(commandProperties);
-                }
-                catch (Exception exception)
-                {
-                    _logger.LogError(exception, exception.Message);
-                    _logger.LogWarning($"Cannot refresh commands for Guild: {guild.Name} [{guild.Id}]");
-                }
-            }
-            _logger.LogInformation("Commands refreshed");
-        }
-
         private async Task RefreshCommandForGuild(SocketGuild guild)
         {
-            ApplicationCommandProperties[] slashCommandProperties = _serviceProvider.GetServices<IBaseSlashCommand>().Select(x => x.GetCommandProperties()).ToArray();
-            ApplicationCommandProperties[] messageCommandProperties = _serviceProvider.GetServices<IBaseMessageCommand>().Select(x => x.GetCommandProperties()).ToArray();
+            ApplicationCommandProperties[] slashCommandProperties = _serviceProvider
+                .GetServices<IBaseSlashCommand>()
+                .Where(x => x.Availability == CommandAvailability.Global || (x.Availability == CommandAvailability.AdminServerOnly && guild.Id == ulong.Parse(_discordBotConfig.AdminServerId)))
+                .Select(x => x.GetCommandProperties())
+                .ToArray();
+            ApplicationCommandProperties[] messageCommandProperties = _serviceProvider
+                .GetServices<IBaseMessageCommand>()
+                .Where(x => x.Availability == CommandAvailability.Global || (x.Availability == CommandAvailability.AdminServerOnly && guild.Id == ulong.Parse(_discordBotConfig.AdminServerId)))
+                .Select(x => x.GetCommandProperties())
+                .ToArray();
 
             try
             {
