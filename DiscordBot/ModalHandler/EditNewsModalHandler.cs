@@ -54,12 +54,9 @@ namespace DiscordBot.ButtonHandler
 
                     var attachmenUrl = await discordApiHelper.UploadAttachment(guildNewsOverride.SnapshotTempFile.FullName, $"{EditNewsModalMasterIdPrefix}: {userMessage.GetJumpUrl()}");
 
-                    var urlOri = embedBuilder.ImageUrl;
-                    var urlNew = createNewAttachmentResult.Attachments.Single().Url.Split("?")[0];
-
                     embedBuilder = embedBuilder
                         .WithTitle(title)
-                        .WithImageUrl(createNewAttachmentResult.Attachments.Single().Url.Split("?")[0])
+                        .WithImageUrl(attachmenUrl)
                         //.WithImageUrl("https://discord.com/assets/2087c4210e4723cc26ac1b265940c499.png")
                         .WithDescription(string.IsNullOrWhiteSpace(releatedMessageUrl) ? content : $"{content}{Environment.NewLine}{Environment.NewLine}維護資訊:{releatedMessageUrl}")
                         .WithCurrentTimestamp();

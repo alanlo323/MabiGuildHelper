@@ -11,7 +11,11 @@ namespace DiscordBot.Db.Entity
 {
     public class GlobalSetting : BaseEntity
     {
-        public ulong GuildId { get; set; }
-        public ulong? AttachmentChannelId { get; set; }
+        public string Key { get; set; }
+        public string? StringValue { get; set; }
+        public int? IntValue { get; set; }
+        public ulong? UlongValue { get; set; }
+        public double? DoubleValue { get; set; }
+        public DateTime? DateTimeValue { get; set; }
     }
 }

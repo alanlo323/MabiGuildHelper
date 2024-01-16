@@ -19,6 +19,7 @@ namespace DiscordBot.Db
         public DbSet<GuildNewsOverride> GuildNewsOverrides { get; set; }
         public DbSet<InstanceReminderSetting> InstanceReminderSettings { get; set; }
         public DbSet<News> News { get; set; }
+        public DbSet<GlobalSetting> GlobalSettings { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -87,6 +88,10 @@ namespace DiscordBot.Db
 
             modelBuilder.Entity<News>()
                 .HasKey(e => e.Url)
+                ;
+
+            modelBuilder.Entity<GlobalSetting>()
+                .HasKey(e => e.Key)
                 ;
         }
     }

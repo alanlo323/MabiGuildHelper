@@ -19,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using static DiscordBot.Commands.IBaseCommand;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
@@ -26,6 +27,10 @@ namespace DiscordBot.Commands.SlashCommand
 {
     public class AdminCommand(ILogger<AdminCommand> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper) : IBaseSlashCommand
     {
+        public static readonly string ATTACHMENT_HOSTING = "AttachmentHosting";
+        public static readonly string ATTACHMENT_HOSTING_GUILD_KEY = $"{ATTACHMENT_HOSTING}GuildId";
+        public static readonly string ATTACHMENT_HOSTING_CHANNEL_KEY = $"{ATTACHMENT_HOSTING}ChannelId";
+
         public string Name { get; set; } = "admin";
         public string Description { get; set; } = "管理員功能";
         public CommandAvailability Availability { get; set; } = CommandAvailability.AdminServerOnly;
@@ -81,21 +86,20 @@ namespace DiscordBot.Commands.SlashCommand
             }
         }
 
-        private async Task<SocketTextChannel> SetChannelId(ulong guildId, SocketSlashCommandDataOption option, string channelIdPropertyName)
+        private async Task UpdateGlobalSetting(string key, string valuePropertyName, object value)
         {
-            SocketTextChannel optionChannel = option.Options.First(x => x.Name == "channel").Value as SocketTextChannel;
-            SocketGuild socketGuild = client.GetGuild(guildId);
-
-            var guildSetting = await databaseHelper.GetOrCreateEntityByKeys<GuildSetting>(new() { { nameof(GuildSetting.GuildId), socketGuild.Id } });
-            guildSetting.SetProperty(channelIdPropertyName, optionChannel.Id);
+            var globalSetting = await databaseHelper.GetOrCreateEntityByKeys<GlobalSetting>(new() { { nameof(GlobalSetting.Key), key } });
+            globalSetting.SetProperty(valuePropertyName, value);
             appDbContext.SaveChanges();
-
-            return optionChannel;
         }
 
         private async Task HandleAttachmentCommand(SocketSlashCommand command, SocketSlashCommandDataOption option)
         {
-            SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GlobalSetting.AttachmentChannelId));
+            SocketTextChannel optionChannel = option.Options.First(x => x.Name == "channel").Value as SocketTextChannel;
+
+            await UpdateGlobalSetting(ATTACHMENT_HOSTING_GUILD_KEY, nameof(GlobalSetting.UlongValue), optionChannel.Guild.Id);
+            await UpdateGlobalSetting(ATTACHMENT_HOSTING_CHANNEL_KEY, nameof(GlobalSetting.UlongValue), optionChannel.Id);
+
             await command.RespondAsync($"已設定{optionChannel.Mention}為附件頻道", ephemeral: true);
         }
     }

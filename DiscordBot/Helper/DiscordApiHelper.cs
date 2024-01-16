@@ -101,8 +101,9 @@ namespace DiscordBot.Helper
         {
             try
             {
-                var createNewAttachmentResult = await userMessage.Channel.SendFileAsync(filePath, text: $"New attachment from {sourceFunction}");
-                return createNewAttachmentResult.Attachments.Single().Url.Split("?")[0];
+                //var createNewAttachmentResult = await userMessage.Channel.SendFileAsync(filePath, text: $"New attachment from {sourceFunction}");
+                //return createNewAttachmentResult.Attachments.Single().Url.Split("?")[0];
+                return null;
             }
             catch (Exception ex)
             {
