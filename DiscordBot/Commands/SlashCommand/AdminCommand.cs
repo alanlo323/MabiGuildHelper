@@ -48,7 +48,7 @@ namespace DiscordBot.Commands.SlashCommand
                     .AddOption(new SlashCommandOptionBuilder()
                         .WithName("attachment")
                         .WithDescription("附件")
-                        .WithType(ApplicationCommandOptionType.SubCommandGroup)
+                        .WithType(ApplicationCommandOptionType.SubCommand)
                         .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
                     )
                 )

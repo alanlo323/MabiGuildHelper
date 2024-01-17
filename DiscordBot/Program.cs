@@ -81,6 +81,7 @@ namespace DiscordBot
                 .AddScoped<IBaseSlashCommand, SettingCommand>()
                 .AddScoped<IBaseSlashCommand, ErinnTimeCommand>()
                 .AddScoped<IBaseSlashCommand, NoticeCommand>()
+                .AddScoped<IBaseSlashCommand, AdminCommand>()
                 .AddScoped<IBaseMessageCommand, EditNewsCommand>()
                 .AddScoped<IBaseButtonHandler, ManageReminderButtonHandler>()
                 .AddScoped<IBaseSelectMenuHandler, AddReminderSelectMenuHandler>()

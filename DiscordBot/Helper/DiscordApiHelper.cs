@@ -12,6 +12,7 @@ using DiscordBot.Extension;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using DiscordBot.Migrations;
+using DiscordBot.Commands.SlashCommand;
 
 namespace DiscordBot.Helper
 {
@@ -101,8 +102,16 @@ namespace DiscordBot.Helper
         {
             try
             {
-                //var createNewAttachmentResult = await userMessage.Channel.SendFileAsync(filePath, text: $"New attachment from {sourceFunction}");
-                //return createNewAttachmentResult.Attachments.Single().Url.Split("?")[0];
+                var guildId = appDbContext.GlobalSettings.Where(x => x.Key == AdminCommand.ATTACHMENT_HOSTING_GUILD_KEY).Single().UlongValue;
+                var channelId = appDbContext.GlobalSettings.Where(x => x.Key == AdminCommand.ATTACHMENT_HOSTING_CHANNEL_KEY).Single().UlongValue;
+                var channel = client.GetChannel(channelId ?? 0);
+
+                if (channel is SocketTextChannel textChannel)
+                {
+                    var createNewAttachmentResult = await textChannel.SendFileAsync(filePath, text: $"New attachment from {sourceFunction}");
+                    return createNewAttachmentResult.Attachments.Single().Url.Split("?")[0];
+                }
+
                 return null;
             }
             catch (Exception ex)
