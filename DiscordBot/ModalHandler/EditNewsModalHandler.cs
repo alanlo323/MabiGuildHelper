@@ -57,7 +57,6 @@ namespace DiscordBot.ButtonHandler
                     embedBuilder = embedBuilder
                         .WithTitle(title)
                         .WithImageUrl(attachmenUrl)
-                        //.WithImageUrl("https://discord.com/assets/2087c4210e4723cc26ac1b265940c499.png")
                         .WithDescription(string.IsNullOrWhiteSpace(releatedMessageUrl) ? content : $"{content}{Environment.NewLine}{Environment.NewLine}維護資訊:{releatedMessageUrl}")
                         .WithCurrentTimestamp();
 

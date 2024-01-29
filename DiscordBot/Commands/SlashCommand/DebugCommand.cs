@@ -21,7 +21,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Commands.SlashCommand
 {
-    public class DebugCommand(ILogger<DebugCommand> logger, AppDbContext appDbContext, DiscordApiHelper discordApiHelper) : IBaseSlashCommand
+    public class DebugCommand(ILogger<DebugCommand> logger, AppDbContext appDbContext, DiscordApiHelper discordApiHelper, IOptionsSnapshot<DiscordBotConfig> discordBotConfig) : IBaseSlashCommand
     {
         public string Name { get; set; } = "debug";
         public string Description { get; set; } = "測試";
@@ -62,6 +62,7 @@ namespace DiscordBot.Commands.SlashCommand
                 foreach (GuildSetting guildSetting in guildSettings)
                 {
                     if (!guildSetting.DataScapingNewsChannelId.HasValue) continue;
+                    if (guildSetting.GuildId != ulong.Parse(discordBotConfig.Value.AdminServerId)) continue;
 
                     foreach (News news in dataScrapingResult.UpdatedNews.Concat(dataScrapingResult.NewNews))
                     {
