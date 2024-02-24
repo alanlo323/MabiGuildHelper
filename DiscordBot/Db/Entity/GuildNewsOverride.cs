@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,9 +17,8 @@ namespace DiscordBot.Db.Entity
     {
         // Parent
         public GuildSetting GuildSetting { get; set; }
-
         public ulong GuildId { get; set; }
-        public string Url { get; set; }
+        public int NewsId { get; set; }
         public ItemTag? ItemTag { get; set; }
         public string? Title { get; set; }
         public string? Content { get; set; }
@@ -46,6 +46,9 @@ namespace DiscordBot.Db.Entity
                 }
                 catch (Exception)
                 {
+                    // Save a blank image
+                    using var image = new Bitmap(1, 1);
+                    image.Save(_snapshotTempFile.FullName);
                 }
 
                 return _snapshotTempFile;
@@ -63,6 +66,7 @@ namespace DiscordBot.Db.Entity
                     property.SetValue(guildNewsOverride, news.GetProperty<object>(property.Name));
                 }
             }
+            guildNewsOverride.NewsId = news.Id;
 
             return guildNewsOverride;
         }

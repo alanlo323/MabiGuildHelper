@@ -26,6 +26,7 @@ namespace DiscordBot.Db.Entity
 
     public class News : BaseEntity
     {
+        public int Id { get; set; }
         public string Url { get; set; }
         public ItemTag? ItemTag { get; set; }
         public string? Title { get; set; }

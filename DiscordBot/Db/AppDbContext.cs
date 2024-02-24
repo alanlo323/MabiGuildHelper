@@ -69,12 +69,7 @@ namespace DiscordBot.Db
                 ;
 
             modelBuilder.Entity<GuildNewsOverride>()
-                .HasKey(e => new { e.GuildId, e.Url })
-                ;
-            modelBuilder.Entity<GuildNewsOverride>()
-                .HasOne(e => e.GuildSetting)
-                .WithMany(e => e.GuildNewsOverrides)
-                .HasForeignKey(e => e.GuildId)
+                .HasKey(e => new { e.GuildId, e.NewsId })
                 ;
 
             modelBuilder.Entity<InstanceReminderSetting>()
@@ -87,7 +82,11 @@ namespace DiscordBot.Db
                 ;
 
             modelBuilder.Entity<News>()
-                .HasKey(e => e.Url)
+                .HasKey(e => e.Id)
+                ;
+            modelBuilder.Entity<News>()
+                .Property(e => e.Id)
+                .ValueGeneratedOnAdd()
                 ;
 
             modelBuilder.Entity<GlobalSetting>()

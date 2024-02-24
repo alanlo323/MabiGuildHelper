@@ -45,15 +45,13 @@ namespace DiscordBot.Commands.MessageCommand
                 }
 
                 Embed embed = message.Embeds.Single();
-                var asd = appDbContext.News.Where(x => x.Url == embed.Url.Replace($"{DataScrapingHelper.MabinogiBaseUrl}/", string.Empty)).ToList();
-                var bbb = appDbContext.News.ToList();
                 News? news = appDbContext.News.Where(x => x.Url == embed.Url.Replace($"{DataScrapingHelper.MabinogiBaseUrl}/", string.Empty)).SingleOrDefault() ?? new()
                 {
                     Url = embed.Url,
                     Title = embed.Title,
                     Content = embed.Description,
                 };
-                GuildNewsOverride newsOverride = appDbContext.GuildNewsOverrides.Where(x => x.GuildId == command.GuildId && x.Url == news.Url).SingleOrDefault() ?? GuildNewsOverride.CloneFromNews(news);
+                GuildNewsOverride newsOverride = appDbContext.GuildNewsOverrides.Where(x => x.GuildId == command.GuildId && x.NewsId == news.Id).SingleOrDefault() ?? GuildNewsOverride.CloneFromNews(news);
                 if (newsOverride.GuildId == default)
                 {
                     newsOverride.GuildId = (ulong)command.GuildId;

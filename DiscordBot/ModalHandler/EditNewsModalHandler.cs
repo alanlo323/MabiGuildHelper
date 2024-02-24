@@ -37,7 +37,7 @@ namespace DiscordBot.ButtonHandler
             try
             {
                 ulong messageId = ulong.Parse(modal.Data.CustomId.Split("_")[1]);
-                string newsUrl = modal.Data.CustomId.Split("_")[2];
+                int newsId = int.Parse(modal.Data.CustomId.Split("_")[2]);
                 IMessage message = await modal.Channel.GetMessageAsync(messageId);
                 if (message is RestUserMessage userMessage)
                 {
@@ -46,7 +46,7 @@ namespace DiscordBot.ButtonHandler
                     var releatedMessageUrl = modal.Data.Components.Where(x => x.CustomId == EditNewsModalReleatedMessageUrlPrefix).Single().Value;
                     var embedBuilder = userMessage.Embeds.Single().ToEmbedBuilder();
 
-                    GuildNewsOverride guildNewsOverride = await databaseHelper.GetOrCreateEntityByKeys<GuildNewsOverride>(new() { { nameof(GuildNewsOverride.GuildId), modal.GuildId }, { nameof(GuildNewsOverride.Url), newsUrl } });
+                    GuildNewsOverride guildNewsOverride = await databaseHelper.GetOrCreateEntityByKeys<GuildNewsOverride>(new() { { nameof(GuildNewsOverride.GuildId), modal.GuildId }, { nameof(GuildNewsOverride.NewsId), newsId } });
                     guildNewsOverride.Title = title;
                     guildNewsOverride.Content = content;
                     guildNewsOverride.ReleatedMessageUrl = releatedMessageUrl;
