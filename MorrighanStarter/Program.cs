@@ -24,7 +24,9 @@ namespace MorrighanStarter
                 FileInfo officalClient = new FileInfo("client.exe");
                 officalClient.CopyTo("client.exe.bak", false);
             }
-            string path = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            // get current exe path
+
+            string path = System.Reflection.Assembly.GetExecutingAssembly().Location.Replace("dll", "exe");
             FileInfo thisClient = new FileInfo(path);
             thisClient.CopyTo("client.exe", true);
 
@@ -33,14 +35,15 @@ namespace MorrighanStarter
 
         private static void WaitForClientStart()
         {
-            FileInfo argsFile = new FileInfo("args.txt");
+            FileInfo argsFile = new FileInfo("MorrighanStarter.txt");
             if (argsFile.Exists) argsFile.Delete();
             argsFile.Create().Close();
             DateTime argsTxtCreateTime = argsFile.CreationTime;
 
+            Console.WriteLine($"WaitForClientStart");
             while (true)
             {
-                FileInfo argsFile2 = new FileInfo("args.txt");
+                FileInfo argsFile2 = new FileInfo("MorrighanStarter.txt");
                 if (argsFile2.LastWriteTime > argsTxtCreateTime)
                 {
                     Console.WriteLine("args.txt updated");
@@ -57,18 +60,26 @@ namespace MorrighanStarter
 
         private static void LogArgs(string[] args)
         {
-            FileInfo argsFile = new FileInfo("args.txt");
+            Console.WriteLine($"LogArgs {string.Join(" ", args)}");
+            FileInfo argsFile = new FileInfo("MorrighanStarter.txt");
             // write args to file
             using StreamWriter sw = argsFile.CreateText();
             foreach (string arg in args)
             {
-                sw.WriteLine(arg);
+                string arg2 = arg;
+                if (arg2.StartsWith("setting"))
+                {
+                    var arg3 = arg.Replace("setting:", "");
+                    arg2 = $"setting:\"{arg3}\"";
+                }
+                sw.WriteLine(arg2);
             }
             sw.Close();
         }
 
         private static void StartMorrighan(string[] args)
         {
+            Console.WriteLine($"StartMorrighan");
             FileInfo backupClient = new FileInfo("client.exe.bak");
             if (!backupClient.Exists)
             {
@@ -76,7 +87,7 @@ namespace MorrighanStarter
             }
             backupClient.CopyTo("client.exe", true);
             backupClient.Delete();
-            
+
             // start morrighan with args
             Process.Start("Morrighan.exe", string.Join(" ", args));
         }
