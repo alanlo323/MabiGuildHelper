@@ -59,14 +59,18 @@ namespace DiscordBot.Helper
             List<News> newsFromWebsite = [];
             foreach (string activityHtml in activitiesHtml)
             {
-                newsFromWebsite.Add(new()
+                try
                 {
-                    Title = activityHtml.Split("item-title\">")[1].Split("</")[0].Trim().MarkDownEscape(),
-                    ItemTag = Enum.Parse<ItemTag>(activityHtml.Split("item-tag ")[1].Split("\"")[0].Trim()),
-                    Url = activityHtml.Split("href=\"")[1].Split("\"")[0].Trim().Replace("&amp;", "&"),
-                    ImageUrl = activityHtml.Split("background-image: url(&quot;")[1].Split(");")[0].Trim(),
-                    PublishDate = DateTime.Parse(activityHtml.Split("item-time\">")[1].Split("</")[0].Trim()),
-                });
+                    newsFromWebsite.Add(new()
+                    {
+                        Title = activityHtml.Split("item-title\">")[1].Split("</")[0].Trim().MarkDownEscape(),
+                        ItemTag = Enum.Parse<ItemTag>(activityHtml.Split("item-tag ")[1].Split("\"")[0].Trim()),
+                        Url = activityHtml.Split("href=\"")[1].Split("\"")[0].Trim().Replace("&amp;", "&"),
+                        ImageUrl = activityHtml.Split("background-image: url(&quot;")[1].Split(");")[0].Trim(),
+                        PublishDate = DateTime.Parse(activityHtml.Split("item-time\">")[1].Split("</")[0].Trim()),
+                    });
+                }
+                catch (Exception) { }
             }
 
             int totalNews = newsFromWebsite.Count;
@@ -80,7 +84,7 @@ namespace DiscordBot.Helper
                   await using var newsContentPage = await browser.NewPageAsync();
                   await UpdateContent(news, newsContentPage);
 
-                  switch (news.Content.Length)
+                  switch (news.Content?.Length)
                   {
                       case > 200:
                           {
@@ -153,54 +157,61 @@ namespace DiscordBot.Helper
         {
             try
             {
-                await page.GoToAsync($"{MabinogiBaseUrl}/{news.Url}", WaitUntilNavigation.Networkidle0);
+                string url = $"{MabinogiBaseUrl}/{news.Url}";
+                // check if urk is valid
+                if (!Uri.IsWellFormedUriString(news.Url, UriKind.Relative)) return;
 
-                var knowElementQuery = ".cookie-bar-know";
-                await page.WaitForSelectorAsync(knowElementQuery);
-                var knowElementHandle = await page.QuerySelectorAsync(knowElementQuery);
-                await knowElementHandle.ClickAsync();
-            }
-            catch (Exception)
-            {
-            }
-
-            try
-            {
-                var navElementQuery = ".navigation-bar";
-                await page.WaitForSelectorAsync(navElementQuery);
-                await page.EvaluateExpressionAsync($"document.querySelector('{navElementQuery}').remove();");
-
-                var bfActionBarElementQuery = "#BF_divActionBar";
-                await page.WaitForSelectorAsync(bfActionBarElementQuery);
-                await page.EvaluateExpressionAsync($"document.querySelector('{bfActionBarElementQuery}').remove();");
-            }
-            catch (Exception)
-            {
-            }
-
-            var contentElementQuery = ".news-inside-content";
-            await page.WaitForSelectorAsync(contentElementQuery);
-            var contentElementHandle = await page.QuerySelectorAsync(contentElementQuery);
-            var contentInnerText = await contentElementHandle.GetPropertyAsync("innerText");
-
-            var contentElementSreenshot = await contentElementHandle.ScreenshotBase64Async(
-                new ScreenshotOptions
+                await page.GoToAsync(url, WaitUntilNavigation.Networkidle0);
+                try
                 {
-                    Type = ScreenshotType.Png,
-                    OmitBackground = true,
+                    var knowElementQuery = ".cookie-bar-know";
+                    await page.WaitForSelectorAsync(knowElementQuery);
+                    var knowElementHandle = await page.QuerySelectorAsync(knowElementQuery);
+                    await knowElementHandle.ClickAsync();
                 }
-            );
+                catch (Exception)
+                {
+                }
 
-            news.Base64Snapshot = contentElementSreenshot;
-            news.Content = contentInnerText.RemoteObject.Value.ToString()
-                .Replace(news.Title, string.Empty)
-                .Replace($"{news.PublishDate:yyyy/MM/dd}", string.Empty)
-                .MarkDownEscape()
-                .Trim()
-                .TrimToDiscordEmbedLimited()
-                ;
+                try
+                {
+                    var navElementQuery = ".navigation-bar";
+                    await page.WaitForSelectorAsync(navElementQuery);
+                    await page.EvaluateExpressionAsync($"document.querySelector('{navElementQuery}').remove();");
 
-            await page.CloseAsync();
+                    var bfActionBarElementQuery = "#BF_divActionBar";
+                    await page.WaitForSelectorAsync(bfActionBarElementQuery);
+                    await page.EvaluateExpressionAsync($"document.querySelector('{bfActionBarElementQuery}').remove();");
+                }
+                catch (Exception)
+                {
+                }
+
+                var contentElementQuery = ".news-inside-content";
+                await page.WaitForSelectorAsync(contentElementQuery);
+                var contentElementHandle = await page.QuerySelectorAsync(contentElementQuery);
+                var contentInnerText = await contentElementHandle.GetPropertyAsync("innerText");
+
+                var contentElementSreenshot = await contentElementHandle.ScreenshotBase64Async(
+                    new ElementScreenshotOptions
+                    {
+                        Type = ScreenshotType.Png,
+                        OmitBackground = true,
+                    }
+                );
+
+                news.Base64Snapshot = contentElementSreenshot;
+                news.Content = contentInnerText.RemoteObject.Value.ToString()
+                    .Replace(news.Title, string.Empty)
+                    .Replace($"{news.PublishDate:yyyy/MM/dd}", string.Empty)
+                    .MarkDownEscape()
+                    .Trim()
+                    .TrimToDiscordEmbedLimited()
+                    ;
+
+                await page.CloseAsync();
+            }
+            catch (Exception) { }
         }
     }
 }

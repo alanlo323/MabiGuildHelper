@@ -29,7 +29,7 @@ namespace DiscordBot.Util
 
             var elementHandle = await page.QuerySelectorAsync(elementQuery); // Declare a variable with an ElementHandle.
             var result = await elementHandle.ScreenshotDataAsync(
-                new ScreenshotOptions
+                new ElementScreenshotOptions
                 {
                     Type = ScreenshotType.Png,
                 }

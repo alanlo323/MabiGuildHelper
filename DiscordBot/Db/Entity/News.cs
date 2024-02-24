@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DiscordBot.Helper;
 using DiscordBot.Migrations;
 using DiscordBot.Util;
 
@@ -36,7 +38,7 @@ namespace DiscordBot.Db.Entity
         public bool IsUrgent => Title?.Contains("臨時維護") ?? false;
 
         [NotMapped]
-        private FileInfo _snapshotTempFile;
+        private FileInfo? _snapshotTempFile;
 
         [NotMapped]
         public FileInfo SnapshotTempFile
@@ -51,15 +53,27 @@ namespace DiscordBot.Db.Entity
 
                 try
                 {
-                    var image = ImageUtil.Base64ToImage(Base64Snapshot);
+                    Image image;
+                    if (string.IsNullOrEmpty(Base64Snapshot))
+                    {
+                        // save a blank image
+                        image = new Bitmap(1, 1);
+                    }
+                    else
+                    {
+                        image = ImageUtil.Base64ToImage(Base64Snapshot);
+                    }
                     image.Save(_snapshotTempFile.FullName);
                 }
-                catch (Exception)
-                {
-                }
+                catch (Exception) { }
 
                 return _snapshotTempFile;
             }
+        }
+
+        public string GetFullUrl()
+        {
+            return Uri.IsWellFormedUriString(Url, UriKind.Relative) ? $"{DataScrapingHelper.MabinogiBaseUrl}/{Url}" : Url;
         }
 
         public override bool Equals(object? obj)

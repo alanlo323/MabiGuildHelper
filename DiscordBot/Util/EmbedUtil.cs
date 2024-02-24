@@ -125,7 +125,7 @@ namespace DiscordBot.Util
                 .WithTitle(news.Title)
                 .WithDescription(news.IsUrgent ? $"{news.Content}{Environment.NewLine}<@here>" : news.Content)
                 .WithFooter("更新時間")
-                .WithUrl($"{DataScrapingHelper.MabinogiBaseUrl}/{news.Url}")
+                .WithUrl(news.GetFullUrl())
                 .WithTimestamp((DateTimeOffset)news.UpdatedAt)
                 .WithImageUrl($"attachment://{news.SnapshotTempFile.Name}")
                 ;
