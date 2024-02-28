@@ -76,6 +76,17 @@ namespace DiscordBot.Commands.SlashCommand
                         .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
                     )
                 )
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("helper")
+                    .WithDescription("助手相關")
+                    .WithType(ApplicationCommandOptionType.SubCommand)
+                    .AddOption(new SlashCommandOptionBuilder()
+                        .WithName("crombas")
+                        .WithDescription("設定喀輪巴斯助手使用的頻道")
+                        .WithType(ApplicationCommandOptionType.SubCommand)
+                        .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
+                    )
+                )
                 ;
             return command.Build();
         }
@@ -91,6 +102,9 @@ namespace DiscordBot.Commands.SlashCommand
                         break;
                     case "reminder":
                         await HandleReminderCommand(command, option);
+                        break;
+                    case "helper":
+                        await HandleHelperCommand(command, option);
                         break;
                     default:
                         break;
@@ -130,6 +144,21 @@ namespace DiscordBot.Commands.SlashCommand
                 {
                     case "instanceresetreminder":
                         await HandleInstanceResetReminderCommand(command, subOption);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        private async Task HandleHelperCommand(SocketSlashCommand command, SocketSlashCommandDataOption option)
+        {
+            foreach (SocketSlashCommandDataOption subOption in option.Options)
+            {
+                switch (subOption.Name)
+                {
+                    case "crombas":
+                        await HandleCrombasCommand(command, subOption);
                         break;
                     default:
                         break;
@@ -189,6 +218,15 @@ namespace DiscordBot.Commands.SlashCommand
         {
             SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.InstanceResetReminderChannelId));
             await command.RespondAsync($"已設定{optionChannel.Mention}為重置提醒頻道", ephemeral: true);
+
+            InstanceResetReminderJob job = serviceProvider.GetRequiredService<InstanceResetReminderJob>();
+            await job.Execute(null);
+        }
+
+        private async Task HandleCrombasCommand(SocketSlashCommand command, SocketSlashCommandDataOption option)
+        {
+            SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.CrombasHelperChannelId));
+            await command.RespondAsync($"已設定{optionChannel.Mention}為喀輪巴斯助手頻道", ephemeral: true);
 
             InstanceResetReminderJob job = serviceProvider.GetRequiredService<InstanceResetReminderJob>();
             await job.Execute(null);
