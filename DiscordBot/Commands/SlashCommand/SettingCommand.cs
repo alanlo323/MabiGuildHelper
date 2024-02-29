@@ -79,7 +79,7 @@ namespace DiscordBot.Commands.SlashCommand
                 .AddOption(new SlashCommandOptionBuilder()
                     .WithName("helper")
                     .WithDescription("助手相關")
-                    .WithType(ApplicationCommandOptionType.SubCommand)
+                    .WithType(ApplicationCommandOptionType.SubCommandGroup)
                     .AddOption(new SlashCommandOptionBuilder()
                         .WithName("crombas")
                         .WithDescription("設定喀輪巴斯助手使用的頻道")
@@ -227,9 +227,6 @@ namespace DiscordBot.Commands.SlashCommand
         {
             SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.CrombasHelperChannelId));
             await command.RespondAsync($"已設定{optionChannel.Mention}為喀輪巴斯助手頻道", ephemeral: true);
-
-            InstanceResetReminderJob job = serviceProvider.GetRequiredService<InstanceResetReminderJob>();
-            await job.Execute(null);
         }
     }
 }

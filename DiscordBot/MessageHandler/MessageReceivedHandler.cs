@@ -35,6 +35,7 @@ namespace DiscordBot.MessageHandler
 
         private async Task CheckFunnyResponse(SocketUserMessage message)
         {
+            await CheckCromBasTrigger(message);
             await CheckWordTrigger(message);
             await CheckStickerTrigger(message);
             await CheckCountOffTrigger(message);
@@ -204,6 +205,8 @@ namespace DiscordBot.MessageHandler
                         result = $"{numberResult}{mappedPostFix}";
                     }
                     result = result.Trim().ToQuotation();
+
+                    await message.ReplyAsync(result);
                 }
             }
         }
