@@ -34,5 +34,10 @@ namespace DiscordBot.Extension
 
             return input;
         }
+
+        public static int ToInt(this string input)
+        {
+            return int.Parse(input);
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -9,16 +10,18 @@ using Discord.Rest;
 using Discord.WebSocket;
 using DiscordBot.Configuration;
 using DiscordBot.Db;
+using DiscordBot.Extension;
 using DiscordBot.Helper;
 using DiscordBot.SelectMenuHandler;
 using DiscordBot.Util;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace DiscordBot.MessageHandler
 {
-    public partial class MessageReceivedHandler(ILogger<MessageReceivedHandler> logger, DiscordSocketClient client, IOptionsSnapshot<FunnyResponseConfig> funnyResponseConfig)
+    public partial class MessageReceivedHandler(ILogger<MessageReceivedHandler> logger, DiscordSocketClient client, IOptionsSnapshot<FunnyResponseConfig> funnyResponseConfig, AppDbContext appDbContext)
     {
         FunnyResponseConfig _funnyResponseConfig = funnyResponseConfig.Value;
 
@@ -146,29 +149,66 @@ namespace DiscordBot.MessageHandler
 
         private async Task CheckCromBasTrigger(SocketUserMessage message)
         {
-            Regex regex = CromBasHintRegex();
-            var match = regex.Match(message.CleanContent);
-            if (match.Success)
+            if (await appDbContext.GuildSettings.AnyAsync(x => x.CrombasHelperChannelId == message.Channel.Id))
             {
-                foreach (Group group in match.Groups)
+                Regex regex = CromBasHintRegex();
+                var match = regex.Match(message.Content);
+                if (match.Success)
                 {
-                    switch (group.Name)
+                    Queue<int> number = new();
+                    Queue<string> symbo = new();
+                    string postfix = string.Empty;
+                    foreach (Group group in match.Groups.Cast<Group>())
                     {
-                        case "1":
-                            break;
-                        case "2":
-                            break;
-                        case "3":
-                            break;
-                        case "4":
-                            break;
+                        switch (group.Name)
+                        {
+                            case "1":
+                                for (int i = 0; i < group.Captures.Count; i++)
+                                {
+                                    number.Enqueue(group.Captures[i].Value.ToInt());
+                                }
+                                break;
+                            case "2":
+                                for (int i = 0; i < group.Captures.Count; i++)
+                                {
+                                    symbo.Enqueue(group.Captures[i].Value);
+                                }
+                                break;
+                            case "3":
+                                postfix = group.Value;
+                                break;
+                        }
                     }
-                    { }
+
+                    string expression = string.Empty;
+                    int numberCount = number.Count;
+                    while (number.Count > 0)
+                    {
+                        expression += $"{number.Dequeue()} ";
+                        if (symbo.Count > 0) expression += $"{symbo.Dequeue()} ";
+                    }
+                    expression = expression.Trim();
+                    var numberResult = new DataTable().Compute(expression, string.Empty);
+                    string[] posfFixes = ["山夏", "立春", "入夏", "秋收", "巴斯"];
+                    string result = string.Empty;
+                    string mappedPostFix = posfFixes.FirstOrDefault(x => !string.IsNullOrWhiteSpace(postfix) && x.StartsWith(postfix));
+                    if (string.IsNullOrEmpty(mappedPostFix))
+                    {
+                        foreach (var item in posfFixes)
+                        {
+                            result += $"{numberResult}{item}{Environment.NewLine}";
+                        }
+                    }
+                    else
+                    {
+                        result = $"{numberResult}{mappedPostFix}";
+                    }
+                    result = result.Trim().ToQuotation();
                 }
             }
         }
 
-        [GeneratedRegex(@"(\d+ *){3}.*([\+\-\*\/]){2} *(..?)?", RegexOptions.IgnoreCase)]
+        [GeneratedRegex(@"(\d+ ){3}.*([\+\-\*\/]){2} *(..?)?", RegexOptions.IgnoreCase)]
         private static partial Regex CromBasHintRegex();
     }
 }

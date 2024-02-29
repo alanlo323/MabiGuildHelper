@@ -5,7 +5,12 @@ VisualStudioVersion = 17.7.34031.279
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordBot", "DiscordBot\DiscordBot.csproj", "{14FEC58D-EFA6-4216-A139-3DF7F60A220A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MorrighanStarter", "MorrighanStarter\MorrighanStarter.csproj", "{9D6425C3-0E85-49D8-8C37-3C4EF27023AB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MorrighanStarter", "MorrighanStarter\MorrighanStarter.csproj", "{9D6425C3-0E85-49D8-8C37-3C4EF27023AB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{23E88A63-DE86-4F62-8DB5-22924F679A03}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

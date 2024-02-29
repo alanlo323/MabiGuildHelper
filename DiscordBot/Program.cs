@@ -7,6 +7,7 @@ using DiscordBot.Configuration;
 using DiscordBot.Constant;
 using DiscordBot.Db;
 using DiscordBot.Db.Entity;
+using DiscordBot.Extension;
 using DiscordBot.Helper;
 using DiscordBot.MessageHandler;
 using DiscordBot.SchedulerJob;
@@ -23,6 +24,7 @@ using NLog.Config;
 using NLog.Extensions.Logging;
 using NLog.Targets;
 using Quartz;
+using System.Data;
 using System.Text.RegularExpressions;
 
 namespace DiscordBot
@@ -33,32 +35,8 @@ namespace DiscordBot
 
         public Program()
         {
-            int[] number = new int[3]; 
-            Regex regex = CromBasHintRegex();
-            var match = regex.Match("27 72 348 *-    入夏");
-            if (match.Success)
-            {
-                foreach (Group group in match.Groups)
-                {
-                    switch (group.Name)
-                    {
-                        case "1":
-                            number[0] = group.Captures[0]
-                            break;
-                        case "2":
-                            break;
-                        case "3":
-                            break;
-                        case "4":
-                            break;
-                    }
-                    { }
-                }
-            }
         }
 
-        [GeneratedRegex(@"(\d+ ){3}.*([\+\-\*\/]){2} *(..?)?", RegexOptions.IgnoreCase)]
-        private static partial Regex CromBasHintRegex();
         public async Task RunAsync(string[] args)
         {
             HostApplicationBuilder builder = Host.CreateApplicationBuilder();
