@@ -307,7 +307,7 @@ namespace DiscordBot
 
                 Thread newThread = new(async () =>
                 {
-                    await instance.Excute(modal);
+                    await instance.Execute(modal);
                 });
                 newThread.Start();
             }

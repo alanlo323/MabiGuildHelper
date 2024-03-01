@@ -225,7 +225,7 @@ namespace DiscordBot.Commands.SlashCommand
 
         private async Task HandleCrombasCommand(SocketSlashCommand command, SocketSlashCommandDataOption option)
         {
-            SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.CrombasHelperChannelId));
+            SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.CromBasHelperChannelId));
             await command.RespondAsync($"已設定{optionChannel.Mention}為喀輪巴斯助手頻道", ephemeral: true);
         }
     }

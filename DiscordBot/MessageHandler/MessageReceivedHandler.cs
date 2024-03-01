@@ -150,7 +150,7 @@ namespace DiscordBot.MessageHandler
 
         private async Task CheckCromBasTrigger(SocketUserMessage message)
         {
-            if (await appDbContext.GuildSettings.AnyAsync(x => x.CrombasHelperChannelId == message.Channel.Id))
+            if (await appDbContext.GuildSettings.AnyAsync(x => x.CromBasHelperChannelId == message.Channel.Id))
             {
                 Regex regex = CromBasHintRegex();
                 var match = regex.Match(message.Content);

@@ -12,6 +12,6 @@ namespace DiscordBot.ButtonHandler
     {
         public string CustomId { get; set; }
 
-        public async Task Excute(SocketModal modal) { }
+        public async Task Execute(SocketModal modal) { }
     }
 }

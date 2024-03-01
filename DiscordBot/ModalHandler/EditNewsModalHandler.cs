@@ -31,7 +31,7 @@ namespace DiscordBot.ButtonHandler
 
         public string CustomId { get; set; } = EditNewsModalMasterIdPrefix;
 
-        public async Task Excute(SocketModal modal)
+        public async Task Execute(SocketModal modal)
         {
             await modal.DeferLoadingAsync(ephemeral: true);
             try
@@ -43,21 +43,21 @@ namespace DiscordBot.ButtonHandler
                 {
                     var title = modal.Data.Components.Where(x => x.CustomId == EditNewsModalTitleIdPrefix).Single().Value;
                     var content = modal.Data.Components.Where(x => x.CustomId == EditNewsModalContentIdPrefix).Single().Value;
-                    var releatedMessageUrl = modal.Data.Components.Where(x => x.CustomId == EditNewsModalReleatedMessageUrlPrefix).Single().Value;
+                    var relatedMessageUrl = modal.Data.Components.Where(x => x.CustomId == EditNewsModalReleatedMessageUrlPrefix).Single().Value;
                     var embedBuilder = userMessage.Embeds.Single().ToEmbedBuilder();
 
                     GuildNewsOverride guildNewsOverride = await databaseHelper.GetOrCreateEntityByKeys<GuildNewsOverride>(new() { { nameof(GuildNewsOverride.GuildId), modal.GuildId }, { nameof(GuildNewsOverride.NewsId), newsId } });
                     guildNewsOverride.Title = title;
                     guildNewsOverride.Content = content;
-                    guildNewsOverride.ReleatedMessageUrl = releatedMessageUrl;
+                    guildNewsOverride.ReleatedMessageUrl = relatedMessageUrl;
                     await appDbContext.SaveChangesAsync();
 
-                    var attachmenUrl = await discordApiHelper.UploadAttachment(guildNewsOverride.SnapshotTempFile.FullName, $"{EditNewsModalMasterIdPrefix}: {userMessage.GetJumpUrl()}");
+                    var attachmentUrl = await discordApiHelper.UploadAttachment(guildNewsOverride.SnapshotTempFile.FullName, $"{EditNewsModalMasterIdPrefix}: {userMessage.GetJumpUrl()}");
 
                     embedBuilder = embedBuilder
                         .WithTitle(title)
-                        .WithImageUrl(attachmenUrl)
-                        .WithDescription(string.IsNullOrWhiteSpace(releatedMessageUrl) ? content : $"{content}{Environment.NewLine}{Environment.NewLine}維護資訊:{releatedMessageUrl}")
+                        .WithImageUrl(attachmentUrl)
+                        .WithDescription(string.IsNullOrWhiteSpace(relatedMessageUrl) ? content : $"{content}{Environment.NewLine}{Environment.NewLine}維護資訊:{relatedMessageUrl}")
                         .WithCurrentTimestamp();
 
                     await userMessage.ModifyAsync(x =>
