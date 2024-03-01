@@ -23,6 +23,8 @@ namespace DiscordBot.MessageHandler
 {
     public partial class MessageReceivedHandler(ILogger<MessageReceivedHandler> logger, DiscordSocketClient client, IOptionsSnapshot<FunnyResponseConfig> funnyResponseConfig, AppDbContext appDbContext)
     {
+        public static readonly string CromBasHelperChannelIdListKey = "CromBasHelperChannelIdListKey";
+
         FunnyResponseConfig _funnyResponseConfig = funnyResponseConfig.Value;
 
         public async Task Excute(SocketMessage socketMessage)
@@ -150,7 +152,8 @@ namespace DiscordBot.MessageHandler
 
         private async Task CheckCromBasTrigger(SocketUserMessage message)
         {
-            if (await appDbContext.GuildSettings.AnyAsync(x => x.CromBasHelperChannelId == message.Channel.Id))
+            var cromBasHelperChannelIdList = (List<ulong?>)RuntimeDbUtil.DefaultRuntimeDb.GetValueOrDefault(CromBasHelperChannelIdListKey, new List<ulong?>());
+            if (cromBasHelperChannelIdList.Any(x => x == message.Channel.Id))
             {
                 Regex regex = CromBasHintRegex();
                 var match = regex.Match(message.Content);

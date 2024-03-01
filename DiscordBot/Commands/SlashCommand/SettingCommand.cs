@@ -13,8 +13,10 @@ using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Extension;
 using DiscordBot.Helper;
+using DiscordBot.MessageHandler;
 using DiscordBot.SchedulerJob;
 using DiscordBot.Util;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -158,7 +160,7 @@ namespace DiscordBot.Commands.SlashCommand
                 switch (subOption.Name)
                 {
                     case "crombas":
-                        await HandleCrombasCommand(command, subOption);
+                        await HandleCromBasCommand(command, subOption);
                         break;
                     default:
                         break;
@@ -223,10 +225,13 @@ namespace DiscordBot.Commands.SlashCommand
             await job.Execute(null);
         }
 
-        private async Task HandleCrombasCommand(SocketSlashCommand command, SocketSlashCommandDataOption option)
+        private async Task HandleCromBasCommand(SocketSlashCommand command, SocketSlashCommandDataOption option)
         {
             SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.CromBasHelperChannelId));
             await command.RespondAsync($"已設定{optionChannel.Mention}為喀輪巴斯助手頻道", ephemeral: true);
+
+            var guildSettings = await appDbContext.GuildSettings.Where(x => x.CromBasHelperChannelId != null).ToListAsync();
+            RuntimeDbUtil.DefaultRuntimeDb[MessageReceivedHandler.CromBasHelperChannelIdListKey] = guildSettings.Select(x => x.CromBasHelperChannelId).ToList();
         }
     }
 }
