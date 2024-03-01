@@ -155,21 +155,22 @@ namespace DiscordBot.MessageHandler
             var cromBasHelperChannelIdList = (List<ulong?>)RuntimeDbUtil.DefaultRuntimeDb.GetValueOrDefault(CromBasHelperChannelIdListKey, new List<ulong?>());
             if (cromBasHelperChannelIdList.Any(x => x == message.Channel.Id))
             {
-                Regex regex = CromBasHintRegex();
-                var match = regex.Match(message.Content);
-                if (match.Success)
+                Regex cromBasRegex = CromBasHintRegex();
+                Regex digitRegex = DigitRegex();
+                var cromBasMatch = cromBasRegex.Match(message.Content);
+                if (cromBasMatch.Success)
                 {
                     Queue<int> number = new();
                     Queue<string> symbol = new();
                     string postfix = string.Empty;
-                    foreach (Group group in match.Groups.Cast<Group>())
+                    foreach (Group group in cromBasMatch.Groups.Cast<Group>())
                     {
                         switch (group.Name)
                         {
                             case "1":
                                 for (int i = 0; i < group.Captures.Count; i++)
                                 {
-                                    number.Enqueue(group.Captures[i].Value.ToInt());
+                                    number.Enqueue(digitRegex.Match(group.Captures[i].Value).Value.ToInt());
                                 }
                                 break;
                             case "2":
@@ -214,7 +215,10 @@ namespace DiscordBot.MessageHandler
             }
         }
 
-        [GeneratedRegex(@"(\d+ ){3}.*([\+\-\*\/]){2} *([山立入秋巴])?.*", RegexOptions.IgnoreCase)]
+        [GeneratedRegex(@"(\d+.?){3}.*([\+\-\*\/]){2} *([山立入秋巴])?.*", RegexOptions.IgnoreCase)]
         private static partial Regex CromBasHintRegex();
+
+        [GeneratedRegex(@"\d+", RegexOptions.IgnoreCase)]
+        private static partial Regex DigitRegex();
     }
 }
