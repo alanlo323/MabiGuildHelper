@@ -45,7 +45,7 @@ namespace DiscordBot.MessageHandler
 
         private async Task CheckWordTrigger(SocketUserMessage message)
         {
-            var triggeredWords = _funnyResponseConfig.TriggerWords.Where(x => message.Content.ToLower().Contains(x.ToLower()));
+            var triggeredWords = _funnyResponseConfig.TriggerWords.Where(x => message.Content.Contains(x, StringComparison.CurrentCultureIgnoreCase));
             if (triggeredWords.Any())
             {
                 string triggeredWord = triggeredWords.First();
@@ -56,7 +56,7 @@ namespace DiscordBot.MessageHandler
 
                 bool replyMessage = false;
                 AppDataHelper appDataHelper = new();
-                FileAttachment[] fileAttachments = new[] { new FileAttachment(appDataHelper.GetFunnyResponseFile().FullName) };
+                FileAttachment[] fileAttachments = [new FileAttachment(appDataHelper.GetFunnyResponseFile().FullName)];
 
                 await message.Channel.SendFilesAsync(fileAttachments, messageReference: replyMessage ? new(message.Id) : null);
                 logger.LogInformation($"CheckFunnyResponse|${key}");

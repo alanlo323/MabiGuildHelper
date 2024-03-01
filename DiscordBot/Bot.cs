@@ -95,10 +95,10 @@ namespace DiscordBot
             logger.LogInformation("Starting Discord Bot");
             logger.LogInformation($"Running in {EnvironmentUtil.GetEnvironment()} mode");
 
+            await Init();
+
             await client.LoginAsync(TokenType.Bot, EnvironmentUtil.IsProduction() ? discordBotConfig.Token : discordBotConfig.BetaToken);
             await client.StartAsync();
-
-            await Init();
         }
 
         public async Task Init()
