@@ -206,9 +206,10 @@ namespace DiscordBot.MessageHandler
                     }
                     else
                     {
+                        expression += $" {mappedPostFix}";
                         result = $"{numberResult}{mappedPostFix}";
                     }
-                    result = result.Trim().ToQuotation();
+                    result = $"{expression}{Environment.NewLine}{result.Trim().ToQuotation()}";
 
                     await message.ReplyAsync(result);
                 }
