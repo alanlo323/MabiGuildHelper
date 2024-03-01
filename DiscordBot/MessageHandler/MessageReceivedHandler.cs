@@ -190,12 +190,12 @@ namespace DiscordBot.MessageHandler
                     }
                     expression = expression.Trim();
                     var numberResult = new DataTable().Compute(expression, string.Empty);
-                    string[] posfFixes = ["山夏", "立春", "入夏", "秋收", "巴斯"];
+                    string[] posFixes = ["山夏", "立春", "入夏", "秋收", "巴斯"];
                     string result = string.Empty;
-                    string mappedPostFix = posfFixes.FirstOrDefault(x => !string.IsNullOrWhiteSpace(postfix) && x.StartsWith(postfix));
+                    string mappedPostFix = posFixes.FirstOrDefault(x => !string.IsNullOrWhiteSpace(postfix) && x.StartsWith(postfix));
                     if (string.IsNullOrEmpty(mappedPostFix))
                     {
-                        foreach (var item in posfFixes)
+                        foreach (var item in posFixes)
                         {
                             result += $"{numberResult}{item}{Environment.NewLine}";
                         }
