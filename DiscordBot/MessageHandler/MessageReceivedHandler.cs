@@ -214,7 +214,7 @@ namespace DiscordBot.MessageHandler
             }
         }
 
-        [GeneratedRegex(@"(\d+ ){3}.*([\+\-\*\/]){2} *(..?)?", RegexOptions.IgnoreCase)]
+        [GeneratedRegex(@"(\d+ ){3}.*([\+\-\*\/]){2} *([山立入秋巴])?.*", RegexOptions.IgnoreCase)]
         private static partial Regex CromBasHintRegex();
     }
 }
