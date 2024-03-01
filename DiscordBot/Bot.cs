@@ -109,7 +109,7 @@ namespace DiscordBot
 
         public async Task ClientReady()
         {
-            logger.LogInformation($"Runngin in {client.Guilds.Count} servers");
+            logger.LogInformation($"Running in {client.Guilds.Count} servers");
             await client.SetActivityAsync(new Game(gameConfig.DisplayName, ActivityType.Playing));
             //await RefreshCommand();
 
