@@ -157,7 +157,7 @@ namespace DiscordBot.MessageHandler
                 if (match.Success)
                 {
                     Queue<int> number = new();
-                    Queue<string> symbo = new();
+                    Queue<string> symbol = new();
                     string postfix = string.Empty;
                     foreach (Group group in match.Groups.Cast<Group>())
                     {
@@ -172,7 +172,7 @@ namespace DiscordBot.MessageHandler
                             case "2":
                                 for (int i = 0; i < group.Captures.Count; i++)
                                 {
-                                    symbo.Enqueue(group.Captures[i].Value);
+                                    symbol.Enqueue(group.Captures[i].Value);
                                 }
                                 break;
                             case "3":
@@ -186,7 +186,7 @@ namespace DiscordBot.MessageHandler
                     while (number.Count > 0)
                     {
                         expression += $"{number.Dequeue()} ";
-                        if (symbo.Count > 0) expression += $"{symbo.Dequeue()} ";
+                        if (symbol.Count > 0) expression += $"{symbol.Dequeue()} ";
                     }
                     expression = expression.Trim();
                     var numberResult = new DataTable().Compute(expression, string.Empty);
