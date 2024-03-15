@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -155,44 +156,63 @@ namespace DiscordBot.MessageHandler
             var cromBasHelperChannelIdList = (List<ulong?>)RuntimeDbUtil.DefaultRuntimeDb.GetValueOrDefault(CromBasHelperChannelIdListKey, new List<ulong?>());
             if (cromBasHelperChannelIdList.Any(x => x == message.Channel.Id))
             {
+                string expression = string.Empty;
+                string postfix = string.Empty;
                 Regex cromBasRegex = CromBasHintRegex();
+                Regex cromBasRegex2 = CromBasHintRegex2();
                 Regex digitRegex = DigitRegex();
                 var cromBasMatch = cromBasRegex.Match(message.Content);
-                if (cromBasMatch.Success)
+                var cromBasMatch2 = cromBasRegex2.Match(message.Content);
+                if (cromBasMatch.Success || cromBasMatch2.Success)
                 {
-                    Queue<int> number = new();
-                    Queue<string> symbol = new();
-                    string postfix = string.Empty;
-                    foreach (Group group in cromBasMatch.Groups.Cast<Group>())
+                    if (cromBasMatch.Success)
                     {
-                        switch (group.Name)
+                        Queue<int> number = new();
+                        Queue<string> symbol = new();
+                        foreach (Group group in cromBasMatch.Groups.Cast<Group>())
                         {
-                            case "1":
-                                for (int i = 0; i < group.Captures.Count; i++)
-                                {
-                                    number.Enqueue(digitRegex.Match(group.Captures[i].Value).Value.ToInt());
-                                }
-                                break;
-                            case "2":
-                                for (int i = 0; i < group.Captures.Count; i++)
-                                {
-                                    symbol.Enqueue(group.Captures[i].Value);
-                                }
-                                break;
-                            case "3":
-                                postfix = group.Value;
-                                break;
+                            switch (group.Name)
+                            {
+                                case "1":
+                                    for (int i = 0; i < group.Captures.Count; i++)
+                                    {
+                                        number.Enqueue(digitRegex.Match(group.Captures[i].Value).Value.ToInt());
+                                    }
+                                    break;
+                                case "2":
+                                    for (int i = 0; i < group.Captures.Count; i++)
+                                    {
+                                        symbol.Enqueue(group.Captures[i].Value);
+                                    }
+                                    break;
+                                case "3":
+                                    postfix = group.Value;
+                                    break;
+                            }
+                        }
+                        int numberCount = number.Count;
+                        while (number.Count > 0)
+                        {
+                            expression += $"{number.Dequeue()} ";
+                            if (symbol.Count > 0) expression += $"{symbol.Dequeue()} ";
+                        }
+                    }
+                    else
+                    {
+                        Group group5 = cromBasMatch2.Groups["5"];
+                        if (group5.Success)
+                        {
+                            expression = cromBasMatch2.Value[..group5.Index];
+                            postfix = group5.Value;
+                        }
+                        else
+                        {
+                            expression = cromBasMatch2.Value;
                         }
                     }
 
-                    string expression = string.Empty;
-                    int numberCount = number.Count;
-                    while (number.Count > 0)
-                    {
-                        expression += $"{number.Dequeue()} ";
-                        if (symbol.Count > 0) expression += $"{symbol.Dequeue()} ";
-                    }
-                    expression = expression.Trim();
+                    expression = expression.Trim().FormatExpression();
+
                     var numberResult = new DataTable().Compute(expression, string.Empty);
                     string[] posFixes = ["山夏", "立春", "入夏", "秋收", "巴斯"];
                     string result = string.Empty;
@@ -216,8 +236,11 @@ namespace DiscordBot.MessageHandler
             }
         }
 
-        [GeneratedRegex(@"(\d+.?){3}.*([\+\-\*\/]){2} *([山立入秋巴])?.*", RegexOptions.IgnoreCase)]
+        [GeneratedRegex(@"(\d+.?){3}.*([\+\-\*\/]){2} *([山立入秋巴])?.*", RegexOptions.IgnoreCase)] //  1 2 3 ++ 山
         private static partial Regex CromBasHintRegex();
+
+        [GeneratedRegex(@"((\d+)( *[\+\-\*\/]) *){2}(\d+) *([山立入秋巴])?.*", RegexOptions.IgnoreCase)] //   1 + 2 + 3 山
+        private static partial Regex CromBasHintRegex2();
 
         [GeneratedRegex(@"\d+", RegexOptions.IgnoreCase)]
         private static partial Regex DigitRegex();

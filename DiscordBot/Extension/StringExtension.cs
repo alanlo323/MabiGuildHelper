@@ -35,9 +35,15 @@ namespace DiscordBot.Extension
             return input;
         }
 
-        public static int ToInt(this string input)
+        public static string FormatExpression(this string input)
         {
-            return int.Parse(input);
+            string output = input;
+            output = output.Replace(" ", string.Empty);
+            output = output.Replace("+", " + ");
+            output = output.Replace("-", " - ");
+            output = output.Replace("*", " * ");
+            output = output.Replace("/", " / ");
+            return output;
         }
     }
 }
