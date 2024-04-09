@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -13,6 +14,11 @@ namespace DiscordBot.Extension
         public static string ToQuotation(this string input)
         {
             return $"```{input}```";
+        }
+
+        public static string ToHighLight(this string input)
+        {
+            return $"`{input}`";
         }
 
         public static string MarkDownEscape(this string input)
@@ -44,6 +50,14 @@ namespace DiscordBot.Extension
             output = output.Replace("*", " * ");
             output = output.Replace("/", " / ");
             return output;
+        }
+
+        public static Random GetRandomFromSeed(this string input)
+        {
+            if (string.IsNullOrEmpty(input)) return new Random(0);
+            byte[] textData = Encoding.UTF8.GetBytes(input);
+            byte[] hash = SHA256.HashData(textData);
+            return new(BitConverter.ToInt32(hash));
         }
     }
 }
