@@ -28,7 +28,7 @@ namespace DiscordBot.SelectMenuHandler
 
         public MessageComponent GetMessageComponent(IEnumerable<InstanceReminderSetting> InstanceReminderSettings)
         {
-            List<InstanceReset> instanceResetList = [.. _gameConfig.InstanceReset];
+            List<InstanceReset> instanceResetList = [.. _gameConfig.InstanceReset.OrderBy(x => x.Type).ThenBy(x => x.Id)];
             if (instanceResetList.Count == 0) throw new NotSupportedException("Empty list in InstanceReset, please check config.");
 
             var menuBuilder = new SelectMenuBuilder()

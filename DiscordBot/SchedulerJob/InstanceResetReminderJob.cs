@@ -37,7 +37,7 @@ namespace DiscordBot.SchedulerJob
         public async Task RefreshTimeTable()
         {
             MessageComponent addReminderButtonComponent = buttonHandlerHelper.GetButtonHandler<ManageReminderButtonHandler>().GetMessageComponent();
-            List<InstanceReset> instanceResetList = [.. _gameConfig.InstanceReset];
+            List<InstanceReset> instanceResetList = [.. _gameConfig.InstanceReset.OrderBy(x => x.Type).ThenBy(x => x.Id)];
             Embed resetInOneEmbed = EmbedUtil.GetResetReminderEmbed(InstanceReset.Constant.ResetInOneDay, Color.Red, instanceResetList.Where(x => x.ResetInOneDay));
             Embed battleEmbed = EmbedUtil.GetResetReminderEmbed(InstanceReset.Constant.Battle, Color.Blue, instanceResetList.Where(x => x.Type == InstanceReset.Constant.Battle));
             Embed lifeEmbed = EmbedUtil.GetResetReminderEmbed(InstanceReset.Constant.Life, Color.Blue, instanceResetList.Where(x => x.Type == InstanceReset.Constant.Life));
