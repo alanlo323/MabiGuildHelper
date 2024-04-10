@@ -30,9 +30,9 @@ namespace DiscordBot.MessageHandler
 
         public async Task Excute(SocketMessage socketMessage)
         {
+            if (socketMessage.Author.IsBot) return;
             if (socketMessage is not SocketUserMessage message) return;
             if (message.Author.Id == client.CurrentUser.Id) return;
-
             await CheckFunnyResponse(message);
         }
 

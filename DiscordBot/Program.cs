@@ -78,6 +78,7 @@ namespace DiscordBot
                 .AddSingleton<ImgurHelper>()
                 .AddSingleton<SelectMenuHandlerHelper>()
                 .AddSingleton<DataScrapingHelper>()
+                .AddSingleton<ConcurrentRandomHelper>()
                 .AddScoped<IBaseSlashCommand, DebugCommand>()
                 .AddScoped<IBaseSlashCommand, AboutCommand>()
                 .AddScoped<IBaseSlashCommand, HelpCommand>()
