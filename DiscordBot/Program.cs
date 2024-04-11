@@ -145,7 +145,7 @@ namespace DiscordBot
 
                         q.ScheduleJob<DataScrapingJob>(trigger => trigger
                             .WithIdentity(DataScrapingJob.Key.Name)
-                            .StartAt(DateBuilder.NextGivenMinuteDate(DateTime.Now, 5))
+                            .StartAt(DateBuilder.NextGivenMinuteDate(DateTime.Now, 1))
                             .WithSimpleSchedule(x => x
                                 .WithIntervalInMinutes(5)
                                 .RepeatForever()
