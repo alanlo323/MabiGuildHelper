@@ -80,11 +80,11 @@ namespace DiscordBot.Commands.SlashCommand
                             break;
                         case var x when x >= border[0] && x < border[1]:
                             evaluate = "中平";
-                            advice = $"今天的運氣還可以, 但還有進步的空間";
+                            advice = $"今天的運氣一般般, 是普通的一天";
                             break;
                         case var x when x >= border[1] && x < border[2]:
                             evaluate = "中吉";
-                            advice = $"今天的運氣不錯, 有機會發生好事";
+                            advice = $"今天的運氣不錯, 但還有進步的空間";
                             break;
                         case var x when x >= border[2] && x < border[3]:
                             evaluate = "上吉";

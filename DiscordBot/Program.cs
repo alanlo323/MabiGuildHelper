@@ -147,7 +147,7 @@ namespace DiscordBot
                             .WithIdentity(DataScrapingJob.Key.Name)
                             .StartAt(DateBuilder.NextGivenMinuteDate(DateTime.Now, 1))
                             .WithSimpleSchedule(x => x
-                                .WithIntervalInMinutes(5)
+                                .WithIntervalInMinutes(1)
                                 .RepeatForever()
                             ));
                     }
