@@ -123,7 +123,7 @@ namespace DiscordBot.Util
                     _ => Color.Default,
                 })
                 .WithTitle(news.Title)
-                .WithDescription(news.IsUrgent ? $"{news.Content}{Environment.NewLine}<@here>" : news.Content)
+                .WithDescription(news.IsUrgent ? $"{news.Content}{Environment.NewLine}@here" : news.Content)
                 .WithFooter("更新時間")
                 .WithUrl(news.GetFullUrl())
                 .WithTimestamp((DateTimeOffset)news.UpdatedAt)
