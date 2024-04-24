@@ -19,13 +19,16 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.36.240416.1" />
     <PackageReference Include="NLog" Version="5.2.8" />
     <PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
+    <PackageReference Include="OllamaSharp" Version="1.1.1" />
     <PackageReference Include="PuppeteerSharp" Version="14.1.0" />
     <PackageReference Include="Quartz" Version="3.8.1" />
     <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.8.1" />
     <PackageReference Include="Quartz.Extensions.Hosting" Version="3.8.1" />
     <PackageReference Include="RestSharp" Version="110.2.0" />
+    <PackageReference Include="TiktokenSharp" Version="1.1.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -90,6 +93,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="AppData\FunnyResponseImage\螢幕擷取畫面 2023-12-12 195123.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="AppData\KMData\武器聚能.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="AppData\KMData\細緻工匠改造.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="appsettings.json">
