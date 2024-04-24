@@ -10,7 +10,8 @@ using DiscordBot.Configuration;
 using DiscordBot.Db;
 using DiscordBot.Extension;
 using DiscordBot.Helper;
-using DiscordBot.KernelMemory;
+using DiscordBot.SemanticKernel;
+using DiscordBot.SemanticKernel.Plugins.KernelMemory;
 using DiscordBot.Util;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -21,7 +22,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Commands.SlashCommand
 {
-    public class ChatCommand(ILogger<ChatCommand> logger, DiscordSocketClient client, KernelMemoryEngine kernelMemoryEngine) : IBaseSlashCommand
+    public class ChatCommand(ILogger<ChatCommand> logger, DiscordSocketClient client, SemanticKernelEngine semanticKernelEngine) : IBaseSlashCommand
     {
         public string Name { get; set; } = "chat";
         public string Description { get; set; } = "和小幫手對話";
@@ -42,20 +43,20 @@ namespace DiscordBot.Commands.SlashCommand
             await command.DeferAsync();
             try
             {
-                string text = command.Data.Options.First(x => x.Name == "text").Value as string;
-                var answer = await kernelMemoryEngine.AskAsync(text);
-                string response = answer.Result;
-                foreach (var x in answer.RelevantSources.OrderByDescending(x => x.Partitions.First().Relevance))
-                {
-                    var firstPartition = x.Partitions.First();
-                    response += $"{Environment.NewLine}  * [{firstPartition.Relevance:P}] {(x.SourceUrl ?? x.SourceName)} -- {firstPartition.LastUpdate:D}";
-                }
-                await command.FollowupAsync(response);
+                string prompt = command.Data.Options.First(x => x.Name == "text").Value as string;
+                var answer = await semanticKernelEngine.GenerateResponse(prompt);
+                //string response = answer.Result;
+                //foreach (var x in answer.RelevantSources.OrderByDescending(x => x.Partitions.First().Relevance))
+                //{
+                //    var firstPartition = x.Partitions.First();
+                //    response += $"{Environment.NewLine}  * [{firstPartition.Relevance:P}] {(x.SourceUrl ?? x.SourceName)} -- {firstPartition.LastUpdate:D}";
+                //}
+                await command.FollowupAsync(answer);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "ChatCommand Error");
-                await command.FollowupAsync("語言模組發生錯誤, 請稍後再試");
+                await command.FollowupAsync($"小幫手發生錯誤, 請聯絡作者{Environment.NewLine}{$"{ex.Message}".ToQuotation()}");
             }
         }
     }

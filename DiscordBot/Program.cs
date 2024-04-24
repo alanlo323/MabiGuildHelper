@@ -9,10 +9,11 @@ using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Extension;
 using DiscordBot.Helper;
-using DiscordBot.KernelMemory;
+using DiscordBot.SemanticKernel.Plugins.KernelMemory;
 using DiscordBot.MessageHandler;
 using DiscordBot.SchedulerJob;
 using DiscordBot.SelectMenuHandler;
+using DiscordBot.SemanticKernel;
 using DiscordBot.Util;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -45,7 +46,7 @@ namespace DiscordBot
             builder.Services.AddOptions<GameConfig>().Bind(builder.Configuration.GetSection(GameConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<ImgurConfig>().Bind(builder.Configuration.GetSection(ImgurConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<FunnyResponseConfig>().Bind(builder.Configuration.GetSection(FunnyResponseConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
-            builder.Services.AddOptions<KernelMemoryConfig>().Bind(builder.Configuration.GetSection(KernelMemoryConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
+            builder.Services.AddOptions<SemanticKernelConfig>().Bind(builder.Configuration.GetSection(SemanticKernelConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
 
             builder.Services.AddLogging(loggingBuilder =>
             {
@@ -81,7 +82,8 @@ namespace DiscordBot
                 .AddSingleton<SelectMenuHandlerHelper>()
                 .AddSingleton<DataScrapingHelper>()
                 .AddSingleton<ConcurrentRandomHelper>()
-                .AddSingleton<KernelMemoryEngine>()
+                .AddSingleton<MabinogiKernelMemoryFactory>()
+                .AddSingleton<SemanticKernelEngine>()
                 .AddScoped<IBaseSlashCommand, DebugCommand>()
                 .AddScoped<IBaseSlashCommand, AboutCommand>()
                 .AddScoped<IBaseSlashCommand, HelpCommand>()
@@ -156,7 +158,7 @@ namespace DiscordBot
                             ));
                     }
                 })
-                .AddQuartzHostedService(options => { options.WaitForJobsToComplete = true; }).AddQuartzHostedService(options =>
+                .AddQuartzHostedService(options =>
                 {
                     options.WaitForJobsToComplete = true;
                 });
