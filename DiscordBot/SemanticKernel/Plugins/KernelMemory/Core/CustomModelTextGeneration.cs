@@ -9,7 +9,7 @@ using Microsoft.KernelMemory.AI;
 using OllamaSharp;
 using TiktokenSharp;
 
-namespace DiscordBot.SemanticKernel.Plugin.KernelMemory.Core
+namespace DiscordBot.SemanticKernel.Plugins.KernelMemory.Core
 {
     public class CustomModelConfig
     {

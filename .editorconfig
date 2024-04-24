@@ -62,6 +62,15 @@ csharp_prefer_static_local_function = true:suggestion
 csharp_style_prefer_readonly_struct = true:suggestion
 csharp_style_prefer_readonly_struct_member = true:suggestion
 
+# SKEXP0050: 類型僅供評估之用，可能會在未來更新中變更或移除。抑制此診斷以繼續。
+dotnet_diagnostic.SKEXP0050.severity = silent
+
+# SKEXP0001: 類型僅供評估之用，可能會在未來更新中變更或移除。抑制此診斷以繼續。
+dotnet_diagnostic.SKEXP0001.severity = silent
+
+# SKEXP0010: 類型僅供評估之用，可能會在未來更新中變更或移除。抑制此診斷以繼續。
+dotnet_diagnostic.SKEXP0010.severity = silent
+
 [*.vb]
 #### 命名樣式 ####
 

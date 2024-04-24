@@ -21,8 +21,13 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.60.3" />
     <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.38.240423.1" />
+    <PackageReference Include="Microsoft.KernelMemory.SemanticKernelPlugin" Version="0.38.240423.1" />
     <PackageReference Include="Microsoft.SemanticKernel" Version="1.8.0" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.8.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.9.0-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.9.0-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.9.0-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.9.0-alpha" />
     <PackageReference Include="NLog" Version="5.2.8" />
     <PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
     <PackageReference Include="OllamaSharp" Version="1.1.1" />

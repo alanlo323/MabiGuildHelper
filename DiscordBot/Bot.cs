@@ -31,7 +31,7 @@ using System.Xml.Linq;
 using DiscordBot.Commands.MessageCommand;
 using static DiscordBot.Commands.IBaseCommand;
 using Quartz.Util;
-using DiscordBot.KernelMemory;
+using DiscordBot.SemanticKernel.Plugins.KernelMemory;
 
 namespace DiscordBot
 {
@@ -47,11 +47,20 @@ namespace DiscordBot
         ButtonHandlerHelper buttonHandlerHelper;
         SelectMenuHandlerHelper selectMenuHandlerHelper;
         MessageReceivedHandler messageReceivedHandler;
-        KernelMemoryEngine kernelMemoryEngine;
 
         bool isReady = false;
 
-        public Bot(ILogger<Bot> logger, IServiceProvider serviceProvider, DiscordSocketClient client, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, IOptionsSnapshot<GameConfig> gameConfig, AppDbContext appDbContext, DatabaseHelper databaseHelper, ButtonHandlerHelper buttonHandlerHelper, SelectMenuHandlerHelper selectMenuHandlerHelper, MessageReceivedHandler messageReceivedHandler, KernelMemoryEngine kernelMemoryEngine)
+        public Bot(
+            ILogger<Bot> logger,
+            IServiceProvider serviceProvider,
+            DiscordSocketClient client,
+            IOptionsSnapshot<DiscordBotConfig> discordBotConfig,
+            IOptionsSnapshot<GameConfig> gameConfig,
+            AppDbContext appDbContext,
+            DatabaseHelper databaseHelper,
+            ButtonHandlerHelper buttonHandlerHelper,
+            SelectMenuHandlerHelper selectMenuHandlerHelper,
+            MessageReceivedHandler messageReceivedHandler)
         {
             this.logger = logger;
             this.serviceProvider = serviceProvider;
@@ -63,7 +72,6 @@ namespace DiscordBot
             this.buttonHandlerHelper = buttonHandlerHelper;
             this.selectMenuHandlerHelper = selectMenuHandlerHelper;
             this.messageReceivedHandler = messageReceivedHandler;
-            this.kernelMemoryEngine = kernelMemoryEngine;
 
             client.Log += LogAsync;
             client.Ready += ClientReady;
@@ -102,10 +110,6 @@ namespace DiscordBot
 
             await client.LoginAsync(TokenType.Bot, EnvironmentUtil.IsProduction() ? discordBotConfig.Token : discordBotConfig.BetaToken);
             await client.StartAsync();
-
-            logger.LogInformation("Loading KernelMemoryEngine");
-            await kernelMemoryEngine.StartEngine();
-            logger.LogInformation("KernelMemoryEngine ready");
         }
 
         public async Task Init()
