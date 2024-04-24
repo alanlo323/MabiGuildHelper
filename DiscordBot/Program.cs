@@ -9,6 +9,7 @@ using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Extension;
 using DiscordBot.Helper;
+using DiscordBot.KernelMemory;
 using DiscordBot.MessageHandler;
 using DiscordBot.SchedulerJob;
 using DiscordBot.SelectMenuHandler;
@@ -44,6 +45,7 @@ namespace DiscordBot
             builder.Services.AddOptions<GameConfig>().Bind(builder.Configuration.GetSection(GameConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<ImgurConfig>().Bind(builder.Configuration.GetSection(ImgurConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<FunnyResponseConfig>().Bind(builder.Configuration.GetSection(FunnyResponseConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
+            builder.Services.AddOptions<KernelMemoryConfig>().Bind(builder.Configuration.GetSection(KernelMemoryConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
 
             builder.Services.AddLogging(loggingBuilder =>
             {
@@ -79,6 +81,7 @@ namespace DiscordBot
                 .AddSingleton<SelectMenuHandlerHelper>()
                 .AddSingleton<DataScrapingHelper>()
                 .AddSingleton<ConcurrentRandomHelper>()
+                .AddSingleton<KernelMemoryEngine>()
                 .AddScoped<IBaseSlashCommand, DebugCommand>()
                 .AddScoped<IBaseSlashCommand, AboutCommand>()
                 .AddScoped<IBaseSlashCommand, HelpCommand>()
@@ -87,6 +90,7 @@ namespace DiscordBot
                 .AddScoped<IBaseSlashCommand, NoticeCommand>()
                 .AddScoped<IBaseSlashCommand, AdminCommand>()
                 .AddScoped<IBaseSlashCommand, LuckyChannelCommand>()
+                .AddScoped<IBaseSlashCommand, ChatCommand>()
                 .AddScoped<IBaseMessageCommand, EditNewsCommand>()
                 .AddScoped<IBaseButtonHandler, ManageReminderButtonHandler>()
                 .AddScoped<IBaseSelectMenuHandler, AddReminderSelectMenuHandler>()

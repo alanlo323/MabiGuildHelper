@@ -82,7 +82,7 @@ namespace DiscordBot.Helper
                   if (cancellationToken.IsCancellationRequested) return;
 
                   await using var newsContentPage = await browser.NewPageAsync();
-                  await UpdateContent(news, newsContentPage);
+                  await UpdateNewsContent(news, newsContentPage);
 
                   switch (news.Content?.Length)
                   {
@@ -91,7 +91,7 @@ namespace DiscordBot.Helper
                               Thread newThread = new(async () =>
                               {
                                   await using var newsMaximizedContentPage = await maximizedBrowser.NewPageAsync();
-                                  await UpdateContent(news, newsMaximizedContentPage);
+                                  await UpdateNewsContent(news, newsMaximizedContentPage);
 
                                   loadedNews++;
                               });
@@ -153,7 +153,7 @@ namespace DiscordBot.Helper
             };
         }
 
-        private async Task UpdateContent(News news, IPage page)
+        private async Task UpdateNewsContent(News news, IPage page)
         {
             try
             {
