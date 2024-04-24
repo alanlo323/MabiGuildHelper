@@ -8,7 +8,7 @@ using Microsoft.KernelMemory;
 using OllamaSharp;
 using TiktokenSharp;
 
-namespace DiscordBot.KernelMemory.Core
+namespace DiscordBot.SemanticKernel.Plugin.KernelMemory.Core
 {
 
     public class CustomEmbeddingGeneratorConfig
