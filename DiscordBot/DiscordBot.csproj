@@ -9,21 +9,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="3.13.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.2">
+    <PackageReference Include="Discord.Net" Version="3.14.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.4">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.36.240416.1" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.60.3" />
+    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.38.240423.1" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.8.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.8.0" />
     <PackageReference Include="NLog" Version="5.2.8" />
     <PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
     <PackageReference Include="OllamaSharp" Version="1.1.1" />
-    <PackageReference Include="PuppeteerSharp" Version="14.1.0" />
+    <PackageReference Include="PuppeteerSharp" Version="17.0.0" />
     <PackageReference Include="Quartz" Version="3.8.1" />
     <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.8.1" />
     <PackageReference Include="Quartz.Extensions.Hosting" Version="3.8.1" />

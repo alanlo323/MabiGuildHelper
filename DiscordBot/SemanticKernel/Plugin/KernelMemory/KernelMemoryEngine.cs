@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DiscordBot.KernelMemory.Core;
+using DiscordBot.SemanticKernel.Plugin.KernelMemory.Core;
 using Microsoft.KernelMemory.Configuration;
 using Microsoft.KernelMemory.ContentStorage.DevTools;
 using Microsoft.KernelMemory.MemoryStorage.DevTools;

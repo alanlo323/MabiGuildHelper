@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.Prompts;
 
-namespace DiscordBot.KernelMemory.Core
+namespace DiscordBot.SemanticKernel.Plugin.KernelMemory.Core
 {
     public class CustomPromptProvider : IPromptProvider
     {
