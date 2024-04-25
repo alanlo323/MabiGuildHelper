@@ -41,23 +41,16 @@ namespace DiscordBot.Commands.SlashCommand
         public async Task Excute(SocketSlashCommand command)
         {
             await command.DeferAsync();
-            try
-            {
-                string prompt = command.Data.Options.First(x => x.Name == "text").Value as string;
-                var answer = await semanticKernelEngine.GenerateResponse(prompt);
-                //string response = answer.Result;
-                //foreach (var x in answer.RelevantSources.OrderByDescending(x => x.Partitions.First().Relevance))
-                //{
-                //    var firstPartition = x.Partitions.First();
-                //    response += $"{Environment.NewLine}  * [{firstPartition.Relevance:P}] {(x.SourceUrl ?? x.SourceName)} -- {firstPartition.LastUpdate:D}";
-                //}
-                await command.FollowupAsync(answer);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "ChatCommand Error");
-                await command.FollowupAsync($"小幫手發生錯誤, 請聯絡作者{Environment.NewLine}{$"{ex.Message}".ToQuotation()}");
-            }
+
+            string prompt = command.Data.Options.First(x => x.Name == "text").Value as string;
+            var answer = await semanticKernelEngine.GenerateResponse(prompt);
+            //string response = answer.Result;
+            //foreach (var x in answer.RelevantSources.OrderByDescending(x => x.Partitions.First().Relevance))
+            //{
+            //    var firstPartition = x.Partitions.First();
+            //    response += $"{Environment.NewLine}  * [{firstPartition.Relevance:P}] {(x.SourceUrl ?? x.SourceName)} -- {firstPartition.LastUpdate:D}";
+            //}
+            await command.FollowupAsync(answer);
         }
     }
 }

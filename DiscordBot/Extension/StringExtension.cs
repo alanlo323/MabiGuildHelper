@@ -21,6 +21,11 @@ namespace DiscordBot.Extension
             return $"`{input}`";
         }
 
+        public static string ToHidden(this string input)
+        {
+            return $"||{input}||";
+        }
+
         public static string MarkDownEscape(this string input)
         {
             return input
