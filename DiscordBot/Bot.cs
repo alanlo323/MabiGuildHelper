@@ -186,7 +186,33 @@ namespace DiscordBot
 
                 Thread newThread = new(async () =>
                 {
-                    await instance.Excute(command);
+                    try
+                    {
+                        await instance.Excute(command);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, ex.Message);
+
+                        StringBuilder errorMsgBuilder = new();
+                        Exception currentException = ex;
+                        do
+                        {
+                            errorMsgBuilder.AppendLine($"{currentException?.Message}");
+                            currentException = currentException?.InnerException;
+                        } while (currentException != null);
+
+                        logger.LogWarning(ex, errorMsgBuilder.ToString());
+
+                        try
+                        {
+                            await command.RespondAsync($"小幫手發生錯誤, 請聯絡作者{Environment.NewLine}{errorMsgBuilder.ToString().ToQuotation()}");
+                        }
+                        catch
+                        {
+                            await command.FollowupAsync($"小幫手發生錯誤, 請聯絡作者{Environment.NewLine}{errorMsgBuilder.ToString().ToQuotation()}");
+                        }
+                    }
                 });
                 newThread.Start();
             }

@@ -71,6 +71,21 @@ dotnet_diagnostic.SKEXP0001.severity = silent
 # SKEXP0010: 類型僅供評估之用，可能會在未來更新中變更或移除。抑制此診斷以繼續。
 dotnet_diagnostic.SKEXP0010.severity = silent
 
+# SKEXP0060: 類型僅供評估之用，可能會在未來更新中變更或移除。抑制此診斷以繼續。
+dotnet_diagnostic.SKEXP0060.severity = silent
+csharp_style_allow_embedded_statements_on_same_line_experimental = true:silent
+csharp_style_allow_blank_lines_between_consecutive_braces_experimental = true:silent
+csharp_style_allow_blank_line_after_colon_in_constructor_initializer_experimental = true:silent
+csharp_style_allow_blank_line_after_token_in_conditional_expression_experimental = true:silent
+csharp_style_allow_blank_line_after_token_in_arrow_expression_clause_experimental = true:silent
+csharp_style_prefer_switch_expression = true:suggestion
+csharp_style_prefer_pattern_matching = true:silent
+csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
+csharp_style_prefer_not_pattern = true:suggestion
+csharp_style_prefer_extended_property_pattern = true:suggestion
+csharp_space_around_binary_operators = before_and_after
+
 [*.vb]
 #### 命名樣式 ####
 
@@ -132,3 +147,5 @@ dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:suggesti
 dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:suggestion
 dotnet_style_parentheses_in_other_operators = never_if_unnecessary:silent
 dotnet_style_allow_multiple_blank_lines_experimental = true:silent
+dotnet_style_allow_statement_immediately_after_block_experimental = true:silent
+tab_width = 4

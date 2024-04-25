@@ -82,6 +82,7 @@ namespace DiscordBot
                 .AddSingleton<SelectMenuHandlerHelper>()
                 .AddSingleton<DataScrapingHelper>()
                 .AddSingleton<ConcurrentRandomHelper>()
+                .AddSingleton<PromptHelper>()
                 .AddSingleton<MabinogiKernelMemoryFactory>()
                 .AddSingleton<SemanticKernelEngine>()
                 .AddScoped<IBaseSlashCommand, DebugCommand>()
