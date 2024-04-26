@@ -280,6 +280,11 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
         {
             var result = (await _memory.AskAsync(question, index ?? _defaultIndex, TagsToMemoryFilter(tags ?? _defaultRetrievalTags), null, minRelevance, cancellationToken).ConfigureAwait(continueOnCapturedContext: false)).Result;
             // TODO: List source
+            //foreach (var x in answer.RelevantSources.OrderByDescending(x => x.Partitions.First().Relevance))
+            //{
+            //    var firstPartition = x.Partitions.First();
+            //    response += $"{Environment.NewLine}  * [{firstPartition.Relevance:P}] {(x.SourceUrl ?? x.SourceName)} -- {firstPartition.LastUpdate:D}";
+            //}
             return result;
         }
 

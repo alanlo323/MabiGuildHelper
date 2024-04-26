@@ -20,12 +20,13 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.60.3" />
-    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.38.240423.1" />
-    <PackageReference Include="Microsoft.KernelMemory.SemanticKernelPlugin" Version="0.38.240423.1" />
-    <PackageReference Include="Microsoft.SemanticKernel" Version="1.8.0" />
-    <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.8.0" />
-    <PackageReference Include="Microsoft.SemanticKernel.Experimental.Orchestration.Flow" Version="1.5.0" />
+    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.38.240425.1" />
+    <PackageReference Include="Microsoft.KernelMemory.SemanticKernelPlugin" Version="0.38.240425.1" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.9.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.9.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Experimental.Orchestration.Flow" Version="1.9.0-alpha" />
     <PackageReference Include="Microsoft.SemanticKernel.Planners.Handlebars" Version="1.9.0-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Planners.OpenAI" Version="1.9.0-preview" />
     <PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.9.0-alpha" />
     <PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.9.0-alpha" />
     <PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.9.0-alpha" />
@@ -113,6 +114,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SemanticKernel\Plugins\Writer\Translate\config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SemanticKernel\Plugins\Writer\Translate\skprompt.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

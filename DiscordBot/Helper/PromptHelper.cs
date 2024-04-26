@@ -12,7 +12,7 @@ namespace DiscordBot.Helper
 {
     public partial class PromptHelper
     {
-        public List<PlanStep> GetStepFromPlan(HandlebarsPlan plan)
+        public (List<PlanStep>, string) GetStepFromPlan(HandlebarsPlan plan)
         {
             // Use reflection to access the private variable _template
             FieldInfo templateField = typeof(HandlebarsPlan).GetField("_template", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -21,7 +21,6 @@ namespace DiscordBot.Helper
             // Get all matches of the regex pattern
             List<PlanStep> planSteps = [];
             Regex stepRegex = StepRegex();
-
 
             foreach (Match match in stepRegex.Matches(templateValue).Cast<Match>())
             {
@@ -34,7 +33,7 @@ namespace DiscordBot.Helper
                 });
             }
 
-            return planSteps;
+            return (planSteps, templateValue);
         }
 
         [GeneratedRegex(@"({{!-- (Step (\d): (.*)) --}}\s){1}(.*{{(.*)}}\s?)+")]

@@ -54,15 +54,15 @@ namespace DiscordBot
                 loggingBuilder.SetMinimumLevel(LogLevel.Trace);
 
                 IConfigurationSection section = builder.Configuration.GetSection(NLogConstant.SectionName);
-                var config = new LoggingConfiguration(new NLog.LogFactory());
-                config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, new ConsoleTarget());
-                config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, new FileTarget
+                var loggingConfiguration = new LoggingConfiguration(new NLog.LogFactory());
+                loggingConfiguration.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, new ConsoleTarget());
+                loggingConfiguration.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, new FileTarget
                 {
                     FileName = section.GetValue<string>(NLogConstant.FileName),
                     Layout = section.GetValue<string>(NLogConstant.Layout),
                 });
 
-                loggingBuilder.AddNLog(config);
+                loggingBuilder.AddNLog(loggingConfiguration);
             });
 
             builder.Services

@@ -7,11 +7,13 @@ using System.Text;
 using System.Threading.Tasks;
 using DiscordBot.Commands.SlashCommand;
 using DiscordBot.Configuration;
+using DiscordBot.Constant;
 using DiscordBot.Extension;
 using DiscordBot.Helper;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -31,6 +33,9 @@ using Microsoft.SemanticKernel.Plugins.Document.OpenXml;
 using Microsoft.SemanticKernel.Plugins.Memory;
 using Microsoft.SemanticKernel.Plugins.Web;
 using Microsoft.SemanticKernel.Plugins.Web.Google;
+using NLog.Config;
+using NLog.Extensions.Logging;
+using NLog.Targets;
 using static DiscordBot.Helper.PromptHelper;
 
 namespace DiscordBot.SemanticKernel
@@ -45,12 +50,11 @@ namespace DiscordBot.SemanticKernel
 
         public async Task StartEngine()
         {
-            // ... initialize the engine ...
-            var builder = Kernel.CreateBuilder();
-
             chatCompletionConfig = semanticKernelConfig.Value.AzureOpenAI.GPT4;
             embeddingConfig = semanticKernelConfig.Value.AzureOpenAI.Embedding;
 
+            // ... initialize the engine ...
+            var builder = Kernel.CreateBuilder();
             builder
                 .AddAzureOpenAIChatCompletion(
                     chatCompletionConfig.Deployment,
@@ -63,7 +67,7 @@ namespace DiscordBot.SemanticKernel
                 ;
 
             builder.Plugins
-                //.AddFromType<HttpPlugin>()
+                .AddFromType<HttpPlugin>()
                 //.AddFromType<TextPlugin>()
                 //.AddFromType<WaitPlugin>()
                 //.AddFromType<TimePlugin>()
@@ -71,11 +75,12 @@ namespace DiscordBot.SemanticKernel
                 //.AddFromType<SearchUrlPlugin>()
                 //.AddFromType<DocumentPlugin>()
                 //.AddFromType<TextMemoryPlugin>()
-                //.AddFromType<WebSearchEnginePlugin>()
-                //.AddFromType<WebFileDownloadPlugin>()
+                .AddFromType<WebSearchEnginePlugin>()
+                .AddFromType<WebFileDownloadPlugin>()
                 //.AddFromType<ConversationSummaryPlugin>()
-                .AddFromType<Plugins.KernelMemory.Math.MathPlugin>()
+                .AddFromType<Plugins.Math.MathPlugin>()
                 .AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
+                .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
                 ;
 
             builder.Services
@@ -92,12 +97,59 @@ namespace DiscordBot.SemanticKernel
                 })
                 ;
 
+            builder.Services.AddLogging(loggingBuilder =>
+            {
+                loggingBuilder.ClearProviders();
+                loggingBuilder.SetMinimumLevel(LogLevel.Trace);
+
+                var config = new ConfigurationBuilder()
+                       .AddJsonFile("appsettings.json")
+                       .Build();
+                IConfigurationSection section = config.GetSection(NLogConstant.SectionName);
+                var loggingConfiguration = new LoggingConfiguration(new NLog.LogFactory());
+                loggingConfiguration.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, new ConsoleTarget());
+                loggingConfiguration.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, new FileTarget
+                {
+                    FileName = section.GetValue<string>(NLogConstant.FileName),
+                    Layout = section.GetValue<string>(NLogConstant.Layout),
+                });
+
+                loggingBuilder.AddNLog(config);
+            });
+
             kernel = builder.Build();
+        }
+
+        public async Task<string> GenerateResponseFromStepwisePlanner(string prompt)
+        {
+            if (kernel == null) await StartEngine();
+
+            //var kernelWithRelevantFunctions = await GetKernelWithRelevantFunctions(prompt);
+            var kernelWithRelevantFunctions = kernel;
+            var config = new FunctionCallingStepwisePlannerOptions
+            {
+                MaxIterations = 15,
+                MaxTokens = 4000,
+            };
+
+            var planner = new FunctionCallingStepwisePlanner(config);
+
+            FunctionCallingStepwisePlannerResult result = await planner.ExecuteAsync(kernelWithRelevantFunctions, prompt);
+
+            ChatHistory history = result.ChatHistory;
+            StringBuilder sb1 = new(), sb2 = new();
+            foreach (var record in history) if (record.Role == AuthorRole.Assistant) sb1.AppendLine(record.Items.OfType<TextContent>().FirstOrDefault()?.Text);
+            sb2.Append(sb1.ToString().ToHidden());
+            sb2.Append(result.FinalAnswer.ToQuotation());
+            return sb2.ToString();
         }
 
         public async Task<string> GenerateResponse(string prompt)
         {
             if (kernel == null) await StartEngine();
+
+            //var kernelWithRelevantFunctions = await GetKernelWithRelevantFunctions(prompt);
+            var kernelWithRelevantFunctions = kernel;
 
             ChatHistory history = [];
             history.AddSystemMessage(SystemPrompt);
@@ -105,9 +157,8 @@ namespace DiscordBot.SemanticKernel
 
             string additionalPromptContext = $"""
                 背景: [{SystemPrompt}]
-                大部分的問題都是關於"瑪奇Mabinogi", 可以在long term memory裡找到答案.
-                你盡量用中文回答
-                風格: 輕鬆, 有趣, 有禮貌
+                你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND)就向用戶道歉
+                只有最後回答的用繁體中文回答, 風格: 可愛
                 """;
             var planner = new HandlebarsPlanner(new HandlebarsPlannerOptions()
             {
@@ -125,9 +176,10 @@ namespace DiscordBot.SemanticKernel
                 AllowLoops = chatCompletionConfig.Deployment.Contains("gpt-4", StringComparison.OrdinalIgnoreCase),
                 GetAdditionalPromptContext = async () => additionalPromptContext
             });
-            HandlebarsPlan plan = await planner.CreatePlanAsync(kernel, prompt);
-            List<PlanStep> planSteps = promptHelper.GetStepFromPlan(plan);
-            var planResult = (await plan.InvokeAsync(kernel)).Trim();
+            HandlebarsPlan plan = await planner.CreatePlanAsync(kernelWithRelevantFunctions, prompt);
+            (List<PlanStep>, string) planSteps = promptHelper.GetStepFromPlan(plan);
+            logger.LogInformation($"Plan steps: {Environment.NewLine}{planSteps.Item2}");
+            var planResult = (await plan.InvokeAsync(kernelWithRelevantFunctions)).Trim();
 
             #region backup
             //// Get the response from the AI
@@ -150,7 +202,7 @@ namespace DiscordBot.SemanticKernel
             //history.AddAssistantMessage(fullMessage);
             #endregion
 
-            foreach (var planStep in planSteps)
+            foreach (var planStep in planSteps.Item1)
             {
                 history.AddAssistantMessage($"{planStep.FullDisplayName}".ToHighLight());
                 foreach (var actionRow in planStep.ActionRows) history.AddAssistantMessage($"{actionRow}");
@@ -162,6 +214,78 @@ namespace DiscordBot.SemanticKernel
             history.AddAssistantMessage(planResult.ToQuotation());
 
             return sb2.ToString();
+        }
+
+        public async Task<Kernel> GetKernelWithRelevantFunctions(string query)
+        {
+            // Create memory to store the functions
+            var memoryStorage = new VolatileMemoryStore();
+            var textEmbeddingGenerator = new AzureOpenAITextEmbeddingGenerationService(
+                    embeddingConfig.Deployment,
+                    embeddingConfig.Endpoint,
+                    embeddingConfig.APIKey);
+            var memory = new SemanticTextMemory(memoryStorage, textEmbeddingGenerator);
+
+            // Save functions to memory
+            foreach (KernelPlugin plugin in kernel.Plugins)
+            {
+                foreach (KernelFunction function in plugin)
+                {
+                    var fullyQualifiedName = $"{plugin.Name} - {function.Name}";
+                    await memory.SaveInformationAsync(
+                        "functions",
+                        fullyQualifiedName + ": " + function.Description,
+                        fullyQualifiedName,
+                        additionalMetadata: function.Name
+                        );
+                }
+            }
+
+            // Retrieve the "relevant" functions
+            var relevantRememberedFunctions = memory.SearchAsync("functions", query, 30, minRelevanceScore: 0.2);
+            var relevantFoundFunctions = new List<KernelFunction>();
+            // Populate a plugin with the filtered results
+            await foreach (MemoryQueryResult relevantFunction in relevantRememberedFunctions)
+            {
+                foreach (KernelPlugin plugin in kernel.Plugins)
+                {
+                    if (plugin.TryGetFunction(relevantFunction.Metadata.AdditionalMetadata, out var function))
+                    {
+                        relevantFoundFunctions.Add(function);
+                        break;
+                    }
+                }
+            }
+            KernelPlugin relevantFunctionsPlugin = KernelPluginFactory.CreateFromFunctions("Plugin", relevantFoundFunctions);
+
+            var builder = Kernel.CreateBuilder();
+            builder
+                .AddAzureOpenAIChatCompletion(
+                    chatCompletionConfig.Deployment,
+                    chatCompletionConfig.Endpoint,
+                     chatCompletionConfig.APIKey)
+                .AddAzureOpenAITextEmbeddingGeneration(
+                    embeddingConfig.Deployment,
+                    embeddingConfig.Endpoint,
+                    embeddingConfig.APIKey)
+                ;
+            builder.Services
+                .AddScoped<IDocumentConnector, WordDocumentConnector>()
+                .AddScoped<IFileSystemConnector, LocalFileSystemConnector>()
+                .AddScoped<ISemanticTextMemory, SemanticTextMemory>()
+                .AddScoped<IMemoryStore, VolatileMemoryStore>()
+                .AddScoped<IWebSearchEngineConnector, GoogleConnector>(x =>
+                {
+                    return new GoogleConnector(
+                        semanticKernelConfig.Value.GoogleSearchApi.ApiKey,
+                        semanticKernelConfig.Value.GoogleSearchApi.SearchEngineId
+                        );
+                })
+                ;
+
+            var kernelWithRelevantFunctions = builder.Build();
+            kernelWithRelevantFunctions.Plugins.Add(relevantFunctionsPlugin);
+            return kernelWithRelevantFunctions;
         }
     }
 }
