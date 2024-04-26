@@ -42,10 +42,10 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory.Core
             switch (promptName)
             {
                 case Constants.PromptNamesAnswerWithFacts:
-                    //return _fallbackProvider.ReadPrompt(promptName);
-                    string  basePrompt = _fallbackProvider.ReadPrompt(promptName);
-                    string factPrompt = VerificationPromptChi.Replace("{{prompt}}", basePrompt);
-                    return factPrompt;
+                    return _fallbackProvider.ReadPrompt(promptName);
+                    //string  basePrompt = _fallbackProvider.ReadPrompt(promptName);
+                    //string factPrompt = VerificationPromptChi.Replace("{{prompt}}", basePrompt);
+                    //return factPrompt;
 
                 default:
                     // Fall back to the default

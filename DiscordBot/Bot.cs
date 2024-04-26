@@ -201,16 +201,18 @@ namespace DiscordBot
                             errorMsgBuilder.AppendLine($"{currentException?.Message}");
                             currentException = currentException?.InnerException;
                         } while (currentException != null);
-
                         logger.LogWarning(ex, errorMsgBuilder.ToString());
+
+                        string errorMsg = $"小幫手發生錯誤, 請聯絡作者{Environment.NewLine}{errorMsgBuilder.ToString().ToQuotation()}";
+                        errorMsg = errorMsg[..Math.Min(2000, errorMsg.Length)];
 
                         try
                         {
-                            await command.RespondAsync($"小幫手發生錯誤, 請聯絡作者{Environment.NewLine}{errorMsgBuilder.ToString().ToQuotation()}");
+                            await command.RespondAsync(errorMsg);
                         }
                         catch
                         {
-                            await command.FollowupAsync($"小幫手發生錯誤, 請聯絡作者{Environment.NewLine}{errorMsgBuilder.ToString().ToQuotation()}");
+                            await command.FollowupAsync(errorMsg);
                         }
                     }
                 });

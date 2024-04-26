@@ -44,12 +44,7 @@ namespace DiscordBot.Commands.SlashCommand
 
             string prompt = command.Data.Options.First(x => x.Name == "text").Value as string;
             var answer = await semanticKernelEngine.GenerateResponse(prompt);
-            //string response = answer.Result;
-            //foreach (var x in answer.RelevantSources.OrderByDescending(x => x.Partitions.First().Relevance))
-            //{
-            //    var firstPartition = x.Partitions.First();
-            //    response += $"{Environment.NewLine}  * [{firstPartition.Relevance:P}] {(x.SourceUrl ?? x.SourceName)} -- {firstPartition.LastUpdate:D}";
-            //}
+            answer = answer[..Math.Min(2000, answer.Length)];
             await command.FollowupAsync(answer);
         }
     }

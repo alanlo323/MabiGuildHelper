@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel;
 
-namespace DiscordBot.SemanticKernel.Plugins.KernelMemory.Math
+namespace DiscordBot.SemanticKernel.Plugins.Math
 {
     public sealed class MathPlugin
     {
