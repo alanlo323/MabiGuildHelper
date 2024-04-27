@@ -17,10 +17,17 @@ using Microsoft.Extensions.Options;
 using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.KernelMemory.AI.OpenAI;
+using DocumentFormat.OpenXml.Bibliography;
+using DiscordBot.Helper;
+using Newtonsoft.Json;
+using Microsoft.SemanticKernel.Plugins.Web;
+using System.Collections.Concurrent;
+using System.Security.Policy;
+using DiscordBot.Util;
 
 namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
 {
-    public class MabinogiKernelMemoryFactory(ILogger<MabinogiKernelMemoryFactory> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig)
+    public class MabinogiKernelMemoryFactory(ILogger<MabinogiKernelMemoryFactory> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, DataScrapingHelper dataScrapingHelper)
     {
         IKernelMemory? memory;
 
@@ -33,7 +40,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                 .WithSimpleVectorDb(SimpleVectorDbConfig.Persistent)
                 .WithSimpleFileStorage(SimpleFileStorageConfig.Persistent)
                 .WithSearchClientConfig(new() { MaxMatchesCount = 3, AnswerTokens = 1000 })
-                .WithAzureOpenAITextGeneration(semanticKernelConfig.Value.AzureOpenAI.GPT35, new DefaultGPTTokenizer())
+                .WithAzureOpenAITextGeneration(semanticKernelConfig.Value.AzureOpenAI.GPT4, new DefaultGPTTokenizer())
                 .WithAzureOpenAITextEmbeddingGeneration(semanticKernelConfig.Value.AzureOpenAI.Embedding, new DefaultGPTTokenizer())
                 //.WithCustomTextGenerator(new CustomModelTextGeneration(ollama, new() { MaxToken = 8 * 1024 }))
                 //.WithCustomEmbeddingGenerator(new CustomEmbeddingGenerator(ollama, new() { MaxToken = 8 * 1024, TokenEncodingName = kernelMemoryConfig.Value.TokenEncodingName }))
@@ -56,17 +63,54 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
             await ImportWebData();
         }
 
+        // Modify the ImportWebData method in the MabinogiKernelMemoryFactory class
+
         private async Task ImportWebData()
         {
+            ConcurrentDictionary<string, WebPage> webPageDict = new();
             Website[] websites = semanticKernelConfig.Value.KernelMemory.DataSource.Website;
+            string folderPath = Path.Combine("KernelMemory", "WebPage");
+            DirectoryInfo preloadedFolder = new(folderPath);
+            DirectoryInfo[] subfolders = preloadedFolder.GetDirectories();
+            foreach (var subfolder in subfolders)
+            {
+                FileInfo json = new(Path.Combine(subfolder.FullName, $"WebPage.json"));
+                WebPage? webPage = JsonConvert.DeserializeObject<WebPage>(await File.ReadAllTextAsync(json.FullName));
+                webPageDict.TryAdd(webPage.Url, webPage);
+            }
+
             foreach (var website in websites)
             {
-                var documentIsReady = await memory.IsDocumentReadyAsync(website.Name);
-                if (documentIsReady)
+                //await dataScrapingHelper.GetAllLinkedWebPage(new() { Url = website.Url, Name = website.Name }, null, webPageDict, []);
+            }
+
+            subfolders = preloadedFolder.GetDirectories();
+            foreach ((DirectoryInfo subfolder, int index) in subfolders.Select((subfolder, index) => (subfolder, index)))
+            {
+                if (await memory.IsDocumentReadyAsync(subfolder.Name)) continue;
+
+                FileInfo json = new(Path.Combine(subfolder.FullName, $"WebPage.json"));
+                WebPage? webPage = JsonConvert.DeserializeObject<WebPage>(await File.ReadAllTextAsync(json.FullName));
+                bool isValidUrl = Uri.TryCreate(webPage.Url, UriKind.Absolute, out Uri uriResult) && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps) && !webPage.Url.EndsWith("#");
+                if (!isValidUrl) continue;
+
+                FileInfo data = new FileInfo(Path.Combine(subfolder.FullName, $"{subfolder.Name}.txt"));
+                if (false && data.Exists)
                 {
-                    continue;
+                    await memory.ImportDocumentAsync(data.FullName, documentId: subfolder.Name, tags: new TagCollection() { webPage.Name });
                 }
-                await memory.ImportWebPageAsync(website.Url, documentId: website.Name, tags: new TagCollection() { website.Name });
+                else
+                {
+                    // Remove URL fragment if it exists
+                    UriBuilder uriBuilder = new(webPage.Url)
+                    {
+                        Fragment = string.Empty
+                    };
+                    string cleanUrl = uriBuilder.Uri.ToString();
+                    if (cleanUrl.EndsWith(".jpg")) continue;
+                    await memory.ImportWebPageAsync(cleanUrl, documentId: subfolder.Name, tags: new TagCollection() { webPage.Name });
+                }
+                logger.LogInformation($"Imported {index + 1}/{subfolders.Length} WebPage: {webPage.Name} Url: {webPage.Url}");
             }
         }
 
@@ -81,7 +125,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                 {
                     continue;
                 }
-                await memory.ImportDocumentAsync(fileInfo.FullName, documentId: fileInfo.Name, tags: new TagCollection() { fileInfo.Name });
+                //await memory.ImportDocumentAsync(fileInfo.FullName, documentId: fileInfo.Name, tags: new TagCollection() { fileInfo.Name });
             }
         }
     }

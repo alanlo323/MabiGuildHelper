@@ -39,5 +39,17 @@ namespace DiscordBot.Util
 
             return Image.FromStream(new MemoryStream(result));
         }
+
+        public static string GetValidFileName(string url)
+        {
+            string invalidChars = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+            string sanitizedUrl = string.Join("-", url.Split(invalidChars.ToCharArray()));
+            string[] invalidChars2 = { "<", ">", ":", "\"", "/", "\\", "|", "?", "*", " ", "#", "=" };
+            foreach (var invalidChar in invalidChars2)
+            {
+                sanitizedUrl = sanitizedUrl.Replace(invalidChar, "-");
+            }
+            return sanitizedUrl;
+        }
     }
 }

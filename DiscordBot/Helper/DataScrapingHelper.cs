@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -14,7 +15,9 @@ using DiscordBot.Util;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.SemanticKernel.Plugins.Web;
 using PuppeteerSharp;
+using Quartz.Util;
 
 namespace DiscordBot.Helper
 {
@@ -212,6 +215,129 @@ namespace DiscordBot.Helper
                 await page.CloseAsync();
             }
             catch (Exception) { }
+        }
+
+        public async Task<ConcurrentDictionary<string, WebPage>> GetAllLinkedWebPage(WebPage source, IBrowser browser, ConcurrentDictionary<string, WebPage> webPageDict, ConcurrentQueue<string> urlsQueue, bool isMainThread = true)
+        {
+            if (browser == null)
+            {
+                using BrowserFetcher browserFetcher = new();
+                await browserFetcher.DownloadAsync();
+
+                await using var newBrowser = await Puppeteer.LaunchAsync(new LaunchOptions
+                {
+                    Headless = false,
+                    DefaultViewport = null,
+                    Args = [$"--window-size=450,450"],
+                });
+
+                return await GetAllLinkedWebPage(source, newBrowser, webPageDict, urlsQueue);
+            }
+
+            await using var page = await browser.NewPageAsync();
+            await page.GoToAsync(source.Url, WaitUntilNavigation.Networkidle0);
+            source.Name = await page.GetTitleAsync();
+
+            Dictionary<string, string> contentRefs = new() {
+                { "#main-article-new", string.Empty },
+                { "#mainlong", string.Empty },
+                { ".TbMainIE", string.Empty },
+            };
+            string a, b, c;
+            await Parallel.ForEachAsync(contentRefs, async (contentRef, cancellationToken) =>
+            {
+                if (cancellationToken.IsCancellationRequested) return;
+
+                try
+                {
+                    var targetQuery = contentRef.Key;
+                    await page.WaitForSelectorAsync(targetQuery, new() { Timeout = 1 * 1000 });
+                    IElementHandle queryElementHandle = await page.QuerySelectorAsync(targetQuery);
+                    IJSHandle innerTextIJSHandle = await queryElementHandle.GetPropertyAsync("innerText");
+                    contentRefs[targetQuery] = innerTextIJSHandle.RemoteObject.Value.ToString();
+                }
+                catch { }
+            });
+
+            foreach (var contentRef in contentRefs)
+            {
+                if (string.IsNullOrWhiteSpace(contentRef.Value)) continue;
+
+                source.Snippet = contentRef.Value;
+                break;
+            }
+
+            if (!webPageDict.ContainsKey(source.Url))
+            {
+                webPageDict.TryAdd(source.Url, source);
+                SaveWebPage(source);
+            }
+
+            var jsSelectAllAnchors = @"Array.from(document.querySelectorAll('a')).map(a => a.href);";
+            var urls = await page.EvaluateExpressionAsync<string[]>(jsSelectAllAnchors);
+            await page.CloseAsync();
+            string[] uniqueUrls =
+            [
+                "https://mabinogi.fws.tw/how_reform.php",
+                "https://mabinogi.fws.tw/how_titles.php",
+                "https://mabinogi.fws.tw/items.php",
+                "https://mabinogi.fws.tw/ac_bbsfree_view.php",
+                "https://mabinogi.fws.tw/ac_gallery_new_view.php",
+                "https://mabinogi.fws.tw/ac_catwalk_view.php",
+                "https://mabinogi.fws.tw/ac_bbpp.php",
+                "https://mabinogi.fws.tw/ac_movies.php",
+                "https://mabinogi.fws.tw/ac_photos_view.php",
+                "https://mabinogi.fws.tw/go.php",
+                "https://mabinogi.fws.tw/member_view.php",
+                "https://mabinogi.fws.tw/how_enchant.php",
+                "https://mabinogi.fws.tw/news_info.php",
+                "https://mabinogi.fws.tw/weather.php",
+            ];
+            foreach (string url in urls)
+            {
+                if (string.IsNullOrEmpty(url)) continue;
+                if (new Uri(source.Url).Host != new Uri(url).Host) continue;
+                //if (!url.StartsWith("https://mabinogi.fws.tw/how")) continue;
+                if (uniqueUrls.Any(x => url.StartsWith(x) && url != x))
+                    continue;
+                if (webPageDict.ContainsKey(url)) continue;
+
+                urlsQueue.Enqueue(url);
+            }
+            if (!isMainThread) return webPageDict;
+
+            await Parallel.ForAsync(0, 32, async (i, cancellationToken) =>
+            {
+            checkpoint:
+                while (urlsQueue.TryDequeue(out string url))
+                {
+                    if (cancellationToken.IsCancellationRequested) return;
+
+                    WebPage newWebPage = new() { Url = url };
+                    await GetAllLinkedWebPage(newWebPage, browser, webPageDict, urlsQueue, false);
+                }
+                Thread.Sleep(3000);
+                if (!urlsQueue.IsEmpty) goto checkpoint;
+            });
+
+            return webPageDict;
+        }
+
+        public async void SaveWebPage(WebPage webPage)
+        {
+            string url = webPage.Url;
+            string folderName = url.GetHashString(); ;
+            string folderPath = Path.Combine("KernelMemory", "WebPage", folderName);
+            DirectoryInfo directory = new(folderPath);
+            if (!directory.Exists) directory.Create();
+
+            FileInfo json = new(Path.Combine(folderPath, $"WebPage.json"));
+            await File.AppendAllTextAsync(json.FullName, webPage.ToJsonString());
+
+            if (string.IsNullOrWhiteSpace(webPage.Snippet)) return;
+
+            FileInfo data = new FileInfo(Path.Combine(folderPath, $"{folderName}.txt"));
+            await File.AppendAllTextAsync(data.FullName, webPage.Snippet);
         }
     }
 }

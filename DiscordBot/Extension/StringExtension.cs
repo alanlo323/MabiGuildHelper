@@ -60,9 +60,22 @@ namespace DiscordBot.Extension
         public static Random GetRandomFromSeed(this string input)
         {
             if (string.IsNullOrEmpty(input)) return new Random();
+            byte[] hash = input.GetHash();
+            return new(BitConverter.ToInt32(hash));
+        }
+
+        public static byte[] GetHash(this string input)
+        {
+            if (string.IsNullOrEmpty(input)) return null;
             byte[] textData = Encoding.UTF8.GetBytes(input);
             byte[] hash = SHA256.HashData(textData);
-            return new(BitConverter.ToInt32(hash));
+            return hash;
+        }
+
+        public static string GetHashString(this string input)
+        {
+            byte[] hash = input.GetHash();
+            return BitConverter.ToString(hash).Replace("-", string.Empty);
         }
     }
 }
