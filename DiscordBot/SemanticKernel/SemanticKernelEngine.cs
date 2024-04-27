@@ -75,9 +75,9 @@ namespace DiscordBot.SemanticKernel
                 //.AddFromType<SearchUrlPlugin>()
                 //.AddFromType<DocumentPlugin>()
                 //.AddFromType<TextMemoryPlugin>()
-                .AddFromType<WebSearchEnginePlugin>()
-                .AddFromType<WebFileDownloadPlugin>()
-                //.AddFromType<ConversationSummaryPlugin>()
+                //.AddFromType<WebSearchEnginePlugin>()
+                //.AddFromType<WebFileDownloadPlugin>()
+                .AddFromType<ConversationSummaryPlugin>()
                 .AddFromType<Plugins.Math.MathPlugin>()
                 .AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
                 .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
@@ -210,7 +210,7 @@ namespace DiscordBot.SemanticKernel
             StringBuilder sb1 = new(), sb2 = new();
             foreach (var record in history) if (record.Role == AuthorRole.Assistant) sb1.AppendLine(record.Items.OfType<TextContent>().FirstOrDefault()?.Text);
             sb2.Append(sb1.ToString().ToHidden());
-            sb2.Append(planResult.ToQuotation());
+            sb2.Append(planResult);
             history.AddAssistantMessage(planResult.ToQuotation());
 
             return sb2.ToString();

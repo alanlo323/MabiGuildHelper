@@ -55,7 +55,7 @@ namespace DiscordBot
 
                 IConfigurationSection section = builder.Configuration.GetSection(NLogConstant.SectionName);
                 var loggingConfiguration = new LoggingConfiguration(new NLog.LogFactory());
-                loggingConfiguration.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, new ConsoleTarget());
+                loggingConfiguration.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, new ConsoleTarget());
                 loggingConfiguration.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, new FileTarget
                 {
                     FileName = section.GetValue<string>(NLogConstant.FileName),
