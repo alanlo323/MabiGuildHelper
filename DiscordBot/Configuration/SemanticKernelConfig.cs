@@ -26,6 +26,7 @@ namespace DiscordBot.Configuration
         public AzureOpenAIConfig GPT35 { get; set; }
         public AzureOpenAIConfig GPT4V { get; set; }
         public AzureOpenAIConfig GPT4_1106 { get; set; }
+        public AzureOpenAIConfig LLAMA3 { get; set; }
         public AzureOpenAIConfig Embedding { get; set; }
     }
 
