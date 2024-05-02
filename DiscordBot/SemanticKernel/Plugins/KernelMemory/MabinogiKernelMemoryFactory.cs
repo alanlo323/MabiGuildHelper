@@ -40,7 +40,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                 .WithSimpleVectorDb(SimpleVectorDbConfig.Persistent)
                 .WithSimpleFileStorage(SimpleFileStorageConfig.Persistent)
                 .WithSearchClientConfig(new() { MaxMatchesCount = 3, AnswerTokens = 1000 })
-                .WithAzureOpenAITextGeneration(semanticKernelConfig.Value.AzureOpenAI.GPT4, new DefaultGPTTokenizer())
+                .WithAzureOpenAITextGeneration(semanticKernelConfig.Value.AzureOpenAI.GPT4V, new DefaultGPTTokenizer())
                 .WithAzureOpenAITextEmbeddingGeneration(semanticKernelConfig.Value.AzureOpenAI.Embedding, new DefaultGPTTokenizer())
                 //.WithCustomTextGenerator(new CustomModelTextGeneration(ollama, new() { MaxToken = 8 * 1024 }))
                 //.WithCustomEmbeddingGenerator(new CustomEmbeddingGenerator(ollama, new() { MaxToken = 8 * 1024, TokenEncodingName = kernelMemoryConfig.Value.TokenEncodingName }))
@@ -68,7 +68,6 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
         private async Task ImportWebData()
         {
             ConcurrentDictionary<string, WebPage> webPageDict = new();
-            Website[] websites = semanticKernelConfig.Value.KernelMemory.DataSource.Website;
             string folderPath = Path.Combine("KernelMemory", "WebPage");
             DirectoryInfo preloadedFolder = new(folderPath);
             DirectoryInfo[] subfolders = preloadedFolder.GetDirectories();
@@ -79,6 +78,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                 webPageDict.TryAdd(webPage.Url, webPage);
             }
 
+            Website[] websites = semanticKernelConfig.Value.KernelMemory.DataSource.Website;
             foreach (var website in websites)
             {
                 //await dataScrapingHelper.GetAllLinkedWebPage(new() { Url = website.Url, Name = website.Name }, null, webPageDict, []);

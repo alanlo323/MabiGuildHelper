@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -9,6 +10,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.SemanticKernelPlugin.Internals;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Plugins.Web;
+using Newtonsoft.Json;
 
 namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
 {
@@ -198,7 +201,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                 return string.Empty;
             }
 
-            return (limit == 1) ? searchResult.Results.First().Partitions.First().Text : JsonSerializer.Serialize(searchResult.Results.Select((Citation x) => x.Partitions.First().Text));
+            return (limit == 1) ? searchResult.Results.First().Partitions.First().Text : System.Text.Json.JsonSerializer.Serialize(searchResult.Results.Select((Citation x) => x.Partitions.First().Text));
         }
 
         //
@@ -212,13 +215,29 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
         [Description("Use long term memory to answer a question")]
         public async Task<string> AskAsync([Description("The question to answer")] string question, [Description("Memories index to search for answers")][DefaultValue("")] string? index = null, [Description("Minimum relevance of the sources to consider")][DefaultValue(0.0)] double minRelevance = 0.0, [Description("Memories tags to search for information")][DefaultValue(null)] TagCollectionWrapper? tags = null, ILoggerFactory? loggerFactory = null, CancellationToken cancellationToken = default(CancellationToken))
         {
+            ConcurrentDictionary<string, WebPage> webPageDict = new();
+            string folderPath = Path.Combine("KernelMemory", "WebPage");
+            DirectoryInfo preloadedFolder = new(folderPath);
+            DirectoryInfo[] subfolders = preloadedFolder.GetDirectories();
+            foreach (var subfolder in subfolders)
+            {
+                FileInfo json = new(Path.Combine(subfolder.FullName, $"WebPage.json"));
+                WebPage? webPage = JsonConvert.DeserializeObject<WebPage>(await File.ReadAllTextAsync(json.FullName));
+                webPageDict.TryAdd(webPage.Url, webPage);
+            }
+
             MemoryAnswer answer = await memoryClient.AskAsync(question, index ?? _defaultIndex, TagsToMemoryFilter(tags ?? defaultRetrievalTags), null, minRelevance, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
             var response = answer.Result + Environment.NewLine;
             // TODO: List source
             foreach (var x in answer.RelevantSources.OrderByDescending(x => x.Partitions.First().Relevance))
             {
+                string sourceDisplayName = string.Empty;
+                sourceDisplayName = x.SourceUrl != null
+                    ? webPageDict.TryGetValue(x.SourceUrl, out WebPage? value) ? $"[{value.Name}]({x.SourceUrl})" : x.SourceUrl
+                    : x.SourceName;
                 var firstPartition = x.Partitions.First();
-                response += $"{Environment.NewLine}  * [{firstPartition.Relevance:P}] {(x.SourceUrl != null ? ($"[{x.SourceUrl}]({x.SourceUrl})") : x.SourceName)} -- {firstPartition.LastUpdate:D}";
+                response += $"{Environment.NewLine}  * [{firstPartition.Relevance:P}] {sourceDisplayName} -- {firstPartition.LastUpdate:D}";
+                // TODO: get website title
             }
             return response;
         }
