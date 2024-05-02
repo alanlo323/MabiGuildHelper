@@ -50,7 +50,7 @@ namespace DiscordBot.SemanticKernel
 
         public async Task StartEngine()
         {
-            chatCompletionConfig = semanticKernelConfig.Value.AzureOpenAI.GPT4;
+            chatCompletionConfig = semanticKernelConfig.Value.AzureOpenAI.GPT4V;
             embeddingConfig = semanticKernelConfig.Value.AzureOpenAI.Embedding;
 
             // ... initialize the engine ...
@@ -67,7 +67,7 @@ namespace DiscordBot.SemanticKernel
                 ;
 
             builder.Plugins
-                .AddFromType<HttpPlugin>()
+                //.AddFromType<HttpPlugin>()
                 //.AddFromType<TextPlugin>()
                 //.AddFromType<WaitPlugin>()
                 //.AddFromType<TimePlugin>()
@@ -77,7 +77,7 @@ namespace DiscordBot.SemanticKernel
                 //.AddFromType<TextMemoryPlugin>()
                 //.AddFromType<WebSearchEnginePlugin>()
                 //.AddFromType<WebFileDownloadPlugin>()
-                .AddFromType<ConversationSummaryPlugin>()
+                //.AddFromType<ConversationSummaryPlugin>()
                 .AddFromType<Plugins.Math.MathPlugin>()
                 .AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
                 .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
@@ -129,16 +129,24 @@ namespace DiscordBot.SemanticKernel
             var config = new FunctionCallingStepwisePlannerOptions
             {
                 MaxIterations = 15,
-                MaxTokens = 4000,
+                MaxTokens = 8000,
+                ExecutionSettings = new OpenAIPromptExecutionSettings()
+                {
+                    //ChatSystemPrompt = SystemPrompt,
+                    Temperature = 0.0,
+                    TopP = 0.1,
+                    MaxTokens = 8000,
+                    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
+                },
             };
 
             var planner = new FunctionCallingStepwisePlanner(config);
-
             FunctionCallingStepwisePlannerResult result = await planner.ExecuteAsync(kernelWithRelevantFunctions, prompt);
 
             ChatHistory history = result.ChatHistory;
             StringBuilder sb1 = new(), sb2 = new();
-            foreach (var record in history) if (record.Role == AuthorRole.Assistant) sb1.AppendLine(record.Items.OfType<TextContent>().FirstOrDefault()?.Text);
+            foreach (var record in history) 
+                sb1.AppendLine(record.Items.OfType<TextContent>().FirstOrDefault()?.Text);
             sb2.Append(sb1.ToString().ToHidden());
             sb2.Append(result.FinalAnswer.ToQuotation());
             return sb2.ToString();
@@ -168,7 +176,7 @@ namespace DiscordBot.SemanticKernel
                     ChatSystemPrompt = SystemPrompt,
                     Temperature = 0.0,
                     TopP = 0.1,
-                    MaxTokens = 4096,
+                    MaxTokens = 4000,
                     ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
                 },
                 // Use gpt-4 or newer models if you want to test with loops.
