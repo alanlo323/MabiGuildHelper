@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Reactive.Joins;
 using System.Reflection;
 using System.Text;
@@ -10,6 +11,7 @@ using DiscordBot.Configuration;
 using DiscordBot.Constant;
 using DiscordBot.Extension;
 using DiscordBot.Helper;
+using DiscordBot.SemanticKernel.CustomClass;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
@@ -60,6 +62,10 @@ namespace DiscordBot.SemanticKernel
                     chatCompletionConfig.Deployment,
                     chatCompletionConfig.Endpoint,
                      chatCompletionConfig.APIKey)
+                //.AddOpenAIChatCompletion(
+                //    chatCompletionConfig.Deployment,
+                //     chatCompletionConfig.APIKey,
+                //     httpClient: new(new CustomHttpMessageHandler(chatCompletionConfig)))
                 .AddAzureOpenAITextEmbeddingGeneration(
                     embeddingConfig.Deployment,
                     embeddingConfig.Endpoint,
