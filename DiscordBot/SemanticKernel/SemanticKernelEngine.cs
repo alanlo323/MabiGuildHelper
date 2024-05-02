@@ -151,14 +151,14 @@ namespace DiscordBot.SemanticKernel
 
             ChatHistory history = result.ChatHistory;
             StringBuilder sb1 = new(), sb2 = new();
-            foreach (var record in history) 
+            foreach (var record in history)
                 sb1.AppendLine(record.Items.OfType<TextContent>().FirstOrDefault()?.Text);
             sb2.Append(sb1.ToString().ToHidden());
             sb2.Append(result.FinalAnswer.ToQuotation());
             return sb2.ToString();
         }
 
-        public async Task<string> GenerateResponse(string prompt)
+        public async Task<(string, string)> GenerateResponse(string prompt)
         {
             if (kernel == null) await StartEngine();
 
@@ -195,39 +195,19 @@ namespace DiscordBot.SemanticKernel
             logger.LogInformation($"Plan steps: {Environment.NewLine}{planSteps.Item2}");
             var planResult = (await plan.InvokeAsync(kernelWithRelevantFunctions)).Trim();
 
-            #region backup
-            //// Get the response from the AI
-            //var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-            //var result = chatCompletionService.GetStreamingChatMessageContentsAsync(
-            //                    history,
-            //                    executionSettings: openAIPromptExecutionSetting,
-            //                    kernel: kernel);
-
-            //string fullMessage = "";
-            //var first = true;
-            //await foreach (var content in result)
-            //{
-            //    if (content.Role.HasValue && first)
-            //    {
-            //        first = false;
-            //    }
-            //    fullMessage += content.Content;
-            //}
-            //history.AddAssistantMessage(fullMessage);
-            #endregion
-
             foreach (var planStep in planSteps.Item1)
             {
                 history.AddAssistantMessage($"{planStep.FullDisplayName}".ToHighLight());
-                foreach (var actionRow in planStep.ActionRows) history.AddAssistantMessage($"{actionRow}");
+                foreach (var actionRow in planStep.DisplayActionRows) history.AddAssistantMessage($"{actionRow}");
             }
+
             StringBuilder sb1 = new(), sb2 = new();
-            foreach (var record in history) if (record.Role == AuthorRole.Assistant) sb1.AppendLine(record.Items.OfType<TextContent>().FirstOrDefault()?.Text);
-            sb2.Append(sb1.ToString().ToHidden());
+            //foreach (var record in history) if (record.Role == AuthorRole.Assistant) sb1.AppendLine(record.Items.OfType<TextContent>().FirstOrDefault()?.Text);
+            //sb2.Append(sb1.ToString().ToHidden());
             sb2.Append(planResult);
             history.AddAssistantMessage(planResult.ToQuotation());
 
-            return sb2.ToString();
+            return (sb2.ToString(), planSteps.Item2);
         }
 
         public async Task<Kernel> GetKernelWithRelevantFunctions(string query)
