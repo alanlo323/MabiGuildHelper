@@ -96,6 +96,7 @@ namespace DiscordBot
                 .AddScoped<IBaseSlashCommand, ChatCommand>()
                 .AddScoped<IBaseMessageCommand, EditNewsCommand>()
                 .AddScoped<IBaseButtonHandler, ManageReminderButtonHandler>()
+                .AddScoped<IBaseButtonHandler, PromptDetailButtonHandler>()
                 .AddScoped<IBaseSelectMenuHandler, AddReminderSelectMenuHandler>()
                 .AddScoped<IBaseModalHandler, EditNewsModalHandler>()
                 .AddScoped<MessageReceivedHandler>()

@@ -20,6 +20,7 @@ namespace DiscordBot.Db
         public DbSet<InstanceReminderSetting> InstanceReminderSettings { get; set; }
         public DbSet<News> News { get; set; }
         public DbSet<GlobalSetting> GlobalSettings { get; set; }
+        public DbSet<Conversation> Conversations { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -91,6 +92,14 @@ namespace DiscordBot.Db
 
             modelBuilder.Entity<GlobalSetting>()
                 .HasKey(e => e.Key)
+                ;
+
+            modelBuilder.Entity<Conversation>()
+                .HasKey(e => e.Id)
+                ;
+            modelBuilder.Entity<Conversation>()
+                .Property(e => e.Id)
+                .ValueGeneratedOnAdd()
                 ;
         }
     }
