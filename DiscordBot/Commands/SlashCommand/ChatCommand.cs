@@ -47,21 +47,15 @@ namespace DiscordBot.Commands.SlashCommand
             DateTime startTime = DateTime.Now;
             string prompt = command.Data.Options.First(x => x.Name == "text").Value as string;
 
-            var result = await semanticKernelEngine.GenerateResponse(prompt);
-            var answer = result.Item1;
-            var planTemplate = result.Item2;
+            Conversation conversation = await semanticKernelEngine.GenerateResponse(prompt);
 
+            var answer = conversation.Result ?? string.Empty;
             answer = answer[..Math.Min(2000, answer.Length)];
             MessageComponent addReminderButtonComponent = buttonHandlerHelper.GetButtonHandler<PromptDetailButtonHandler>().GetMessageComponent();
             RestFollowupMessage restFollowupMessage = await command.FollowupAsync(answer, components: addReminderButtonComponent);
-            //RestFollowupMessage restFollowupMessage = await command.FollowupAsync(answer);
 
-            var conversation = await databaseHelper.GetOrCreateEntityByKeys<Conversation>(new() { { nameof(Conversation.DiscordMessageId), restFollowupMessage.Id } });
-            conversation.UserPrompt = prompt;
-            conversation.Result = answer;
-            conversation.PlanTemplate = planTemplate;
-            conversation.StartTime = startTime;
-            conversation.EndTime = DateTime.Now;
+            conversation.DiscordMessageId = restFollowupMessage.Id;
+            await databaseHelper.Add(conversation);
             await databaseHelper.SaveChange();
         }
     }

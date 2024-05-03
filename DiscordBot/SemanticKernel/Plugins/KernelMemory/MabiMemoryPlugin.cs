@@ -228,7 +228,6 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
 
             MemoryAnswer answer = await memoryClient.AskAsync(question, index ?? _defaultIndex, TagsToMemoryFilter(tags ?? defaultRetrievalTags), null, minRelevance, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
             var response = answer.Result + Environment.NewLine;
-            // TODO: List source
             foreach (var x in answer.RelevantSources.OrderByDescending(x => x.Partitions.First().Relevance))
             {
                 string sourceDisplayName = string.Empty;
@@ -237,7 +236,6 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                     : x.SourceName;
                 var firstPartition = x.Partitions.First();
                 response += $"{Environment.NewLine}  * [{firstPartition.Relevance:P}] {sourceDisplayName} -- {firstPartition.LastUpdate:D}";
-                // TODO: get website title
             }
             return response;
         }

@@ -1,20 +1,27 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Reactive.Joins;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Azure.Monitor.OpenTelemetry.Exporter;
 using DiscordBot.Commands.SlashCommand;
 using DiscordBot.Configuration;
 using DiscordBot.Constant;
+using DiscordBot.Db.Entity;
 using DiscordBot.Extension;
 using DiscordBot.Helper;
 using DiscordBot.SemanticKernel.CustomClass;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Google.Apis.CustomSearchAPI.v1.Data;
+using HandlebarsDotNet.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -38,6 +45,10 @@ using Microsoft.SemanticKernel.Plugins.Web.Google;
 using NLog.Config;
 using NLog.Extensions.Logging;
 using NLog.Targets;
+using OpenTelemetry;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using static DiscordBot.Helper.PromptHelper;
 
 namespace DiscordBot.SemanticKernel
@@ -46,14 +57,33 @@ namespace DiscordBot.SemanticKernel
     {
         public const string SystemPrompt = "你是一個Discord Bot, 名字叫夏夜小幫手, 你在\"夏夜月涼\"伺服器裡為會員們服務.";
 
-        Kernel kernel;
+        bool isEngineStarted = false;
         AzureOpenAIConfig chatCompletionConfig;
         AzureOpenAIConfig embeddingConfig;
+        ApplicationInsightsConfig applicationInsightsConfig;
 
         public async Task StartEngine()
         {
             chatCompletionConfig = semanticKernelConfig.Value.AzureOpenAI.GPT4V;
             embeddingConfig = semanticKernelConfig.Value.AzureOpenAI.Embedding;
+            applicationInsightsConfig = semanticKernelConfig.Value.ApplicationInsightsConfig;
+
+            using TracerProvider traceProvider = Sdk.CreateTracerProviderBuilder()
+                //.AddSource("Microsoft.SemanticKernel*")
+                .AddSource("SemanticKernel.Connectors.OpenAI")
+                //.AddAzureMonitorTraceExporter(options => options.ConnectionString = applicationInsightsConfig.ConnectionString)
+                .Build();
+
+            using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                //.AddMeter("Microsoft.SemanticKernel*")
+                .AddMeter("SemanticKernel.Connectors.OpenAI")
+                //.AddAzureMonitorMetricExporter(options => options.ConnectionString = applicationInsightsConfig.ConnectionString)
+                .Build();
+        }
+
+        public async Task<Kernel> GetKernelAsync(ICollection<LogRecord> logRecords = null)
+        {
+            if (!isEngineStarted) await StartEngine();
 
             // ... initialize the engine ...
             var builder = Kernel.CreateBuilder();
@@ -121,14 +151,97 @@ namespace DiscordBot.SemanticKernel
                 });
 
                 loggingBuilder.AddNLog(config);
+                loggingBuilder.AddOpenTelemetry(options =>
+                {
+                    //options
+                    //.AddAzureMonitorLogExporter(options => options.ConnectionString = applicationInsightsConfig.ConnectionString)
+                    //.AddConsoleExporter()
+                    //;
+                    if (logRecords != null) options.AddInMemoryExporter(logRecords);
+                    // Format log messages. This is default to false.
+                    options.IncludeFormattedMessage = true;
+                });
             });
 
-            kernel = builder.Build();
+            Kernel kernel = builder.Build();
+
+            kernel.FunctionInvoking += (sender, e) =>
+            {
+                logger.LogInformation($"{e.Function.Name} : Pre Function Execution Handler - Triggered");
+            };
+            kernel.FunctionInvoked += (sender, e) =>
+            {
+                logger.LogInformation($"{e.Function.Name} : Post Function Execution Handler");
+            };
+            kernel.PromptRendering += (sender, e) =>
+            {
+                logger.LogInformation($"{e.Function.Name} : Pre Prompt Render Handler - Triggered");
+            };
+            kernel.PromptRendered += (sender, e) =>
+            {
+                logger.LogInformation($"{e.Function.Name} : Post Prompt Render Handler");
+            };
+            return kernel;
+        }
+
+        public async Task<Conversation> GenerateResponse(string prompt)
+        {
+            DateTime startTime = DateTime.Now;
+            ObservableCollection<LogRecord> logRecords = [];
+            Kernel kernel = await GetKernelAsync(logRecords);
+
+            //var kernelWithRelevantFunctions = await GetKernelWithRelevantFunctions(prompt);
+            var kernelWithRelevantFunctions = kernel;
+
+            ChatHistory history = [];
+            history.AddSystemMessage(SystemPrompt);
+            history.AddUserMessage(prompt);
+
+            string additionalPromptContext = $"""
+                背景: [{SystemPrompt}]
+                你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND / 找不到資訊)就向用戶道歉
+                只有最後回答的用繁體中文回答, 風格: 可愛
+                """;
+            var planner = new HandlebarsPlanner(new HandlebarsPlannerOptions()
+            {
+                // When using OpenAI models, we recommend using low values for temperature and top_p to minimize planner hallucinations.
+                ExecutionSettings = new OpenAIPromptExecutionSettings()
+                {
+                    ChatSystemPrompt = SystemPrompt,
+                    Temperature = 0.0,
+                    TopP = 0.1,
+                    MaxTokens = 4000,
+                    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
+                },
+                // Use gpt-4 or newer models if you want to test with loops.
+                // Older models like gpt-35-turbo are less recommended. They do handle loops but are more prone to syntax errors.
+                AllowLoops = chatCompletionConfig.Deployment.Contains("gpt-4", StringComparison.OrdinalIgnoreCase),
+                GetAdditionalPromptContext = async () => additionalPromptContext
+            });
+            HandlebarsPlan plan = await planner.CreatePlanAsync(kernelWithRelevantFunctions, prompt);
+            string planTemplate = promptHelper.GetPlanTemplateFromPlan(plan);
+            logger.LogInformation($"Plan steps: {Environment.NewLine}{planTemplate}");
+            var planResult = (await plan.InvokeAsync(kernelWithRelevantFunctions)).Trim();
+
+            history.AddUserMessage(planTemplate);
+            history.AddAssistantMessage(planResult);
+
+            Conversation conversation = new()
+            {
+                UserPrompt = prompt,
+                PlanTemplate = planTemplate,
+                Result = planResult,
+                StartTime = startTime,
+                EndTime = DateTime.Now,
+                ChatHistory = history
+            };
+            conversation.SetTokens(logRecords);
+            return conversation;
         }
 
         public async Task<string> GenerateResponseFromStepwisePlanner(string prompt)
         {
-            if (kernel == null) await StartEngine();
+            Kernel kernel = await GetKernelAsync();
 
             //var kernelWithRelevantFunctions = await GetKernelWithRelevantFunctions(prompt);
             var kernelWithRelevantFunctions = kernel;
@@ -151,67 +264,16 @@ namespace DiscordBot.SemanticKernel
 
             ChatHistory history = result.ChatHistory;
             StringBuilder sb1 = new(), sb2 = new();
-            foreach (var record in history)
-                sb1.AppendLine(record.Items.OfType<TextContent>().FirstOrDefault()?.Text);
+            foreach (var record in history) sb1.AppendLine(record.Items.OfType<TextContent>().FirstOrDefault()?.Text);
             sb2.Append(sb1.ToString().ToHidden());
             sb2.Append(result.FinalAnswer.ToQuotation());
             return sb2.ToString();
         }
 
-        public async Task<(string, string)> GenerateResponse(string prompt)
-        {
-            if (kernel == null) await StartEngine();
-
-            //var kernelWithRelevantFunctions = await GetKernelWithRelevantFunctions(prompt);
-            var kernelWithRelevantFunctions = kernel;
-
-            ChatHistory history = [];
-            history.AddSystemMessage(SystemPrompt);
-            history.AddUserMessage(prompt);
-
-            string additionalPromptContext = $"""
-                背景: [{SystemPrompt}]
-                你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND)就向用戶道歉
-                只有最後回答的用繁體中文回答, 風格: 可愛
-                """;
-            var planner = new HandlebarsPlanner(new HandlebarsPlannerOptions()
-            {
-                // When using OpenAI models, we recommend using low values for temperature and top_p to minimize planner hallucinations.
-                ExecutionSettings = new OpenAIPromptExecutionSettings()
-                {
-                    ChatSystemPrompt = SystemPrompt,
-                    Temperature = 0.0,
-                    TopP = 0.1,
-                    MaxTokens = 4000,
-                    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
-                },
-                // Use gpt-4 or newer models if you want to test with loops.
-                // Older models like gpt-35-turbo are less recommended. They do handle loops but are more prone to syntax errors.
-                AllowLoops = chatCompletionConfig.Deployment.Contains("gpt-4", StringComparison.OrdinalIgnoreCase),
-                GetAdditionalPromptContext = async () => additionalPromptContext
-            });
-            HandlebarsPlan plan = await planner.CreatePlanAsync(kernelWithRelevantFunctions, prompt);
-            (List<PlanStep>, string) planSteps = promptHelper.GetStepFromPlan(plan);
-            logger.LogInformation($"Plan steps: {Environment.NewLine}{planSteps.Item2}");
-            var planResult = (await plan.InvokeAsync(kernelWithRelevantFunctions)).Trim();
-
-            foreach (var planStep in planSteps.Item1)
-            {
-                history.AddAssistantMessage($"{planStep.FullDisplayName}".ToHighLight());
-                foreach (var actionRow in planStep.DisplayActionRows) history.AddAssistantMessage($"{actionRow}");
-            }
-
-            StringBuilder sb1 = new(), sb2 = new();
-            //foreach (var record in history) if (record.Role == AuthorRole.Assistant) sb1.AppendLine(record.Items.OfType<TextContent>().FirstOrDefault()?.Text);
-            //sb2.Append(sb1.ToString().ToHidden());
-            sb2.Append(planResult);
-            history.AddAssistantMessage(planResult.ToQuotation());
-
-            return (sb2.ToString(), planSteps.Item2);
-        }
-
         public async Task<Kernel> GetKernelWithRelevantFunctions(string query)
         {
+            Kernel kernel = await GetKernelAsync();
+
             // Create memory to store the functions
             var memoryStorage = new VolatileMemoryStore();
             var textEmbeddingGenerator = new AzureOpenAITextEmbeddingGenerationService(

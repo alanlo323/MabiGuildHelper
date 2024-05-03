@@ -14,6 +14,7 @@ namespace DiscordBot.Configuration
         public AzureOpenAI AzureOpenAI { get; set; }
         public KernelMemory KernelMemory { get; set; }
         public GoogleSearchApi GoogleSearchApi { get; set; }
+        public ApplicationInsightsConfig ApplicationInsightsConfig { get; set; }
 
         public bool Validate()
         {
@@ -62,4 +63,8 @@ namespace DiscordBot.Configuration
         public string SearchEngineId { get; set; }
     }
 
+    public class ApplicationInsightsConfig
+    {
+        public string ConnectionString { get; set; }
+    }
 }
