@@ -12,18 +12,17 @@ namespace DiscordBot.Helper
 {
     public partial class PromptHelper
     {
-        public (List<PlanStep>, string) GetStepFromPlan(HandlebarsPlan plan)
+        public string? GetPlanTemplateFromPlan(HandlebarsPlan plan)
         {
             // Use reflection to access the private variable _template
             FieldInfo templateField = typeof(HandlebarsPlan).GetField("_template", BindingFlags.NonPublic | BindingFlags.Instance);
-            string templateValue = (string)templateField?.GetValue(plan);
-            List<PlanStep> planSteps = GetPlanStepFromString(templateValue);
-
-            return (planSteps, templateValue);
+            return (string)templateField?.GetValue(plan);
         }
 
         public List<PlanStep> GetPlanStepFromString(string templateValue)
         {
+            if (templateValue == null) return [];
+
             // Get all matches of the regex pattern
             List<PlanStep> planSteps = [];
             Regex stepRegex = StepRegex();

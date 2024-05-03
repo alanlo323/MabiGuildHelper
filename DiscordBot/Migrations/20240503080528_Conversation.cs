@@ -23,6 +23,9 @@ namespace DiscordBot.Migrations
                     StartTime = table.Column<DateTime>(type: "TEXT", nullable: true),
                     EndTime = table.Column<DateTime>(type: "TEXT", nullable: true),
                     Result = table.Column<string>(type: "TEXT", nullable: true),
+                    PromptTokens = table.Column<int>(type: "INTEGER", nullable: false),
+                    CompletionTokens = table.Column<int>(type: "INTEGER", nullable: false),
+                    TotalTokens = table.Column<int>(type: "INTEGER", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },

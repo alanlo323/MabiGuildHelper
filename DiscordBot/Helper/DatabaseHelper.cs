@@ -100,6 +100,11 @@ namespace DiscordBot.Helper
             return await appDbContext.SaveChangesAsync();
         }
 
+        public async Task Add(object obj)
+        {
+            await appDbContext.AddAsync(obj);
+        }
+
         private async Task<T> GetOrCreateEntity<T>(Expression<Func<T, bool>> whereExpression, Dictionary<string, object> defaultPropertyValues = null, List<Expression<Func<T, object>>>? includeExpressions = null) where T : class, new()
         {
             IQueryable<T> query = appDbContext

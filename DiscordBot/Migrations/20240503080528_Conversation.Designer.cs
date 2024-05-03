@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DiscordBot.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240502115357_Conversation")]
+    [Migration("20240503080528_Conversation")]
     partial class Conversation
     {
         /// <inheritdoc />
@@ -26,6 +26,9 @@ namespace DiscordBot.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("CompletionTokens")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -38,11 +41,17 @@ namespace DiscordBot.Migrations
                     b.Property<string>("PlanTemplate")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("PromptTokens")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Result")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("StartTime")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("TotalTokens")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");

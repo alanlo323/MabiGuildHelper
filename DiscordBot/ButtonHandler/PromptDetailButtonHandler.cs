@@ -38,7 +38,7 @@ namespace DiscordBot.ButtonHandler
 
         public async Task Excute(SocketMessageComponent component)
         {
-            await component.DeferAsync();
+            await component.DeferAsync(ephemeral: true);
             var conversation = await databaseHelper.GetOrCreateEntityByKeys<Conversation>(new() { { nameof(Conversation.DiscordMessageId), component.Message.Id } });
 
             StringBuilder sb = new();
@@ -52,10 +52,14 @@ namespace DiscordBot.ButtonHandler
             }
             sb.AppendLine($"{conversation.UserPrompt}".ToHighLight());
             sb.AppendLine(innerSb.ToString().ToQuotation());
-            sb.AppendLine($"**開始時間:** {conversation.StartTime:yyyy-MM-dd HH:mm:ss}");
+            sb.AppendLine($"**開始時間:** {conversation.StartTime:yyyy-MM-dd HH:mm:ss}"); 
             sb.AppendLine($"**結束時間:** {conversation.EndTime:yyyy-MM-dd HH:mm:ss}");
-            sb.AppendLine($"**執行時間:** {conversation.RunningTime?.Humanize(precision: 2, minUnit: Humanizer.Localisation.TimeUnit.Second, culture: new CultureInfo("zh-tw"))}");
-            await component.FollowupAsync(text: sb.ToString());
+            sb.AppendLine($"**執行時間:** {conversation.RunningTime?.Humanize(precision: 2, minUnit: Humanizer.Localisation.TimeUnit.Second, collectionSeparator: " ", culture: new CultureInfo("zh-tw"))}");
+            sb.AppendLine($"**Prompt Tokens:** {conversation.PromptTokens}");
+            sb.AppendLine($"**Completion Tokens:** {conversation.CompletionTokens}");
+            sb.AppendLine($"**Total Tokens:** {conversation.TotalTokens}");
+            sb.AppendLine($"**估計成本:** {conversation.DisplayEstimatedCost}");
+            await component.FollowupAsync(text: sb.ToString(), ephemeral: true);
         }
     }
 }
