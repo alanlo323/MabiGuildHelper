@@ -35,7 +35,9 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory.Core
                                               </user>
                                               """;
 
+#pragma warning disable KMEXP00 // 類型僅供評估之用，可能會在未來更新中變更或移除。抑制此診斷以繼續。
         private readonly EmbeddedPromptProvider _fallbackProvider = new();
+#pragma warning restore KMEXP00 // 類型僅供評估之用，可能會在未來更新中變更或移除。抑制此診斷以繼續。
 
         public string ReadPrompt(string promptName)
         {
