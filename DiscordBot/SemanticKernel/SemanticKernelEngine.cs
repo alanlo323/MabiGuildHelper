@@ -18,6 +18,7 @@ using DiscordBot.Extension;
 using DiscordBot.Helper;
 using DiscordBot.SemanticKernel.CustomClass;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory;
+using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Google.Apis.CustomSearchAPI.v1.Data;
@@ -190,17 +191,13 @@ namespace DiscordBot.SemanticKernel
             ObservableCollection<LogRecord> logRecords = [];
             Kernel kernel = await GetKernelAsync(logRecords);
 
-            //var kernelWithRelevantFunctions = await GetKernelWithRelevantFunctions(prompt);
-            var kernelWithRelevantFunctions = kernel;
-
             ChatHistory history = [];
             history.AddSystemMessage(SystemPrompt);
             history.AddUserMessage(prompt);
-
+            // 只有最後回答的用繁體中文回答, 風格: 可愛
             string additionalPromptContext = $"""
                 背景: [{SystemPrompt}]
-                你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND / 找不到資訊)就向用戶道歉
-                只有最後回答的用繁體中文回答, 風格: 可愛
+                你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND)就向用戶道歉
                 """;
             var planner = new HandlebarsPlanner(new HandlebarsPlannerOptions()
             {
@@ -218,10 +215,10 @@ namespace DiscordBot.SemanticKernel
                 AllowLoops = chatCompletionConfig.Deployment.Contains("gpt-4", StringComparison.OrdinalIgnoreCase),
                 GetAdditionalPromptContext = async () => additionalPromptContext
             });
-            HandlebarsPlan plan = await planner.CreatePlanAsync(kernelWithRelevantFunctions, prompt);
+            HandlebarsPlan plan = await planner.CreatePlanAsync(kernel, prompt);
             string planTemplate = promptHelper.GetPlanTemplateFromPlan(plan);
             logger.LogInformation($"Plan steps: {Environment.NewLine}{planTemplate}");
-            var planResult = (await plan.InvokeAsync(kernelWithRelevantFunctions)).Trim();
+            var planResult = (await plan.InvokeAsync(kernel)).Trim();
 
             history.AddUserMessage(planTemplate);
             history.AddAssistantMessage(planResult);
@@ -239,35 +236,44 @@ namespace DiscordBot.SemanticKernel
             return conversation;
         }
 
-        public async Task<string> GenerateResponseFromStepwisePlanner(string prompt)
+        public async Task<Conversation> GenerateResponseFromStepwisePlanner(string prompt)
         {
-            Kernel kernel = await GetKernelAsync();
+            DateTime startTime = DateTime.Now;
+            ObservableCollection<LogRecord> logRecords = [];
+            Kernel kernel = await GetKernelAsync(logRecords);
 
-            //var kernelWithRelevantFunctions = await GetKernelWithRelevantFunctions(prompt);
-            var kernelWithRelevantFunctions = kernel;
             var config = new FunctionCallingStepwisePlannerOptions
             {
-                MaxIterations = 15,
+                MaxIterations = 5,
                 MaxTokens = 8000,
                 ExecutionSettings = new OpenAIPromptExecutionSettings()
                 {
                     //ChatSystemPrompt = SystemPrompt,
                     Temperature = 0.0,
                     TopP = 0.1,
-                    MaxTokens = 8000,
+                    MaxTokens = 2000,
                     ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
                 },
             };
 
             var planner = new FunctionCallingStepwisePlanner(config);
-            FunctionCallingStepwisePlannerResult result = await planner.ExecuteAsync(kernelWithRelevantFunctions, prompt);
+            FunctionCallingStepwisePlannerResult result = await planner.ExecuteAsync(kernel, prompt);
 
             ChatHistory history = result.ChatHistory;
-            StringBuilder sb1 = new(), sb2 = new();
-            foreach (var record in history) sb1.AppendLine(record.Items.OfType<TextContent>().FirstOrDefault()?.Text);
-            sb2.Append(sb1.ToString().ToHidden());
-            sb2.Append(result.FinalAnswer.ToQuotation());
-            return sb2.ToString();
+            StringBuilder sb1 = new();
+            foreach (var record in history) sb1.AppendLine(record.ToString());
+
+            Conversation conversation = new()
+            {
+                UserPrompt = prompt,
+                PlanTemplate = sb1.ToString(),
+                Result = result.FinalAnswer,
+                StartTime = startTime,
+                EndTime = DateTime.Now,
+                ChatHistory = history
+            };
+            conversation.SetTokens(logRecords);
+            return conversation;
         }
 
         public async Task<Kernel> GetKernelWithRelevantFunctions(string query)
