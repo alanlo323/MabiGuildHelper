@@ -34,24 +34,32 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
         public async Task<IKernelMemory> GetMabinogiKernelMemory()
         {
             if (memory != null) return memory;
+            try
+            {
 
-            var kernelMemoryBuilder = new KernelMemoryBuilder();
-            memory = kernelMemoryBuilder
-                .WithSimpleVectorDb(SimpleVectorDbConfig.Persistent)
-                .WithSimpleFileStorage(SimpleFileStorageConfig.Persistent)
-                .WithSearchClientConfig(new() { MaxMatchesCount = 3, AnswerTokens = 2000 })
-                .WithAzureOpenAITextGeneration(semanticKernelConfig.Value.AzureOpenAI.GPT4V, new DefaultGPTTokenizer())
-                .WithAzureOpenAITextEmbeddingGeneration(semanticKernelConfig.Value.AzureOpenAI.Embedding, new DefaultGPTTokenizer())
-                //.WithCustomTextGenerator(new CustomModelTextGeneration(ollama, new() { MaxToken = 8 * 1024 }))
-                //.WithCustomEmbeddingGenerator(new CustomEmbeddingGenerator(ollama, new() { MaxToken = 8 * 1024, TokenEncodingName = kernelMemoryConfig.Value.TokenEncodingName }))
-                .WithCustomPromptProvider(new CustomPromptProvider())
-                .WithCustomTextPartitioningOptions(new TextPartitioningOptions
-                {
-                    MaxTokensPerParagraph = semanticKernelConfig.Value.AzureOpenAI.Embedding.MaxTokenTotal,
-                    MaxTokensPerLine = semanticKernelConfig.Value.AzureOpenAI.Embedding.MaxTokenTotal / 10
-                })
-                .Build();
+                var kernelMemoryBuilder = new KernelMemoryBuilder();
+                memory = kernelMemoryBuilder
+                    .WithSimpleVectorDb(SimpleVectorDbConfig.Persistent)
+                    .WithSimpleFileStorage(SimpleFileStorageConfig.Persistent)
+                    .WithSearchClientConfig(new() { MaxMatchesCount = 3, AnswerTokens = 2000 })
+                    .WithAzureOpenAITextGeneration(semanticKernelConfig.Value.AzureOpenAI.GPT4_Turbo_0409)
+                    .WithAzureOpenAITextEmbeddingGeneration(semanticKernelConfig.Value.AzureOpenAI.Embedding)
+                    //.WithCustomTextGenerator(new CustomModelTextGeneration(ollama, new() { MaxToken = 8 * 1024 }))
+                    //.WithCustomEmbeddingGenerator(new CustomEmbeddingGenerator(ollama, new() { MaxToken = 8 * 1024, TokenEncodingName = kernelMemoryConfig.Value.TokenEncodingName }))
+                    .WithCustomPromptProvider(new CustomPromptProvider())
+                    .WithCustomTextPartitioningOptions(new TextPartitioningOptions
+                    {
+                        MaxTokensPerParagraph = semanticKernelConfig.Value.AzureOpenAI.Embedding.MaxTokenTotal,
+                        MaxTokensPerLine = semanticKernelConfig.Value.AzureOpenAI.Embedding.MaxTokenTotal / 10
+                    })
+                    .Build();
 
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
             await ImportData();
 
             return memory;
@@ -94,22 +102,22 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                 bool isValidUrl = Uri.TryCreate(webPage.Url, UriKind.Absolute, out Uri uriResult) && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps) && !webPage.Url.EndsWith("#");
                 if (!isValidUrl) continue;
 
-                FileInfo data = new FileInfo(Path.Combine(subfolder.FullName, $"{subfolder.Name}.txt"));
+                FileInfo data = new(Path.Combine(subfolder.FullName, $"{subfolder.Name}.txt"));
                 if (false && data.Exists)
                 {
                     await memory.ImportDocumentAsync(data.FullName, documentId: subfolder.Name, tags: new TagCollection() { webPage.Name });
+                    continue;
                 }
-                else
+
+                // Remove URL fragment if it exists
+                UriBuilder uriBuilder = new(webPage.Url)
                 {
-                    // Remove URL fragment if it exists
-                    UriBuilder uriBuilder = new(webPage.Url)
-                    {
-                        Fragment = string.Empty
-                    };
-                    string cleanUrl = uriBuilder.Uri.ToString();
-                    if (cleanUrl.EndsWith(".jpg")) continue;
-                    await memory.ImportWebPageAsync(cleanUrl, documentId: subfolder.Name, tags: new TagCollection() { webPage.Name });
-                }
+                    Fragment = string.Empty
+                };
+                string cleanUrl = uriBuilder.Uri.ToString();
+                if (cleanUrl.EndsWith(".jpg")) continue;
+                await memory.ImportWebPageAsync(cleanUrl, documentId: subfolder.Name, tags: new TagCollection() { webPage.Name });
+
                 logger.LogInformation($"Imported {index + 1}/{subfolders.Length} WebPage: {webPage.Name} Url: {webPage.Url}");
             }
         }

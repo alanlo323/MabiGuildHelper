@@ -32,8 +32,11 @@ namespace DiscordBot.Db.Entity
         public int CompletionTokens { get; set; }
         public int TotalTokens { get; set; }
 
+        private readonly double promptCost = 0.01;   //  per 1000 tokens
+        private readonly double completionCost = 0.03;   //  per 1000 tokens
+
         [NotMapped]
-        public double EstimatedCostInUSD { get => TotalTokens * 0.01 / 1000; }   // $0.01 per 1000 tokens
+        public double EstimatedCostInUSD { get => (PromptTokens * promptCost / 1000) + (CompletionTokens * completionCost / 1000); } 
         [NotMapped]
         //public string DisplayEstimatedCost { get => $"US${EstimatedCostInUSD.ToString("#,##0.#####", CultureInfo.CreateSpecificCulture("zh-us"))}"; }
         public string DisplayEstimatedCost { get => $"{(EstimatedCostInUSD * 7.8).ToString("C", CultureInfo.CreateSpecificCulture("zh-hk"))}, NT{(EstimatedCostInUSD * 32.3).ToString("C", CultureInfo.CreateSpecificCulture("zh-tw"))}"; }
