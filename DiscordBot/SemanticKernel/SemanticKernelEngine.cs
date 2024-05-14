@@ -65,7 +65,7 @@ namespace DiscordBot.SemanticKernel
 
         public async Task StartEngine()
         {
-            chatCompletionConfig = semanticKernelConfig.Value.AzureOpenAI.GPT4V;
+            chatCompletionConfig = semanticKernelConfig.Value.AzureOpenAI.GPT4_Turbo_0409;
             embeddingConfig = semanticKernelConfig.Value.AzureOpenAI.Embedding;
             applicationInsightsConfig = semanticKernelConfig.Value.ApplicationInsightsConfig;
 
@@ -268,6 +268,64 @@ namespace DiscordBot.SemanticKernel
                 UserPrompt = prompt,
                 PlanTemplate = sb1.ToString(),
                 Result = result.FinalAnswer,
+                StartTime = startTime,
+                EndTime = DateTime.Now,
+                ChatHistory = history
+            };
+            conversation.SetTokens(logRecords);
+            return conversation;
+        }
+
+        public async Task<Conversation> GenerateResponseWithoutPlanner(string prompt)
+        {
+            DateTime startTime = DateTime.Now;
+            ObservableCollection<LogRecord> logRecords = [];
+            Kernel kernel = await GetKernelAsync(logRecords);
+
+            ChatHistory history = [];
+            history.AddSystemMessage(SystemPrompt);
+            history.AddUserMessage(prompt);
+
+            var memoryPrompt = @"
+            Question to Kernel Memory: {{$input}}
+
+            Kernel Memory Answer: {{memory.ask}}
+
+            If the answer is empty say 'I don't know', otherwise reply with a business mail to share the answer.
+            ";
+
+            OpenAIPromptExecutionSettings settings = new()
+            {
+                ChatSystemPrompt = SystemPrompt,
+                Temperature = 0.0,
+                TopP = 0.1,
+                MaxTokens = 4000,
+                ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
+            };
+
+            KernelArguments arguments = new(settings)
+            {
+                { "input", prompt },
+            };
+            //+		ex	{"Missing argument for function parameter 'question'"}	System.Exception {Microsoft.SemanticKernel.KernelException}
+
+            var response = await kernel.InvokePromptAsync(memoryPrompt, arguments);
+            var result = response.GetValue<string>();
+
+            history.AddAssistantMessage(result);
+
+            var instructPrompt = $@"
+           Question to Kernel Memory: {prompt}
+
+           Kernel Memory Answer: {{memory.ask}}
+
+           If the answer is empty say 'I don't know', otherwise reply with the answer.
+           ";
+            Conversation conversation = new()
+            {
+                UserPrompt = prompt,
+                PlanTemplate = null,
+                Result = result,
                 StartTime = startTime,
                 EndTime = DateTime.Now,
                 ChatHistory = history

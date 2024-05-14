@@ -31,7 +31,6 @@ namespace DiscordBot.Util
             List<DailyDungeonInfo> dungeonInfoList = [];
             DateTime baseDate = new(2023, 10, 15);
             DateTime today = DateTime.Today;
-            DateTime now = DateTime.Now;
 
             int pos = (int)today.DayOfWeek + 7;
             DateTime day = today.AddDays(pos * (-1));
