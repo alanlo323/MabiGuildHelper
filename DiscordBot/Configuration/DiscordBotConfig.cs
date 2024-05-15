@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DiscordBot.Util;
 
 namespace DiscordBot.Configuration
 {
@@ -10,9 +11,11 @@ namespace DiscordBot.Configuration
     {
         public const string SectionName = "DiscordBot";
 
-        public string Token { get; set; }
+        public string ProductionToken { get; set; }
         public string BetaToken { get; set; }
         public string AdminServerId { get; set; }
+
+        public string Token { get => EnvironmentUtil.IsProduction() ? ProductionToken : BetaToken; }
 
         public bool Validate()
         {

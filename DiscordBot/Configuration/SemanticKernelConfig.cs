@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DiscordBot.SemanticKernel.Plugins.KernelMemory.Extensions.Discord;
 using Microsoft.KernelMemory;
 
 namespace DiscordBot.Configuration
@@ -11,9 +12,9 @@ namespace DiscordBot.Configuration
     {
         public const string SectionName = "SemanticKernel";
 
-        public AzureOpenAI AzureOpenAI { get; set; }
-        public KernelMemory KernelMemory { get; set; }
-        public GoogleSearchApi GoogleSearchApi { get; set; }
+        public AzureOpenAiConfig AzureOpenAI { get; set; }
+        public KernelMemoryConfig KernelMemory { get; set; }
+        public GoogleSearchApiConfig GoogleSearchApi { get; set; }
         public ApplicationInsightsConfig ApplicationInsightsConfig { get; set; }
 
         public bool Validate()
@@ -22,22 +23,23 @@ namespace DiscordBot.Configuration
         }
     }
 
-    public class AzureOpenAI
+    public class AzureOpenAiConfig
     {
-        public AzureOpenAIConfig GPT35 { get; set; }
-        public AzureOpenAIConfig GPT4V { get; set; }
-        public AzureOpenAIConfig GPT4_1106 { get; set; }
-        public AzureOpenAIConfig GPT4_32K { get; set; }
-        public AzureOpenAIConfig GPT4_Turbo_0409 { get; set; }
-        public AzureOpenAIConfig LLAMA3 { get; set; }
-        public AzureOpenAIConfig Embedding { get; set; }
+        public Microsoft.KernelMemory.AzureOpenAIConfig GPT35 { get; set; }
+        public Microsoft.KernelMemory.AzureOpenAIConfig GPT4V { get; set; }
+        public Microsoft.KernelMemory.AzureOpenAIConfig GPT4_1106 { get; set; }
+        public Microsoft.KernelMemory.AzureOpenAIConfig GPT4_32K { get; set; }
+        public Microsoft.KernelMemory.AzureOpenAIConfig GPT4_Turbo_0409 { get; set; }
+        public Microsoft.KernelMemory.AzureOpenAIConfig LLAMA3 { get; set; }
+        public Microsoft.KernelMemory.AzureOpenAIConfig Embedding { get; set; }
     }
 
-    public class KernelMemory
+    public class KernelMemoryConfig
     {
         public string TokenEncodingName { get; set; }
         public Ollama Ollama { get; set; }
         public DataSource DataSource { get; set; }
+        public DiscordConnectorConfig Discord { get; set; }
     }
 
     public class Ollama
@@ -59,7 +61,7 @@ namespace DiscordBot.Configuration
         public string[] Tag { get; set; }
     }
 
-    public class GoogleSearchApi
+    public class GoogleSearchApiConfig
     {
         public string ApiKey { get; set; }
         public string SearchEngineId { get; set; }
