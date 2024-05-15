@@ -28,6 +28,10 @@ using NLog.Targets;
 using Quartz;
 using System.Data;
 using System.Text.RegularExpressions;
+using Microsoft.KernelMemory;
+using DiscordBot.SemanticKernel.Plugins.KernelMemory.Extensions.Discord;
+using Google.Protobuf.WellKnownTypes;
+using Microsoft.KernelMemory.Pipeline;
 
 namespace DiscordBot
 {
@@ -42,6 +46,7 @@ namespace DiscordBot
         public async Task RunAsync(string[] args)
         {
             HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+            builder.Services.AddOptions<ConnectionStringsConfig>().Bind(builder.Configuration.GetSection(ConnectionStringsConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<DiscordBotConfig>().Bind(builder.Configuration.GetSection(DiscordBotConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<GameConfig>().Bind(builder.Configuration.GetSection(GameConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<ImgurConfig>().Bind(builder.Configuration.GetSection(ImgurConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
@@ -105,6 +110,7 @@ namespace DiscordBot
                 .AddScoped<ErinnTimeJob>()
                 .AddScoped<InstanceResetReminderJob>()
                 .AddScoped<DataScrapingJob>()
+                .AddHostedService<DiscordConnector>()
                 ;
 
             builder.Services
@@ -167,6 +173,7 @@ namespace DiscordBot
 
             using IHost host = builder.Build();
             await host.Services.GetRequiredService<DatabaseHelper>().EnsureDatabaseReady();
+            await host.Services.GetService<MabinogiKernelMemoryFactory>()!.Prepare();
             await host.Services.GetRequiredService<Bot>().Start();
             host.Run();
         }

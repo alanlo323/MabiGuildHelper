@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using DiscordBot.Db.Entity;
+using DiscordBot.SemanticKernel.Plugins.KernelMemory.Extensions.Discord;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
@@ -21,6 +22,7 @@ namespace DiscordBot.Db
         public DbSet<News> News { get; set; }
         public DbSet<GlobalSetting> GlobalSettings { get; set; }
         public DbSet<Conversation> Conversations { get; set; }
+        public DbSet<DiscordDbMessage> Messages { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -100,6 +102,10 @@ namespace DiscordBot.Db
             modelBuilder.Entity<Conversation>()
                 .Property(e => e.Id)
                 .ValueGeneratedOnAdd()
+                ;
+
+            modelBuilder.Entity<DiscordDbMessage>()
+                .HasKey(e => e.Id)
                 ;
         }
     }

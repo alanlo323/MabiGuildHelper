@@ -59,8 +59,8 @@ namespace DiscordBot.SemanticKernel
         public const string SystemPrompt = "你是一個Discord Bot, 名字叫夏夜小幫手, 你在\"夏夜月涼\"伺服器裡為會員們服務.";
 
         bool isEngineStarted = false;
-        AzureOpenAIConfig chatCompletionConfig;
-        AzureOpenAIConfig embeddingConfig;
+        Microsoft.KernelMemory.AzureOpenAIConfig chatCompletionConfig;
+        Microsoft.KernelMemory.AzureOpenAIConfig embeddingConfig;
         ApplicationInsightsConfig applicationInsightsConfig;
 
         public async Task StartEngine()

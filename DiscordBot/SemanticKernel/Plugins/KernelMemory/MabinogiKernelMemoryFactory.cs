@@ -24,44 +24,58 @@ using Microsoft.SemanticKernel.Plugins.Web;
 using System.Collections.Concurrent;
 using System.Security.Policy;
 using DiscordBot.Util;
+using Microsoft.KernelMemory.Pipeline;
+using Microsoft.Extensions.DependencyInjection;
+using DiscordBot.Db;
+using DiscordBot.SemanticKernel.Plugins.KernelMemory.Extensions.Discord;
+using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
 
 namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
 {
-    public class MabinogiKernelMemoryFactory(ILogger<MabinogiKernelMemoryFactory> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, DataScrapingHelper dataScrapingHelper)
+    public class MabinogiKernelMemoryFactory(ILogger<MabinogiKernelMemoryFactory> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, IOptionsSnapshot<ConnectionStringsConfig> connectionStringsConfig, DataScrapingHelper dataScrapingHelper, AppDbContext appDbContext)
     {
         IKernelMemory? memory;
+        public async Task Prepare()
+        {
+            if (memory != null) return;
+            try
+            {
+                KernelMemoryBuilder kernelMemoryBuilder = new();
+                kernelMemoryBuilder
+                     .WithSimpleVectorDb(SimpleVectorDbConfig.Persistent)
+                     .WithSimpleFileStorage(SimpleFileStorageConfig.Persistent)
+                     .WithSearchClientConfig(new() { MaxMatchesCount = 3, AnswerTokens = 2000 })
+                     .WithAzureOpenAITextGeneration(semanticKernelConfig.Value.AzureOpenAI.GPT4_Turbo_0409)
+                     .WithAzureOpenAITextEmbeddingGeneration(semanticKernelConfig.Value.AzureOpenAI.Embedding)
+                     //.WithCustomTextGenerator(new CustomModelTextGeneration(ollama, new() { MaxToken = 8 * 1024 }))
+                     //.WithCustomEmbeddingGenerator(new CustomEmbeddingGenerator(ollama, new() { MaxToken = 8 * 1024, TokenEncodingName = kernelMemoryConfig.Value.TokenEncodingName }))
+                     .WithCustomPromptProvider(new CustomPromptProvider())
+                     .WithCustomTextPartitioningOptions(new TextPartitioningOptions
+                     {
+                         MaxTokensPerParagraph = semanticKernelConfig.Value.AzureOpenAI.Embedding.MaxTokenTotal,
+                         MaxTokensPerLine = semanticKernelConfig.Value.AzureOpenAI.Embedding.MaxTokenTotal / 10
+                     })
+                     ;
+
+                kernelMemoryBuilder.Services.AddSingleton(this);
+                kernelMemoryBuilder.Services.AddSingleton(semanticKernelConfig);
+                kernelMemoryBuilder.Services.AddSingleton(appDbContext);
+
+                memory = kernelMemoryBuilder.Build();
+                (memory as MemoryServerless)!.Orchestrator.AddHandler<DiscordMessageHandler>(semanticKernelConfig.Value.KernelMemory.Discord.Steps[0]);
+
+                await ImportData();
+            }
+            catch
+            {
+                throw;
+            }
+        }
 
         public async Task<IKernelMemory> GetMabinogiKernelMemory()
         {
-            if (memory != null) return memory;
-            try
-            {
-
-                var kernelMemoryBuilder = new KernelMemoryBuilder();
-                memory = kernelMemoryBuilder
-                    .WithSimpleVectorDb(SimpleVectorDbConfig.Persistent)
-                    .WithSimpleFileStorage(SimpleFileStorageConfig.Persistent)
-                    .WithSearchClientConfig(new() { MaxMatchesCount = 3, AnswerTokens = 2000 })
-                    .WithAzureOpenAITextGeneration(semanticKernelConfig.Value.AzureOpenAI.GPT4_Turbo_0409)
-                    .WithAzureOpenAITextEmbeddingGeneration(semanticKernelConfig.Value.AzureOpenAI.Embedding)
-                    //.WithCustomTextGenerator(new CustomModelTextGeneration(ollama, new() { MaxToken = 8 * 1024 }))
-                    //.WithCustomEmbeddingGenerator(new CustomEmbeddingGenerator(ollama, new() { MaxToken = 8 * 1024, TokenEncodingName = kernelMemoryConfig.Value.TokenEncodingName }))
-                    .WithCustomPromptProvider(new CustomPromptProvider())
-                    .WithCustomTextPartitioningOptions(new TextPartitioningOptions
-                    {
-                        MaxTokensPerParagraph = semanticKernelConfig.Value.AzureOpenAI.Embedding.MaxTokenTotal,
-                        MaxTokensPerLine = semanticKernelConfig.Value.AzureOpenAI.Embedding.MaxTokenTotal / 10
-                    })
-                    .Build();
-
-            }
-            catch (Exception)
-            {
-
-                throw;
-            }
-            await ImportData();
-
+            await Prepare();
             return memory;
         }
 

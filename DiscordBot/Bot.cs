@@ -108,7 +108,7 @@ namespace DiscordBot
 
             await Init();
 
-            await client.LoginAsync(TokenType.Bot, EnvironmentUtil.IsProduction() ? discordBotConfig.Token : discordBotConfig.BetaToken);
+            await client.LoginAsync(TokenType.Bot, discordBotConfig.Token);
             await client.StartAsync();
         }
 

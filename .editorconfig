@@ -86,6 +86,9 @@ csharp_style_prefer_not_pattern = true:suggestion
 csharp_style_prefer_extended_property_pattern = true:suggestion
 csharp_space_around_binary_operators = before_and_after
 
+# KMEXP04: 類型僅供評估之用，可能會在未來更新中變更或移除。抑制此診斷以繼續。
+dotnet_diagnostic.KMEXP04.severity = silent
+
 [*.vb]
 #### 命名樣式 ####
 
