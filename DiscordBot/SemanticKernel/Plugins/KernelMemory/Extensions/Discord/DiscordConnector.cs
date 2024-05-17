@@ -15,6 +15,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.KernelMemory;
+using MongoDB.Driver.Core.Servers;
 
 namespace DiscordBot.SemanticKernel.Plugins.KernelMemory.Extensions.Discord;
 
@@ -99,6 +100,7 @@ public sealed class DiscordConnector : IHostedService, IDisposable, IAsyncDispos
 
     private Task OnMessage(SocketMessage message)
     {
+        if (message.Author.IsBot) return Task.CompletedTask;
         var msg = new DiscordMessage
         {
             MessageId = message.Id.ToString(CultureInfo.InvariantCulture),
@@ -152,11 +154,25 @@ public sealed class DiscordConnector : IHostedService, IDisposable, IAsyncDispos
             {
                 try
                 {
+                    TagCollection tags = new()
+                    {
+                        { "SourceType", "Text" },
+                        { "Source", "Discord" },
+                        { "ServerId", msg.ServerId },
+                        { "ServerName", msg.ServerName },
+                        { "ChannelId", msg.ChannelId },
+                        { "ChannelName", msg.ChannelName },
+                        { "MessageId", msg.MessageId },
+                        { "AuthorId", msg.AuthorId },
+                        { "AuthorUsername", msg.AuthorUsername },
+                        { "UtcTicks", msg.Timestamp.UtcTicks.ToString() },
+                    };
                     await _memory.ImportDocumentAsync(
                         fileContent,
                         fileName: _contentStorageFilename,
                         documentId: documentId,
                         index: _contentStorageIndex,
+                        tags: tags,
                         steps: _pipelineSteps).ConfigureAwait(false);
                 }
                 catch (Exception ex)

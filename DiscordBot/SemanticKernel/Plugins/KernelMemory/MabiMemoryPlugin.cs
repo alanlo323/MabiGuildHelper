@@ -19,7 +19,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
     // 摘要:
     //     Kernel Memory Plugin Recommended name: "memory" Functions: * memory.save * memory.saveFile
     //     * memory.saveWebPage * memory.ask * memory.search * memory.delete
-    public class MabiMemoryPlugin(IKernelMemory memoryClient, string defaultIndex = "", TagCollection? defaultIngestionTags = null, TagCollection? defaultRetrievalTags = null, List<string>? defaultIngestionSteps = null, bool waitForIngestionToComplete = false)
+    public class MabiMemoryPlugin(IKernelMemory memoryClient, string? defaultIndex = "", TagCollection? defaultIngestionTags = null, TagCollection? defaultRetrievalTags = null, List<string>? defaultIngestionSteps = null, bool waitForIngestionToComplete = false)
     {
         //
         // 摘要:

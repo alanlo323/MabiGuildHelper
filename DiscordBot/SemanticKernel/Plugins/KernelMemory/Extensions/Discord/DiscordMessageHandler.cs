@@ -18,6 +18,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory.Extensions.Discord;
 /// </summary>
 public sealed class DiscordMessageHandler(
     string stepName,
+    MabinogiKernelMemoryFactory mabinogiKernelMemoryFactory,
     IPipelineOrchestrator orchestrator,
     IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig,
     IServiceProvider serviceProvider,
@@ -46,7 +47,6 @@ public sealed class DiscordMessageHandler(
             if (uploadedFile.Name != this._filename) { continue; }
 
             string fileContent = await orchestrator.ReadTextFileAsync(pipeline, uploadedFile.Name, cancellationToken);
-
             DiscordDbMessage? data;
             try
             {
@@ -64,6 +64,9 @@ public sealed class DiscordMessageHandler(
             }
 
             await db.Messages.AddAsync(data, cancellationToken);
+
+            var memory = await mabinogiKernelMemoryFactory.GetMabinogiKernelMemory();
+            await memory.ImportTextAsync(fileContent, index: pipeline.Index, tags: pipeline.Tags, cancellationToken: cancellationToken);
         }
 
         await db.SaveChangesAsync(cancellationToken);

@@ -243,7 +243,7 @@ namespace DiscordBot.Helper
                 { "#mainlong", string.Empty },
                 { ".TbMainIE", string.Empty },
             };
-            string a, b, c;
+
             await Parallel.ForEachAsync(contentRefs, async (contentRef, cancellationToken) =>
             {
                 if (cancellationToken.IsCancellationRequested) return;
