@@ -13,6 +13,7 @@ using DiscordBot.Db.Entity;
 using DiscordBot.Extension;
 using DiscordBot.Helper;
 using DiscordBot.SemanticKernel;
+using DiscordBot.SemanticKernel.Core;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory;
 using DiscordBot.Util;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,17 +47,83 @@ namespace DiscordBot.Commands.SlashCommand
 
             DateTime startTime = DateTime.Now;
             string prompt = command.Data.Options.First(x => x.Name == "text").Value as string;
+            RestFollowupMessage restFollowupMessage = null;
+            object lockObj = new();
 
-            Conversation conversation = await semanticKernelEngine.GenerateResponse(prompt);
+            KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(prompt, OnKenelStatusUpdated);
+            Conversation conversation= kernelStatus.Conversation;
 
-            var answer = conversation.Result ?? string.Empty;
+            string responseMessage = GetResponseMessage(kernelStatus);
+            var answer = responseMessage ?? string.Empty;
             answer = answer[..Math.Min(2000, answer.Length)];
             MessageComponent addReminderButtonComponent = buttonHandlerHelper.GetButtonHandler<PromptDetailButtonHandler>().GetMessageComponent();
-            RestFollowupMessage restFollowupMessage = await command.FollowupAsync(answer, components: addReminderButtonComponent);
+            await FollowUpOrEditMessage(answer, components: addReminderButtonComponent);
 
             conversation.DiscordMessageId = restFollowupMessage.Id;
             await databaseHelper.Add(conversation);
             await databaseHelper.SaveChange();
+
+            #region Local Functions
+            async void OnKenelStatusUpdated(object? sender, KernelStatus kernelStatus)
+            {
+                string responseMessage = GetResponseMessage(kernelStatus);
+                await FollowUpOrEditMessage(responseMessage);
+            }
+
+            async Task FollowUpOrEditMessage(string message, MessageComponent? components = null)
+            {
+                lock (lockObj)
+                {
+                    if (restFollowupMessage == null)
+                    {
+                        restFollowupMessage = command.FollowupAsync(message, components: components).GetAwaiter().GetResult();
+                    }
+                    else
+                    {
+                        restFollowupMessage.ModifyAsync(x =>
+                        {
+                            x.Content = message;
+                            x.Components = components;
+                        }).GetAwaiter().GetResult();
+                    }
+                }
+            }
+
+            string GetResponseMessage(KernelStatus kernelStatus)
+            {
+                Dictionary<string, string> replacementDict = new() { { "memory-Ask", "在長期記憶尋找相關資料" } };
+                List<string> statusList = [];
+                foreach (var stepStatus in kernelStatus.StepStatuses)
+                {
+                    string displayName = stepStatus.Name;
+                    foreach (var replacement in replacementDict) displayName = displayName.Replace(replacement.Key, replacement.Value);
+
+                    string message = $"{stepStatus.Name} is {stepStatus.Status}";
+                    switch (stepStatus.Status)
+                    {
+                        case StatusEnum.Pending:
+                            break;
+                        case StatusEnum.Running:
+                            message = $"⌛{displayName}";
+                            break;
+                        case StatusEnum.Completed:
+                            message = $"✅ {displayName}";
+                            break;
+                        case StatusEnum.Failed:
+                            break;
+                        default:
+                            break;
+                    }
+                    statusList.Add(message);
+                }
+
+                string stepStatusMessage = string.Join(Environment.NewLine, statusList);
+                string responseMessage = $"{stepStatusMessage}";
+                if (!string.IsNullOrWhiteSpace(kernelStatus.Conversation.Result)) responseMessage += $"{Environment.NewLine}{Environment.NewLine}{kernelStatus.Conversation.Result}";
+
+                return responseMessage;
+            }
+            #endregion
         }
     }
 }

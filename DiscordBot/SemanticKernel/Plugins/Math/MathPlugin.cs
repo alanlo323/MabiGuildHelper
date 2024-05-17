@@ -12,46 +12,46 @@ namespace DiscordBot.SemanticKernel.Plugins.Math
     {
         [KernelFunction, Description("Take the square root of a number")]
         public static double Sqrt(
-            [Description("The number to take a square root of")] object number1
+            [Description("The number to take a square root of, value must be input as double")] double number1
         )
         {
-            return System.Math.Sqrt(double.Parse((string)number1));
+            return System.Math.Sqrt(number1);
         }
 
         [KernelFunction, Description("Add two numbers")]
         public static double Add(
-            [Description("The first number to add")] object number1,
-            [Description("The second number to add")] object number2
+            [Description("The first number to add, value must be input as double")] double number1,
+            [Description("The second number to add, value must be input as double")] double number2
         )
         {
-            return double.Parse((string)number1) + double.Parse((string)number2);
+            return number1 + number2;
         }
 
         [KernelFunction, Description("Subtract two numbers")]
         public static double Subtract(
-            [Description("The first number to subtract from")] object number1,
-            [Description("The second number to subtract away")] object number2
+            [Description("The first number to subtract from, value must be input as double")] double number1,
+            [Description("The second number to subtract away, value must be input as double")] double number2
         )
         {
-            return double.Parse((string)number1) - double.Parse((string)number2);
+            return number1 - number2;
         }
 
         [KernelFunction, Description("Multiply two numbers. When increasing by a percentage, don't forget to add 1 to the percentage.")]
         public static double Multiply(
-            [Description("The first number to multiply")] object number1,
-            [Description("The second number to multiply")] object number2
+            [Description("The first number to multiply, value must be input as double")] double number1,
+            [Description("The second number to multiply, value must be input as double")] double number2
         )
         {
-            return double.Parse((string)number1) * double.Parse((string)number2);
+            return number1 * number2;
         }
 
         [KernelFunction, Description("Divide two numbers")]
         public static double Divide(
-            [Description("The first number to divide from")] object number1,
-            [Description("The second number to divide by")] object number2
+            [Description("The first number to divide from, value must be input as double")] double number1,
+            [Description("The second number to divide by, value must be input as double")] double number2
         )
         {
-            return double.Parse((string)number1) / double.Parse((string)number2);
+            return number1 / number2;
         }
 
         [KernelFunction, Description("Raise a number to a power")]
@@ -74,11 +74,11 @@ namespace DiscordBot.SemanticKernel.Plugins.Math
 
         [KernelFunction, Description("Round a number to the target number of decimal places")]
         public static double Round(
-            [Description("The number to round")] object number1,
-            [Description("The number of decimal places to round to")] object number2
+            [Description("The number to round, value must be input as double")] double number1,
+            [Description("The number of decimal places to round to, value must be input as int")] int number2
         )
         {
-            return System.Math.Round(double.Parse((string)number1), (int)double.Parse((string)number2));
+            return System.Math.Round(number1, number2);
         }
 
         [KernelFunction, Description("Take the absolute value of a number")]

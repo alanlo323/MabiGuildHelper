@@ -119,7 +119,14 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                 FileInfo data = new(Path.Combine(subfolder.FullName, $"{subfolder.Name}.txt"));
                 if (false && data.Exists)
                 {
-                    await memory.ImportDocumentAsync(data.FullName, documentId: subfolder.Name, tags: new TagCollection() { webPage.Name });
+                    TagCollection docTags = new()
+                    {
+                        { "SourceType", "WebPage" },
+                        { "Source", webPage.Url },
+                        { "Url", webPage.Url },
+                        { "Name", webPage.Name},
+                    };
+                    await memory.ImportDocumentAsync(data.FullName, documentId: subfolder.Name, tags: docTags);
                     continue;
                 }
 
@@ -130,7 +137,14 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                 };
                 string cleanUrl = uriBuilder.Uri.ToString();
                 if (cleanUrl.EndsWith(".jpg")) continue;
-                await memory.ImportWebPageAsync(cleanUrl, documentId: subfolder.Name, tags: new TagCollection() { webPage.Name });
+                TagCollection tags = new()
+                    {
+                        { "SourceType", "WebPage" },
+                        { "Source", webPage.Url },
+                        { "Url", webPage.Url },
+                        { "Name", webPage.Name},
+                    };
+                await memory.ImportWebPageAsync(cleanUrl, documentId: subfolder.Name, tags: tags);
 
                 logger.LogInformation($"Imported {index + 1}/{subfolders.Length} WebPage: {webPage.Name} Url: {webPage.Url}");
             }

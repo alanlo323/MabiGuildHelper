@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net.Http;
 using System.Reactive.Joins;
 using System.Reflection;
@@ -16,7 +17,7 @@ using DiscordBot.Constant;
 using DiscordBot.Db.Entity;
 using DiscordBot.Extension;
 using DiscordBot.Helper;
-using DiscordBot.SemanticKernel.CustomClass;
+using DiscordBot.SemanticKernel.Core;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -112,7 +113,7 @@ namespace DiscordBot.SemanticKernel
                 //.AddFromType<SearchUrlPlugin>()
                 //.AddFromType<DocumentPlugin>()
                 //.AddFromType<TextMemoryPlugin>()
-                //.AddFromType<WebSearchEnginePlugin>()
+                .AddFromType<WebSearchEnginePlugin>()
                 //.AddFromType<WebFileDownloadPlugin>()
                 //.AddFromType<ConversationSummaryPlugin>()
                 .AddFromType<Plugins.Math.MathPlugin>()
@@ -185,55 +186,112 @@ namespace DiscordBot.SemanticKernel
             return kernel;
         }
 
-        public async Task<Conversation> GenerateResponse(string prompt)
-        {
-            DateTime startTime = DateTime.Now;
-            ObservableCollection<LogRecord> logRecords = [];
-            Kernel kernel = await GetKernelAsync(logRecords);
+        public  event EventHandler<KernelStatus> OnKenelStatusUpdated;
 
-            ChatHistory history = [];
-            history.AddSystemMessage(SystemPrompt);
-            history.AddUserMessage(prompt);
-            // 只有最後回答的用繁體中文回答, 風格: 可愛
-            string additionalPromptContext = $"""
+        public async Task<KernelStatus> GenerateResponse(string prompt, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null) => await GenerateResponseFromHandlebarsPlanner(prompt, onKenelStatusUpdatedCallback);
+
+        public async Task<KernelStatus> GenerateResponseFromHandlebarsPlanner(string prompt, EventHandler<KernelStatus> OnKenelStatusUpdatedCallback)
+        {
+            try
+            {
+                OnKenelStatusUpdated += OnKenelStatusUpdatedCallback;
+
+                DateTime startTime = DateTime.Now;
+                ObservableCollection<LogRecord> logRecords = [];
+                Kernel kernel = await GetKernelAsync(logRecords);
+                KernelStatus kernelStatus = new();
+
+                ChatHistory history = [];
+                history.AddSystemMessage(SystemPrompt);
+                history.AddUserMessage(prompt);
+
+                StepStatus GetStepStatus(KernelEventArgs e)
+                {
+                    string stepName = $"{e.Function.PluginName}-{e.Function.Name}";
+                    StepStatus stepStatus = kernelStatus.StepStatuses.FirstOrDefault(x => x.Name == stepName);
+                    if (stepStatus == null)
+                    {
+                        stepStatus = new StepStatus { Name = stepName };
+                        kernelStatus.StepStatuses.Enqueue(stepStatus);
+                    }
+                    return stepStatus;
+                }
+
+                kernel.FunctionInvoking += (sender, e) =>
+                {
+                    StepStatus stepStatus = GetStepStatus(e);
+                    stepStatus.Status = StatusEnum.Running;
+                    kernelStatus.Conversation = new()
+                    {
+                        UserPrompt = prompt,
+                        StartTime = startTime,
+                        ChatHistory = history
+                    };
+                    OnKenelStatusUpdated?.Invoke(this, kernelStatus);
+                };
+                kernel.FunctionInvoked += (sender, e) =>
+                {
+                    StepStatus stepStatus = GetStepStatus(e);
+                    stepStatus.Status = StatusEnum.Completed;
+                    kernelStatus.Conversation = new()
+                    {
+                        UserPrompt = prompt,
+                        StartTime = startTime,
+                        ChatHistory = history
+                    };
+                    OnKenelStatusUpdated?.Invoke(this, kernelStatus);
+                };
+
+                string additionalPromptContext = $"""
                 背景: [{SystemPrompt}]
                 你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND)就向用戶道歉
+                把你的回答翻譯成繁體中文
                 """;
-            var planner = new HandlebarsPlanner(new HandlebarsPlannerOptions()
-            {
-                // When using OpenAI models, we recommend using low values for temperature and top_p to minimize planner hallucinations.
-                ExecutionSettings = new OpenAIPromptExecutionSettings()
+                var planner = new HandlebarsPlanner(new HandlebarsPlannerOptions()
                 {
-                    ChatSystemPrompt = SystemPrompt,
-                    Temperature = 0.0,
-                    TopP = 0.1,
-                    MaxTokens = 4000,
-                    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
-                },
-                // Use gpt-4 or newer models if you want to test with loops.
-                // Older models like gpt-35-turbo are less recommended. They do handle loops but are more prone to syntax errors.
-                AllowLoops = chatCompletionConfig.Deployment.Contains("gpt-4", StringComparison.OrdinalIgnoreCase),
-                GetAdditionalPromptContext = async () => additionalPromptContext
-            });
-            HandlebarsPlan plan = await planner.CreatePlanAsync(kernel, prompt);
-            string planTemplate = promptHelper.GetPlanTemplateFromPlan(plan);
-            logger.LogInformation($"Plan steps: {Environment.NewLine}{planTemplate}");
-            var planResult = (await plan.InvokeAsync(kernel)).Trim();
+                    // When using OpenAI models, we recommend using low values for temperature and top_p to minimize planner hallucinations.
+                    ExecutionSettings = new OpenAIPromptExecutionSettings()
+                    {
+                        ChatSystemPrompt = SystemPrompt,
+                        Temperature = 0.0,
+                        TopP = 0.1,
+                        MaxTokens = 4000,
+                        ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
+                    },
+                    // Use gpt-4 or newer models if you want to test with loops.
+                    // Older models like gpt-35-turbo are less recommended. They do handle loops but are more prone to syntax errors.
+                    AllowLoops = chatCompletionConfig.Deployment.Contains("gpt-4", StringComparison.OrdinalIgnoreCase),
+                    GetAdditionalPromptContext = async () => additionalPromptContext
+                });
+                HandlebarsPlan plan = await planner.CreatePlanAsync(kernel, prompt);
+                string planTemplate = promptHelper.GetPlanTemplateFromPlan(plan);
+                logger.LogInformation($"Plan steps: {Environment.NewLine}{planTemplate}");
+                var planResult = (await plan.InvokeAsync(kernel)).Trim();
 
-            history.AddUserMessage(planTemplate);
-            history.AddAssistantMessage(planResult);
+                history.AddUserMessage(planTemplate);
+                history.AddAssistantMessage(planResult);
 
-            Conversation conversation = new()
+                Conversation conversation = new()
+                {
+                    UserPrompt = prompt,
+                    PlanTemplate = planTemplate,
+                    Result = planResult,
+                    StartTime = startTime,
+                    EndTime = DateTime.Now,
+                    ChatHistory = history
+                };
+                conversation.SetTokens(logRecords);
+                kernelStatus.Conversation = conversation;
+                return kernelStatus;
+            }
+            catch (Exception)
             {
-                UserPrompt = prompt,
-                PlanTemplate = planTemplate,
-                Result = planResult,
-                StartTime = startTime,
-                EndTime = DateTime.Now,
-                ChatHistory = history
-            };
-            conversation.SetTokens(logRecords);
-            return conversation;
+                throw;
+            }
+            finally
+            {
+                OnKenelStatusUpdated -= OnKenelStatusUpdatedCallback;
+            }
         }
 
         public async Task<Conversation> GenerateResponseFromStepwisePlanner(string prompt)
@@ -326,6 +384,64 @@ namespace DiscordBot.SemanticKernel
                 UserPrompt = prompt,
                 PlanTemplate = null,
                 Result = result,
+                StartTime = startTime,
+                EndTime = DateTime.Now,
+                ChatHistory = history
+            };
+            conversation.SetTokens(logRecords);
+            return conversation;
+        }
+
+        public async Task<Conversation> GenerateResponseWithChatCompletionService(string prompt)
+        {
+            DateTime startTime = DateTime.Now;
+            ObservableCollection<LogRecord> logRecords = [];
+            Kernel kernel = await GetKernelAsync(logRecords);
+            var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+
+            ChatHistory history = [];
+            history.AddSystemMessage(SystemPrompt);
+            history.AddUserMessage(prompt);
+
+            string additionalPromptContext = $"""
+                背景: [{SystemPrompt}]
+                你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND)就向用戶道歉
+                """;
+            OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
+            {
+                ChatSystemPrompt = additionalPromptContext,
+                Temperature = 0.0,
+                TopP = 0.1,
+                MaxTokens = 4000,
+                ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
+            };
+            var result = chatCompletionService.GetStreamingChatMessageContentsAsync(
+                history,
+                executionSettings: openAIPromptExecutionSettings,
+                kernel: kernel);
+
+            // Stream the results
+            string fullMessage = "";
+            var first = true;
+            await foreach (var content in result)
+            {
+                if (content.Role.HasValue && first)
+                {
+                    Console.Write($"Assistant > ");
+                    first = false;
+                }
+                Console.Write(content.Content);
+                fullMessage += content.Content;
+            }
+            Console.WriteLine();
+            // Add the message from the agent to the chat history
+            history.AddAssistantMessage(fullMessage);
+
+            Conversation conversation = new()
+            {
+                UserPrompt = prompt,
+                PlanTemplate = null,
+                Result = fullMessage,
                 StartTime = startTime,
                 EndTime = DateTime.Now,
                 ChatHistory = history

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.KernelMemory;
 
-namespace DiscordBot.SemanticKernel.CustomClass
+namespace DiscordBot.SemanticKernel.Core
 {
     public class CustomHttpMessageHandler(AzureOpenAIConfig config) : HttpClientHandler
     {
