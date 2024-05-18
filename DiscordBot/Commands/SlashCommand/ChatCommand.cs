@@ -51,7 +51,7 @@ namespace DiscordBot.Commands.SlashCommand
             object lockObj = new();
 
             KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(prompt, OnKenelStatusUpdated);
-            Conversation conversation= kernelStatus.Conversation;
+            Conversation conversation = kernelStatus.Conversation;
 
             string responseMessage = GetResponseMessage(kernelStatus);
             var answer = responseMessage ?? string.Empty;
@@ -91,7 +91,14 @@ namespace DiscordBot.Commands.SlashCommand
 
             string GetResponseMessage(KernelStatus kernelStatus)
             {
-                Dictionary<string, string> replacementDict = new() { { "memory-Ask", "在長期記憶尋找相關資料" } };
+                Dictionary<string, string> replacementDict = new() {
+                    { "memory-Ask", "在長期記憶尋找相關資料" },
+                    { "Writer-Translate", "翻譯文本" },
+                    { "MathPlugin", "數學計算" },
+                    { "WebSearchEnginePlugin-Search", "搜尋網路資料" },
+                    { "WebSearchEnginePlugin-GetSearchResults", "搜尋網路資料" },
+                    { "HttpPlugin-Get", "獲取網頁內容" },
+                };
                 List<string> statusList = [];
                 foreach (var stepStatus in kernelStatus.StepStatuses)
                 {

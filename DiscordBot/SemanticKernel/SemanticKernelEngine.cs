@@ -105,7 +105,7 @@ namespace DiscordBot.SemanticKernel
                 ;
 
             builder.Plugins
-                //.AddFromType<HttpPlugin>()
+                .AddFromType<HttpPlugin>()
                 //.AddFromType<TextPlugin>()
                 //.AddFromType<WaitPlugin>()
                 //.AddFromType<TimePlugin>()
