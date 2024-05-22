@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ using DiscordBot.SemanticKernel;
 using DiscordBot.SemanticKernel.Core;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory;
 using DiscordBot.Util;
+using Humanizer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -121,12 +123,13 @@ namespace DiscordBot.Commands.SlashCommand
                         default:
                             break;
                     }
+                    if (stepStatus.ElapsedTime.HasValue) message += $" ({stepStatus.ElapsedTime?.Humanize(precision: 2, minUnit: Humanizer.Localisation.TimeUnit.Second, collectionSeparator: " ", culture: new CultureInfo("zh-tw"))})";
                     statusList.Add(message);
                 }
 
                 string stepStatusMessage = string.Join(Environment.NewLine, statusList);
                 string responseMessage = $"{stepStatusMessage}";
-                if (!string.IsNullOrWhiteSpace(kernelStatus.Conversation.Result)) responseMessage += $"{Environment.NewLine}{Environment.NewLine}{kernelStatus.Conversation.Result}";
+                if (!string.IsNullOrWhiteSpace(kernelStatus.Conversation?.Result)) responseMessage += $"{Environment.NewLine}{Environment.NewLine}{kernelStatus.Conversation?.Result}";
 
                 return responseMessage;
             }

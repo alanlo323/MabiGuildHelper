@@ -54,7 +54,7 @@ namespace DiscordBot.ButtonHandler
             sb.AppendLine(innerSb.ToString().ToQuotation());
             sb.AppendLine($"**開始時間:** {conversation.StartTime:yyyy-MM-dd HH:mm:ss}");
             sb.AppendLine($"**結束時間:** {conversation.EndTime:yyyy-MM-dd HH:mm:ss}");
-            sb.AppendLine($"**執行時間:** {conversation.RunningTime?.Humanize(precision: 2, minUnit: Humanizer.Localisation.TimeUnit.Second, collectionSeparator: " ", culture: new CultureInfo("zh-tw"))}");
+            sb.AppendLine($"**執行時間:** {conversation.ElapsedTime?.Humanize(precision: 2, minUnit: Humanizer.Localisation.TimeUnit.Second, collectionSeparator: " ", culture: new CultureInfo("zh-tw"))}");
             sb.AppendLine($"**Prompt Tokens:** {conversation.PromptTokens}");
             sb.AppendLine($"**Completion Tokens:** {conversation.CompletionTokens}");
             sb.AppendLine($"**Total Tokens:** {conversation.TotalTokens}");
