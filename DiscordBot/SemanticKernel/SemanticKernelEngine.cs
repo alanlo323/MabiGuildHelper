@@ -14,11 +14,14 @@ using Azure.Monitor.OpenTelemetry.Exporter;
 using DiscordBot.Commands.SlashCommand;
 using DiscordBot.Configuration;
 using DiscordBot.Constant;
+using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Extension;
 using DiscordBot.Helper;
 using DiscordBot.SemanticKernel.Core;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory;
+using DiscordBot.SemanticKernel.Plugins.Web;
+using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
@@ -55,7 +58,7 @@ using static DiscordBot.Helper.PromptHelper;
 
 namespace DiscordBot.SemanticKernel
 {
-    public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper)
+    public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper, AppDbContext appDbContext)
     {
         public const string SystemPrompt = "你是一個Discord Bot, 名字叫夏夜小幫手, 你在\"夏夜月涼\"伺服器裡為會員們服務.";
 
@@ -105,18 +108,18 @@ namespace DiscordBot.SemanticKernel
                 ;
 
             builder.Plugins
-                .AddFromType<HttpPlugin>()
+                //.AddFromType<HttpPlugin>()
                 //.AddFromType<TextPlugin>()
                 //.AddFromType<WaitPlugin>()
                 //.AddFromType<TimePlugin>()
                 //.AddFromType<FileIOPlugin>()
+                .AddFromType<WebSearchPlugin>()
                 //.AddFromType<SearchUrlPlugin>()
                 //.AddFromType<DocumentPlugin>()
                 //.AddFromType<TextMemoryPlugin>()
-                .AddFromType<WebSearchEnginePlugin>()
-                //.AddFromType<WebFileDownloadPlugin>()
-                //.AddFromType<ConversationSummaryPlugin>()
                 .AddFromType<Plugins.Math.MathPlugin>()
+                //.AddFromType<WebFileDownloadPlugin>()
+                .AddFromType<Plugins.Writer.Summary.ConversationSummaryPlugin>()
                 .AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
                 .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
                 ;
@@ -165,6 +168,10 @@ namespace DiscordBot.SemanticKernel
                 });
             });
 
+            builder.Services.AddSingleton(appDbContext);
+            builder.Services.AddScoped<DatabaseHelper>();
+            builder.Services.AddScoped<DataScrapingHelper>();
+
             Kernel kernel = builder.Build();
 
             kernel.FunctionInvoking += (sender, e) =>
@@ -186,7 +193,7 @@ namespace DiscordBot.SemanticKernel
             return kernel;
         }
 
-        public  event EventHandler<KernelStatus> OnKenelStatusUpdated;
+        public event EventHandler<KernelStatus> OnKenelStatusUpdated;
 
         public async Task<KernelStatus> GenerateResponse(string prompt, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null) => await GenerateResponseFromHandlebarsPlanner(prompt, onKenelStatusUpdatedCallback);
 
@@ -207,7 +214,9 @@ namespace DiscordBot.SemanticKernel
 
                 StepStatus GetStepStatus(KernelEventArgs e)
                 {
-                    string stepName = $"{e.Function.PluginName}-{e.Function.Name}";
+                    string stepName = $"{e.Function.Name}";
+                    if (!string.IsNullOrWhiteSpace(e.Function.PluginName)) stepName = $"{e.Function.PluginName}-{stepName}";
+
                     StepStatus stepStatus = kernelStatus.StepStatuses.FirstOrDefault(x => x.Name == stepName);
                     if (stepStatus == null)
                     {
@@ -245,7 +254,7 @@ namespace DiscordBot.SemanticKernel
                 string additionalPromptContext = $"""
                 背景: [{SystemPrompt}]
                 你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND)就向用戶道歉
-                把你的回答翻譯成繁體中文
+                把你最後的回答翻譯成繁體中文
                 """;
                 var planner = new HandlebarsPlanner(new HandlebarsPlannerOptions()
                 {

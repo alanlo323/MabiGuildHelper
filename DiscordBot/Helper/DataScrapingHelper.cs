@@ -7,6 +7,7 @@ using System.Linq;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using DiscordBot.DataObject;
 using DiscordBot.Db;
 using DiscordBot.Db.Entity;
@@ -338,6 +339,39 @@ namespace DiscordBot.Helper
 
             FileInfo data = new FileInfo(Path.Combine(folderPath, $"{folderName}.txt"));
             await File.AppendAllTextAsync(data.FullName, webPage.Snippet);
+        }
+
+        public async Task<IEnumerable<WebPage>?> GetWebContent(IEnumerable<WebPage> webPages)
+        {
+            try
+            {
+                using BrowserFetcher browserFetcher = new();
+                await browserFetcher.DownloadAsync();
+
+                await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+                {
+                    Headless = false,
+                    DefaultViewport = null,
+                    Args = [$"--start-maximized"],
+                });
+
+                await Parallel.ForEachAsync(webPages, async (webPage, cancellationToken) =>
+                {
+                    if (cancellationToken.IsCancellationRequested) return;
+
+                    await using var page = await browser.NewPageAsync();
+                      await page.GoToAsync(webPage.Url, WaitUntilNavigation.Networkidle0);
+                      string plainText = await page.EvaluateExpressionAsync<string>("document.body.innerText");
+                      webPage.Snippet = plainText.Trim();
+                  });
+
+                return webPages;
+            }
+            catch (Exception ex)
+            {
+                logger.LogException(ex);
+                return null;
+            }
         }
     }
 }

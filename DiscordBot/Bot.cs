@@ -192,18 +192,8 @@ namespace DiscordBot
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError(ex, ex.Message);
-
-                        StringBuilder errorMsgBuilder = new();
-                        Exception currentException = ex;
-                        do
-                        {
-                            errorMsgBuilder.AppendLine($"{currentException?.Message}");
-                            currentException = currentException?.InnerException;
-                        } while (currentException != null);
-                        logger.LogWarning(ex, errorMsgBuilder.ToString());
-                        
-                        string errorMsg = $"小幫手發生錯誤, 請聯絡作者{Environment.NewLine}{errorMsgBuilder.ToString().ToQuotation()}";
+                        string errorMsg = logger.LogException(ex);
+                        errorMsg = $"小幫手發生錯誤, 請聯絡作者{Environment.NewLine}{errorMsg.ToQuotation()}";
                         errorMsg = errorMsg[..Math.Min(2000, errorMsg.Length)];
 
                         try

@@ -110,7 +110,7 @@ namespace DiscordBot
                 .AddScoped<ErinnTimeJob>()
                 .AddScoped<InstanceResetReminderJob>()
                 .AddScoped<DataScrapingJob>()
-                .AddHostedService<DiscordConnector>()
+                //.AddHostedService<DiscordConnector>()
                 ;
 
             builder.Services
