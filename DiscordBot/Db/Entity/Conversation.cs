@@ -41,7 +41,7 @@ namespace DiscordBot.Db.Entity
         //public string DisplayEstimatedCost { get => $"US${EstimatedCostInUSD.ToString("#,##0.#####", CultureInfo.CreateSpecificCulture("zh-us"))}"; }
         public string DisplayEstimatedCost { get => $"{(EstimatedCostInUSD * 7.8).ToString("C", CultureInfo.CreateSpecificCulture("zh-hk"))}, NT{(EstimatedCostInUSD * 32.3).ToString("C", CultureInfo.CreateSpecificCulture("zh-tw"))}"; }
         [NotMapped]
-        public TimeSpan? RunningTime { get => EndTime - StartTime; }
+        public TimeSpan? ElapsedTime { get => EndTime - StartTime; }
         [NotMapped]
         public ChatHistory? ChatHistory { get; set; }
 

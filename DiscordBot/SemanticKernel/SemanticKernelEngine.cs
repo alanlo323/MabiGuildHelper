@@ -27,6 +27,7 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Google.Apis.CustomSearchAPI.v1.Data;
 using HandlebarsDotNet.Collections;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -197,7 +198,7 @@ namespace DiscordBot.SemanticKernel
 
         public async Task<KernelStatus> GenerateResponse(string prompt, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null) => await GenerateResponseFromHandlebarsPlanner(prompt, onKenelStatusUpdatedCallback);
 
-        public async Task<KernelStatus> GenerateResponseFromHandlebarsPlanner(string prompt, EventHandler<KernelStatus> OnKenelStatusUpdatedCallback)
+        public async Task<KernelStatus> GenerateResponseFromHandlebarsPlanner(string prompt, EventHandler<KernelStatus> OnKenelStatusUpdatedCallback, bool showStatusPerSec = false)
         {
             try
             {
@@ -230,6 +231,8 @@ namespace DiscordBot.SemanticKernel
                 {
                     StepStatus stepStatus = GetStepStatus(e);
                     stepStatus.Status = StatusEnum.Running;
+                    stepStatus.StartTime = DateTime.Now;
+                    stepStatus.ShowElapsedTime = showStatusPerSec;
                     kernelStatus.Conversation = new()
                     {
                         UserPrompt = prompt,
@@ -242,6 +245,7 @@ namespace DiscordBot.SemanticKernel
                 {
                     StepStatus stepStatus = GetStepStatus(e);
                     stepStatus.Status = StatusEnum.Completed;
+                    stepStatus.EndTime = DateTime.Now;
                     kernelStatus.Conversation = new()
                     {
                         UserPrompt = prompt,
@@ -275,7 +279,12 @@ namespace DiscordBot.SemanticKernel
                 HandlebarsPlan plan = await planner.CreatePlanAsync(kernel, prompt);
                 string planTemplate = promptHelper.GetPlanTemplateFromPlan(plan);
                 logger.LogInformation($"Plan steps: {Environment.NewLine}{planTemplate}");
+
+               using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
+                statusReportTimer.Elapsed += (sender, e) => { OnKenelStatusUpdated?.Invoke(this, kernelStatus); };
+                if (showStatusPerSec) statusReportTimer.Start();
                 var planResult = (await plan.InvokeAsync(kernel)).Trim();
+                if (showStatusPerSec) statusReportTimer.Stop();
 
                 history.AddUserMessage(planTemplate);
                 history.AddAssistantMessage(planResult);
@@ -291,6 +300,7 @@ namespace DiscordBot.SemanticKernel
                 };
                 conversation.SetTokens(logRecords);
                 kernelStatus.Conversation = conversation;
+
                 return kernelStatus;
             }
             catch (Exception)

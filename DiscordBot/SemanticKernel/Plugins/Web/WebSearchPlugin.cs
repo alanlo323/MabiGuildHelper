@@ -74,11 +74,11 @@ public sealed class WebSearchPlugin(ILogger<DataScrapingJob> logger, IWebSearchE
                 }, cancellationToken);
                 webPage.Snippet = summary!;
             }
-            results = searchResults;
-            if (!results.Any())
+            if (!searchResults.Any())
             {
                 throw new InvalidOperationException("Failed to get a response from the web search engine.");
             }
+            results = searchResults;
         }
         catch (Exception ex)
         {
