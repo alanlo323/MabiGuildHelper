@@ -52,7 +52,7 @@ namespace DiscordBot.Commands.SlashCommand
             RestFollowupMessage restFollowupMessage = null;
             object lockObj = new();
 
-            KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(prompt, OnKenelStatusUpdated);
+            KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(prompt, command, onKenelStatusUpdatedCallback: OnKenelStatusUpdated);
             Conversation conversation = kernelStatus.Conversation;
 
             string responseMessage = GetResponseMessage(kernelStatus);
@@ -100,6 +100,7 @@ namespace DiscordBot.Commands.SlashCommand
                     { "WebSearchPlugin-Search", "搜尋網路資料" },
                     { "ConversationSummaryPlugin-FindRelatedInformationWithGoal", "分析資料" },
                     { "FindRelatedInformationWithGoal", "尋找相關內容" },
+                    { "AboutPlugin-GetBackgroundInformation", "獲得背景資料" },
                 };
                 List<string> statusList = [];
                 foreach (var stepStatus in kernelStatus.StepStatuses)

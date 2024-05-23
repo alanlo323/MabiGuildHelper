@@ -9,8 +9,11 @@ using System.Net.Http;
 using System.Reactive.Joins;
 using System.Reflection;
 using System.Text;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Monitor.OpenTelemetry.Exporter;
+using Discord.WebSocket;
 using DiscordBot.Commands.SlashCommand;
 using DiscordBot.Configuration;
 using DiscordBot.Constant;
@@ -56,6 +59,8 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using static DiscordBot.Helper.PromptHelper;
+using Elastic.Clients.Elasticsearch;
+using DiscordBot.SemanticKernel.Plugins.About;
 
 namespace DiscordBot.SemanticKernel
 {
@@ -64,8 +69,8 @@ namespace DiscordBot.SemanticKernel
         public const string SystemPrompt = "你是一個Discord Bot, 名字叫夏夜小幫手, 你在\"夏夜月涼\"伺服器裡為會員們服務.";
 
         bool isEngineStarted = false;
-        Microsoft.KernelMemory.AzureOpenAIConfig chatCompletionConfig;
-        Microsoft.KernelMemory.AzureOpenAIConfig embeddingConfig;
+        AzureOpenAIConfig chatCompletionConfig;
+        AzureOpenAIConfig embeddingConfig;
         ApplicationInsightsConfig applicationInsightsConfig;
 
         public async Task StartEngine()
@@ -80,11 +85,14 @@ namespace DiscordBot.SemanticKernel
                 //.AddAzureMonitorTraceExporter(options => options.ConnectionString = applicationInsightsConfig.ConnectionString)
                 .Build();
 
+
             using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
                 //.AddMeter("Microsoft.SemanticKernel*")
                 .AddMeter("SemanticKernel.Connectors.OpenAI")
                 //.AddAzureMonitorMetricExporter(options => options.ConnectionString = applicationInsightsConfig.ConnectionString)
                 .Build();
+
+            isEngineStarted = true;
         }
 
         public async Task<Kernel> GetKernelAsync(ICollection<LogRecord> logRecords = null)
@@ -120,8 +128,9 @@ namespace DiscordBot.SemanticKernel
                 //.AddFromType<TextMemoryPlugin>()
                 .AddFromType<Plugins.Math.MathPlugin>()
                 //.AddFromType<WebFileDownloadPlugin>()
+                .AddFromType<Plugins.About.AboutPlugin>()
                 .AddFromType<Plugins.Writer.Summary.ConversationSummaryPlugin>()
-                .AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
+                //.AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
                 .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
                 ;
 
@@ -196,9 +205,9 @@ namespace DiscordBot.SemanticKernel
 
         public event EventHandler<KernelStatus> OnKenelStatusUpdated;
 
-        public async Task<KernelStatus> GenerateResponse(string prompt, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null) => await GenerateResponseFromHandlebarsPlanner(prompt, onKenelStatusUpdatedCallback);
+        public async Task<KernelStatus> GenerateResponse(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null) => await GenerateResponseFromHandlebarsPlanner(prompt, command, OnKenelStatusUpdatedCallback: onKenelStatusUpdatedCallback);
 
-        public async Task<KernelStatus> GenerateResponseFromHandlebarsPlanner(string prompt, EventHandler<KernelStatus> OnKenelStatusUpdatedCallback, bool showStatusPerSec = false)
+        public async Task<KernelStatus> GenerateResponseFromHandlebarsPlanner(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> OnKenelStatusUpdatedCallback, bool showStatusPerSec = false)
         {
             try
             {
@@ -256,8 +265,9 @@ namespace DiscordBot.SemanticKernel
                 };
 
                 string additionalPromptContext = $"""
-                背景: [{SystemPrompt}]
+                {SystemPrompt}
                 你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND)就向用戶道歉
+                你可以使用GetBackgroundInformation來獲取更多背景資料
                 把你最後的回答翻譯成繁體中文
                 """;
                 var planner = new HandlebarsPlanner(new HandlebarsPlannerOptions()
@@ -276,11 +286,14 @@ namespace DiscordBot.SemanticKernel
                     AllowLoops = chatCompletionConfig.Deployment.Contains("gpt-4", StringComparison.OrdinalIgnoreCase),
                     GetAdditionalPromptContext = async () => additionalPromptContext
                 });
-                HandlebarsPlan plan = await planner.CreatePlanAsync(kernel, prompt);
+                HandlebarsPlan plan = await planner.CreatePlanAsync(kernel, prompt, arguments: new()
+                {
+                    { "username", command.User.Username }
+                });
                 string planTemplate = promptHelper.GetPlanTemplateFromPlan(plan);
                 logger.LogInformation($"Plan steps: {Environment.NewLine}{planTemplate}");
 
-               using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
+                using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
                 statusReportTimer.Elapsed += (sender, e) => { OnKenelStatusUpdated?.Invoke(this, kernelStatus); };
                 if (showStatusPerSec) statusReportTimer.Start();
                 var planResult = (await plan.InvokeAsync(kernel)).Trim();
@@ -328,7 +341,7 @@ namespace DiscordBot.SemanticKernel
                     //ChatSystemPrompt = SystemPrompt,
                     Temperature = 0.0,
                     TopP = 0.1,
-                    MaxTokens = 2000,
+                    MaxTokens = 4000,
                     ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
                 },
             };
@@ -338,7 +351,7 @@ namespace DiscordBot.SemanticKernel
 
             ChatHistory history = result.ChatHistory;
             StringBuilder sb1 = new();
-            foreach (var record in history) sb1.AppendLine(record.ToString());
+            foreach (var record in history!) sb1.AppendLine(record.ToString());
 
             Conversation conversation = new()
             {
