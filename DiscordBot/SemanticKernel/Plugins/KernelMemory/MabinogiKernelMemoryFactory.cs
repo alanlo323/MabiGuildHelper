@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory.Core;
 using Microsoft.KernelMemory.Configuration;
-using Microsoft.KernelMemory.ContentStorage.DevTools;
 using Microsoft.KernelMemory.MemoryStorage.DevTools;
 using Microsoft.KernelMemory.Prompts;
 using Microsoft.KernelMemory;
@@ -30,6 +29,7 @@ using DiscordBot.Db;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory.Extensions.Discord;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.KernelMemory.DocumentStorage.DevTools;
 
 namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
 {

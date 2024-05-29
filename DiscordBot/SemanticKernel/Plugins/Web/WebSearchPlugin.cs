@@ -8,6 +8,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Search.Documents.Models;
 using DiscordBot.Extension;
 using DiscordBot.Helper;
 using DiscordBot.SchedulerJob;
@@ -57,35 +58,39 @@ public sealed class WebSearchPlugin(ILogger<DataScrapingJob> logger, IWebSearchE
         Kernel kernel,
         CancellationToken cancellationToken = default)
     {
-        IEnumerable<WebPage>? results = null;
+        string response = "INFO NOT FOUND";
         try
         {
-            //string googleSearchPrompt = "Searching the web for information...";
-            //var googleSearchStr = await  kernel.InvokePromptAsync("Searching the web for information...", cancellationToken: cancellationToken);
-            IEnumerable<WebPage> searchResults = await connector.SearchAsync<WebPage>(query, 1, 0, cancellationToken);
+            IEnumerable<WebPage> searchResults = await connector.SearchAsync<WebPage>(query, 3, 0, cancellationToken);
             searchResults = await dataScrapingHelper.GetWebContent(searchResults);
             foreach (WebPage webPage in searchResults!)
             {
-                string summary = await kernel.InvokeAsync<string>("ConversationSummaryPlugin", "FindRelatedInformationWithGoal", new()
+                string snippetSummary = await kernel.InvokeAsync<string>("ConversationSummaryPlugin", "FindRelatedInformationWithGoal", new()
                 {
                     { "input", webPage.Snippet },
                     { "goal", query },
                     { "kernel", kernel },
                 }, cancellationToken);
-                webPage.Snippet = summary!;
+                webPage.Snippet = snippetSummary!;
             }
             if (!searchResults.Any())
             {
                 throw new InvalidOperationException("Failed to get a response from the web search engine.");
             }
-            results = searchResults;
+
+            string resultSnippet = string.Join($"{Environment.NewLine}{Environment.NewLine}", searchResults.Select((x, index) => $"RESULT {index + 1}:{Environment.NewLine}Source Url: {x.Url}{Environment.NewLine}Content:{Environment.NewLine}{x.Snippet}"));
+            string finalSummary = await kernel.InvokeAsync<string>("ConversationSummaryPlugin", "SummarizeConversation", new()
+                {
+                    { "input", resultSnippet },
+                    { "kernel", kernel },
+                }, cancellationToken);
+            response = finalSummary!;
         }
         catch (Exception ex)
         {
             logger.LogException(ex);
+            throw;
         }
-
-        string result = string.Join($"{Environment.NewLine}{Environment.NewLine}", results.Select((x, index) => $"RESULT {index + 1}:{Environment.NewLine}{x.Snippet}"));
-        return result;
+        return response;
     }
 }

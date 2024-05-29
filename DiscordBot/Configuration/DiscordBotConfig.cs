@@ -13,6 +13,7 @@ namespace DiscordBot.Configuration
 
         public string ProductionToken { get; set; }
         public string BetaToken { get; set; }
+        public string AdminId { get; set; }
         public string AdminServerId { get; set; }
 
         public string Token { get => EnvironmentUtil.IsProduction() ? ProductionToken : BetaToken; }

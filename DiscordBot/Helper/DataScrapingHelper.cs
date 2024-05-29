@@ -31,7 +31,7 @@ namespace DiscordBot.Helper
         {
             logger.LogInformation("Loading news");
 
-            using BrowserFetcher _browserFetcher = new();
+            BrowserFetcher _browserFetcher = new();
             await _browserFetcher.DownloadAsync();
 
             await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
@@ -222,7 +222,7 @@ namespace DiscordBot.Helper
         {
             if (browser == null)
             {
-                using BrowserFetcher browserFetcher = new();
+                BrowserFetcher browserFetcher = new();
                 await browserFetcher.DownloadAsync();
 
                 await using var newBrowser = await Puppeteer.LaunchAsync(new LaunchOptions
@@ -345,7 +345,7 @@ namespace DiscordBot.Helper
         {
             try
             {
-                using BrowserFetcher browserFetcher = new();
+                BrowserFetcher browserFetcher = new();
                 await browserFetcher.DownloadAsync();
 
                 await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
@@ -360,10 +360,10 @@ namespace DiscordBot.Helper
                     if (cancellationToken.IsCancellationRequested) return;
 
                     await using var page = await browser.NewPageAsync();
-                      await page.GoToAsync(webPage.Url, WaitUntilNavigation.Networkidle0);
-                      string plainText = await page.EvaluateExpressionAsync<string>("document.body.innerText");
-                      webPage.Snippet = plainText.Trim();
-                  });
+                    await page.GoToAsync(webPage.Url, WaitUntilNavigation.Networkidle0);
+                    string plainText = await page.EvaluateExpressionAsync<string>("document.body.innerText");
+                    webPage.Snippet = plainText.Trim();
+                });
 
                 return webPages;
             }
