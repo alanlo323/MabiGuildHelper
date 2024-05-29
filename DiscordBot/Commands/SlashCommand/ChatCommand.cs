@@ -27,7 +27,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Commands.SlashCommand
 {
-    public class ChatCommand(ILogger<ChatCommand> logger, DiscordSocketClient client, SemanticKernelEngine semanticKernelEngine, DatabaseHelper databaseHelper, ButtonHandlerHelper buttonHandlerHelper) : IBaseSlashCommand
+    public class ChatCommand(ILogger<ChatCommand> logger, DiscordSocketClient client, SemanticKernelEngine semanticKernelEngine, DatabaseHelper databaseHelper, ButtonHandlerHelper buttonHandlerHelper, IOptionsSnapshot<DiscordBotConfig> discordBotConfig) : IBaseSlashCommand
     {
         public string Name { get; set; } = "chat";
         public string Description { get; set; } = "和小幫手對話";
@@ -49,10 +49,11 @@ namespace DiscordBot.Commands.SlashCommand
 
             DateTime startTime = DateTime.Now;
             string prompt = command.Data.Options.First(x => x.Name == "text").Value as string;
+            bool showStatusPerSec = command.User.Id == ulong.Parse(discordBotConfig.Value.AdminId);
             RestFollowupMessage restFollowupMessage = null;
             object lockObj = new();
 
-            KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(prompt, command, onKenelStatusUpdatedCallback: OnKenelStatusUpdated);
+            KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(prompt, command, showStatusPerSec: showStatusPerSec, onKenelStatusUpdatedCallback: OnKenelStatusUpdated);
             Conversation conversation = kernelStatus.Conversation;
 
             string responseMessage = GetResponseMessage(kernelStatus);
@@ -101,11 +102,19 @@ namespace DiscordBot.Commands.SlashCommand
                     { "ConversationSummaryPlugin-FindRelatedInformationWithGoal", "分析資料" },
                     { "FindRelatedInformationWithGoal", "尋找相關內容" },
                     { "AboutPlugin-GetBackgroundInformation", "獲得背景資料" },
+                    { "GeneratePlan", "生成計劃" },
+                    { "ConversationSummaryPlugin-SummarizeConversation", "總結內容" },
                 };
+                List<string> ignoreList = [
+                    "GetBackgroundInformation",
+                    "FindRelatedInformationWithGoal",
+                    "SummarizeConversation",
+                ];
                 List<string> statusList = [];
                 foreach (var stepStatus in kernelStatus.StepStatuses)
                 {
                     string displayName = stepStatus.Name;
+                    if (ignoreList.Any(x => displayName == x)) continue;
                     foreach (var replacement in replacementDict) displayName = displayName.Replace(replacement.Key, replacement.Value);
 
                     string message = $"{stepStatus.Name} is {stepStatus.Status}";

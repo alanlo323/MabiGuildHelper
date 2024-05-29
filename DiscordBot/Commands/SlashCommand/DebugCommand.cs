@@ -39,7 +39,7 @@ namespace DiscordBot.Commands.SlashCommand
 
         public async Task Excute(SocketSlashCommand command)
         {
-            ulong[] allowedUser = [170721070976860161];
+            ulong[] allowedUser = [ulong.Parse(discordBotConfig.Value.AdminId)];
             if (!allowedUser.Contains(command.User.Id))
             {
                 await command.RespondAsync("你沒有權限使用此指令", ephemeral: true);
