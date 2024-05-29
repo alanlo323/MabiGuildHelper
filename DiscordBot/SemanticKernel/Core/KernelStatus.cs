@@ -16,7 +16,8 @@ namespace DiscordBot.SemanticKernel.Core
 
     public class StepStatus
     {
-        public string Name { get; set; }
+        public string Key { get; set; }
+        public string DisplayName { get; set; }
         public StatusEnum Status { get; set; }
         public string Message { get; set; }
         public DateTime StartTime { get; set; }

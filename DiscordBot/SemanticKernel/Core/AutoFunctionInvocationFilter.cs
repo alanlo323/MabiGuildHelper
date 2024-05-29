@@ -63,15 +63,19 @@ namespace DiscordBot.SemanticKernel.Core
 
         private StepStatus GetStepStatus(FunctionInvocationContext context)
         {
-            string stepName = $"{context.Function.Name}";
-            if (!string.IsNullOrWhiteSpace(context.Function.PluginName)) stepName = $"{context.Function.PluginName}-{stepName}";
+            string key = $"{context.Function.Name}";
+            if (!string.IsNullOrWhiteSpace(context.Function.PluginName)) key = $"{context.Function.PluginName}-{key}";
 
-            StepStatus stepStatus = kernelStatus.StepStatuses.FirstOrDefault(x => x.Name == stepName);
+            string displayName = key;
+            for (int i = 0; i < kernelStatus.StepStatuses.Where(x => x.Status == StatusEnum.Running).Count(); i++) displayName = $"-{displayName}";
+
+            StepStatus stepStatus = kernelStatus.StepStatuses.FirstOrDefault(x => x.Key == key);
             if (stepStatus == null)
             {
                 stepStatus = new StepStatus
                 {
-                    Name = stepName,
+                    Key = key,
+                    DisplayName = displayName,
                     StartTime = DateTime.Now,
                     ShowElapsedTime = showStatusPerSec
                 };
