@@ -102,8 +102,8 @@ namespace DiscordBot.Commands.SlashCommand
                     { "ConversationSummaryPlugin-FindRelatedInformationWithGoal", "分析資料" },
                     { "FindRelatedInformationWithGoal", "尋找相關內容" },
                     { "AboutPlugin-GetBackgroundInformation", "獲得背景資料" },
-                    { "GeneratePlan", "生成計劃" },
                     { "ConversationSummaryPlugin-SummarizeConversation", "總結內容" },
+                    { "CreatePlan", "製定計劃" },
                 };
                 List<string> ignoreList = [
                     "GetBackgroundInformation",
@@ -113,11 +113,12 @@ namespace DiscordBot.Commands.SlashCommand
                 List<string> statusList = [];
                 foreach (var stepStatus in kernelStatus.StepStatuses)
                 {
-                    string displayName = stepStatus.Name;
-                    if (ignoreList.Any(x => displayName == x)) continue;
+                    if (ignoreList.Any(x => stepStatus.Key == x)) continue;
+
+                    string displayName = stepStatus.DisplayName;
                     foreach (var replacement in replacementDict) displayName = displayName.Replace(replacement.Key, replacement.Value);
 
-                    string message = $"{stepStatus.Name} is {stepStatus.Status}";
+                    string message = $"{displayName} is {stepStatus.Status}";
                     switch (stepStatus.Status)
                     {
                         case StatusEnum.Pending:

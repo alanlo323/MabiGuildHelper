@@ -229,6 +229,15 @@ namespace DiscordBot.SemanticKernel
                 history.AddSystemMessage(SystemPrompt);
                 history.AddUserMessage(prompt);
 
+                StepStatus planStatus = new()
+                {
+                    DisplayName = "CreatePlan",
+                    Status = StatusEnum.Running,
+                    StartTime = DateTime.Now,
+                    ShowElapsedTime = showStatusPerSec
+                };
+                kernelStatus.StepStatuses.Enqueue(planStatus);
+
                 string additionalPromptContext = $"""
                 {SystemPrompt}
                 你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND)就向用戶道歉
@@ -250,6 +259,11 @@ namespace DiscordBot.SemanticKernel
                     AllowLoops = chatCompletionConfig.Deployment.Contains("gpt-4", StringComparison.OrdinalIgnoreCase),
                     GetAdditionalPromptContext = async () => additionalPromptContext
                 });
+
+                using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
+                statusReportTimer.Elapsed += (sender, e) => { OnKenelStatusUpdated?.Invoke(this, kernelStatus); };
+                if (showStatusPerSec) statusReportTimer.Start();
+
                 HandlebarsPlan plan = await planner.CreatePlanAsync(kernel, prompt, arguments: new()
                 {
                     { "username", command.User.Username }
@@ -257,9 +271,9 @@ namespace DiscordBot.SemanticKernel
                 string planTemplate = promptHelper.GetPlanTemplateFromPlan(plan);
                 logger.LogInformation($"Plan steps: {Environment.NewLine}{planTemplate}");
 
-                using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
-                statusReportTimer.Elapsed += (sender, e) => { OnKenelStatusUpdated?.Invoke(this, kernelStatus); };
-                if (showStatusPerSec) statusReportTimer.Start();
+                planStatus.Status = StatusEnum.Completed;
+                planStatus.EndTime = DateTime.Now;
+
                 var planResult = (await plan.InvokeAsync(kernel)).Trim();
                 if (showStatusPerSec) statusReportTimer.Stop();
 
@@ -290,11 +304,11 @@ namespace DiscordBot.SemanticKernel
             }
         }
 
-        public async Task<KernelStatus> GenerateResponseFromStepwisePlanner(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> OnKenelStatusUpdatedCallback, bool showStatusPerSec = false)
+        public async Task<KernelStatus> GenerateResponseFromStepwisePlanner(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, bool showStatusPerSec = false)
         {
             try
             {
-                OnKenelStatusUpdated += OnKenelStatusUpdatedCallback;
+                OnKenelStatusUpdated += onKenelStatusUpdatedCallback;
 
                 DateTime startTime = DateTime.Now;
                 KernelStatus kernelStatus = new();
@@ -307,7 +321,6 @@ namespace DiscordBot.SemanticKernel
                 string additionalPromptContext = $"""
                 {SystemPrompt}
                 你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND)就向用戶道歉
-                你可以使用GetBackgroundInformation來獲取更多背景資料
                 最後使用繁體中文來回覆
                 """;
                 var config = new FunctionCallingStepwisePlannerOptions
@@ -356,7 +369,7 @@ namespace DiscordBot.SemanticKernel
             }
             finally
             {
-                OnKenelStatusUpdated -= OnKenelStatusUpdatedCallback;
+                OnKenelStatusUpdated -= onKenelStatusUpdatedCallback;
             }
         }
 
