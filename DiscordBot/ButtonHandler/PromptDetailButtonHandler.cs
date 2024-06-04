@@ -51,7 +51,7 @@ namespace DiscordBot.ButtonHandler
                 foreach (var rows in planStep.DisplayActionRows) innerSb.AppendLine($"{rows}");
             }
             sb.AppendLine($"{conversation.UserPrompt}".ToHighLight());
-            sb.AppendLine(innerSb.ToString().ToQuotation());
+            sb.AppendLine(innerSb.ToString()[..Math.Min(1700, innerSb.ToString().Length)].ToQuotation());
             sb.AppendLine($"**開始時間:** {conversation.StartTime:yyyy-MM-dd HH:mm:ss}");
             sb.AppendLine($"**結束時間:** {conversation.EndTime:yyyy-MM-dd HH:mm:ss}");
             sb.AppendLine($"**執行時間:** {conversation.ElapsedTime?.Humanize(precision: 2, minUnit: Humanizer.Localisation.TimeUnit.Second, collectionSeparator: " ", culture: new CultureInfo("zh-tw"))}");

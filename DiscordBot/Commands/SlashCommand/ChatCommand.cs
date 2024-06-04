@@ -104,6 +104,7 @@ namespace DiscordBot.Commands.SlashCommand
                     { "AboutPlugin-GetBackgroundInformation", "獲得背景資料" },
                     { "ConversationSummaryPlugin-SummarizeConversation", "總結內容" },
                     { "CreatePlan", "製定計劃" },
+                    { "Thinking", "思考中" },
                 };
                 List<string> ignoreList = [
                     "GetBackgroundInformation",
@@ -121,7 +122,8 @@ namespace DiscordBot.Commands.SlashCommand
                     string message = $"{displayName} is {stepStatus.Status}";
                     switch (stepStatus.Status)
                     {
-                        case StatusEnum.Pending:
+                        case StatusEnum.Thinking:
+                            message = $"💭{displayName}";
                             break;
                         case StatusEnum.Running:
                             message = $"⌛{displayName}";

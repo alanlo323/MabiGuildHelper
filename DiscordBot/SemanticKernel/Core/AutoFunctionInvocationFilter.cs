@@ -13,36 +13,19 @@ namespace DiscordBot.SemanticKernel.Core
     {
         public async Task OnAutoFunctionInvocationAsync(AutoFunctionInvocationContext context, Func<AutoFunctionInvocationContext, Task> next)
         {
-            // Example: get function information
-            var functionName = context.Function.Name;
-
-            // Example: get chat history
-            var chatHistory = context.ChatHistory;
-
-            // Example: get information about all functions which will be invoked
-            var functionCalls = FunctionCallContent.GetFunctionCalls(context.ChatHistory.Last());
-
-            // Example: get request sequence index
-            //this._output.WriteLine($"Request sequence index: {context.RequestSequenceIndex}");
-
-            // Example: get function sequence index
-            //this._output.WriteLine($"Function sequence index: {context.FunctionSequenceIndex}");
-
-            // Example: get total number of functions which will be called
-            //this._output.WriteLine($"Total number of functions: {context.FunctionCount}");
+            StepStatus stepStatus = GetStepStatus(context);
+            stepStatus.Status = StatusEnum.Running;
+            stepStatus.EndTime = default;
+            onKenelStatusUpdatedHandler?.Invoke(this, kernelStatus);
 
             // Calling next filter in pipeline or function itself.
             // By skipping this call, next filters and function won't be invoked, and function call loop will proceed to the next function.
             await next(context);
 
-            // Example: get function result
-            var result = context.Result;
-
-            // Example: override function result value
-            //context.Result = new FunctionResult(context.Result, "Result from auto function invocation filter");
-
-            // Example: Terminate function invocation
-            //context.Terminate = true;
+            stepStatus = GetStepStatus(context);
+            stepStatus.Status = StatusEnum.Completed;
+            stepStatus.EndTime = DateTime.Now;
+            onKenelStatusUpdatedHandler?.Invoke(this, kernelStatus);
         }
 
         public async Task OnFunctionInvocationAsync(FunctionInvocationContext context, Func<FunctionInvocationContext, Task> next)
@@ -60,14 +43,42 @@ namespace DiscordBot.SemanticKernel.Core
             onKenelStatusUpdatedHandler?.Invoke(this, kernelStatus);
         }
 
+        private StepStatus GetStepStatus(AutoFunctionInvocationContext context)
+        {
+            string key = $"{context.Function.Name}";
+            if (!string.IsNullOrWhiteSpace(context.Function.PluginName)) key = $"{context.Function.PluginName}-{key}";
+
+            string displayName = string.Empty;
+            var runningSteps = kernelStatus.StepStatuses.Where(x => x.Status == StatusEnum.Running);
+            for (int i = 0; i < runningSteps.Count(); i++) displayName = $"-{displayName}";
+            if (runningSteps.Any()) displayName += " ";
+            displayName += $"{key}";
+
+            StepStatus stepStatus = kernelStatus.StepStatuses.FirstOrDefault(x => x.Key == key);
+            if (stepStatus == null)
+            {
+                stepStatus = new StepStatus
+                {
+                    Key = key,
+                    DisplayName = displayName,
+                    StartTime = DateTime.Now,
+                    ShowElapsedTime = showStatusPerSec
+                };
+                kernelStatus.StepStatuses.Enqueue(stepStatus);
+            }
+            return stepStatus;
+        }
 
         private StepStatus GetStepStatus(FunctionInvocationContext context)
         {
             string key = $"{context.Function.Name}";
             if (!string.IsNullOrWhiteSpace(context.Function.PluginName)) key = $"{context.Function.PluginName}-{key}";
 
-            string displayName = key;
-            for (int i = 0; i < kernelStatus.StepStatuses.Where(x => x.Status == StatusEnum.Running).Count(); i++) displayName = $"-{displayName}";
+            string displayName = string.Empty;
+            var runningSteps = kernelStatus.StepStatuses.Where(x => x.Status == StatusEnum.Running);
+            for (int i = 0; i < runningSteps.Count(); i++) displayName = $"-{displayName}";
+            if (runningSteps.Any()) displayName += " ";
+            displayName += $"{key}";
 
             StepStatus stepStatus = kernelStatus.StepStatuses.FirstOrDefault(x => x.Key == key);
             if (stepStatus == null)
