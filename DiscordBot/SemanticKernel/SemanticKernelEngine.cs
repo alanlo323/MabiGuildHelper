@@ -211,7 +211,7 @@ namespace DiscordBot.SemanticKernel
 
         public event EventHandler<KernelStatus> OnKenelStatusUpdated;
 
-        public async Task<KernelStatus> GenerateResponse(string prompt, SocketSlashCommand command, bool showStatusPerSec = false, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null) => await GenerateResponseFromHandlebarsPlanner(prompt, command, showStatusPerSec: showStatusPerSec, onKenelStatusUpdatedCallback: onKenelStatusUpdatedCallback);
+        public async Task<KernelStatus> GenerateResponse(string prompt, SocketSlashCommand command, bool showStatusPerSec = false, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null) => await GenerateResponseWithChatCompletionService(prompt, command, showStatusPerSec: showStatusPerSec, onKenelStatusUpdatedCallback: onKenelStatusUpdatedCallback);
 
         public async Task<KernelStatus> GenerateResponseFromHandlebarsPlanner(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, bool showStatusPerSec = false)
         {
@@ -318,6 +318,15 @@ namespace DiscordBot.SemanticKernel
 
                 ChatHistory history = [];
 
+                StepStatus planStatus = new()
+                {
+                    DisplayName = "Thinking",
+                    Status = StatusEnum.Thinking,
+                    StartTime = DateTime.Now,
+                    ShowElapsedTime = showStatusPerSec
+                };
+                kernelStatus.StepStatuses.Enqueue(planStatus);
+
                 string additionalPromptContext = $"""
                 {SystemPrompt}
                 你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND)就向用戶道歉
@@ -340,7 +349,10 @@ namespace DiscordBot.SemanticKernel
                 var planner = new FunctionCallingStepwisePlanner(config);
 
                 using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
-                statusReportTimer.Elapsed += (sender, e) => { OnKenelStatusUpdated?.Invoke(this, kernelStatus); };
+                statusReportTimer.Elapsed += (sender, e) =>
+                {
+                    OnKenelStatusUpdated?.Invoke(this, kernelStatus);
+                };
                 if (showStatusPerSec) statusReportTimer.Start();
                 FunctionCallingStepwisePlannerResult result = await planner.ExecuteAsync(kernel, prompt, chatHistoryForSteps: history);
                 if (showStatusPerSec) statusReportTimer.Stop();
@@ -360,6 +372,7 @@ namespace DiscordBot.SemanticKernel
                 };
                 conversation.SetTokens(logRecords);
                 kernelStatus.Conversation = conversation;
+                kernelStatus.StepStatuses = new(kernelStatus.StepStatuses.Where(x => x.Status != StatusEnum.Thinking));
 
                 return kernelStatus;
             }
@@ -431,62 +444,102 @@ namespace DiscordBot.SemanticKernel
             return conversation;
         }
 
-        public async Task<Conversation> GenerateResponseWithChatCompletionService(string prompt)
+        public async Task<KernelStatus> GenerateResponseWithChatCompletionService(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, bool showStatusPerSec = false)
         {
-            DateTime startTime = DateTime.Now;
-            ObservableCollection<LogRecord> logRecords = [];
-            Kernel kernel = await GetKernelAsync(logRecords);
-            var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+            try
+            {
+                OnKenelStatusUpdated += onKenelStatusUpdatedCallback;
 
-            ChatHistory history = [];
-            history.AddSystemMessage(SystemPrompt);
-            history.AddUserMessage(prompt);
+                DateTime startTime = DateTime.Now;
+                KernelStatus kernelStatus = new();
+                ObservableCollection<LogRecord> logRecords = [];
+                AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, OnKenelStatusUpdated, showStatusPerSec: showStatusPerSec);
+                Kernel kernel = await GetKernelAsync(logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter);
+                var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
-            string additionalPromptContext = $"""
-                背景: [{SystemPrompt}]
-                你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND)就向用戶道歉
+                string additionalPromptContext = $"""
+                {SystemPrompt}
+                使用繁體中文來回覆
                 """;
-            OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
-            {
-                ChatSystemPrompt = additionalPromptContext,
-                Temperature = 0.0,
-                TopP = 0.1,
-                MaxTokens = 4000,
-                ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
-            };
-            var result = chatCompletionService.GetStreamingChatMessageContentsAsync(
-                history,
-                executionSettings: openAIPromptExecutionSettings,
-                kernel: kernel);
 
-            // Stream the results
-            string fullMessage = "";
-            var first = true;
-            await foreach (var content in result)
-            {
-                if (content.Role.HasValue && first)
+                ChatHistory history = [];
+                history.AddSystemMessage(additionalPromptContext);
+                history.AddUserMessage(prompt);
+
+                StepStatus planStatus = new()
                 {
-                    Console.Write($"Assistant > ");
-                    first = false;
-                }
-                Console.Write(content.Content);
-                fullMessage += content.Content;
-            }
-            Console.WriteLine();
-            // Add the message from the agent to the chat history
-            history.AddAssistantMessage(fullMessage);
+                    DisplayName = "Thinking",
+                    Status = StatusEnum.Thinking,
+                    StartTime = DateTime.Now,
+                    ShowElapsedTime = showStatusPerSec
+                };
+                kernelStatus.StepStatuses.Enqueue(planStatus);
+                using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
+                statusReportTimer.Elapsed += (sender, e) =>
+                {
+                    OnKenelStatusUpdated?.Invoke(this, kernelStatus);
+                };
 
-            Conversation conversation = new()
+                OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
+                {
+                    Temperature = 0.0,
+                    TopP = 0.1,
+                    MaxTokens = 4000,
+                    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
+                };
+
+                if (showStatusPerSec) statusReportTimer.Start();
+                var result = chatCompletionService.GetStreamingChatMessageContentsAsync(
+                    history,
+                    executionSettings: openAIPromptExecutionSettings,
+                    kernel: kernel);
+
+                // Stream the results
+                string fullMessage = "";
+                bool first = true;
+
+                await foreach (var content in result)
+                {
+                    if (content.Role.HasValue && first)
+                    {
+                        first = false;
+                    }
+                    if (string.IsNullOrWhiteSpace(content.Content)) continue;
+                    fullMessage += content.Content;
+                    kernelStatus.Conversation.Result = fullMessage;
+                }
+                if (showStatusPerSec) statusReportTimer.Stop();
+
+                //Console.WriteLine();
+                // Add the message from the agent to the chat history
+                //history.AddAssistantMessage(fullMessage);
+
+                StringBuilder sb1 = new();
+                foreach (var record in history!.Where(x=>x.Role != AuthorRole.System)) sb1.AppendLine(record.ToString());
+
+                Conversation conversation = new()
+                {
+                    UserPrompt = prompt,
+                    PlanTemplate = sb1.ToString(),
+                    Result = $"{fullMessage}",
+                    StartTime = startTime,
+                    EndTime = DateTime.Now,
+                    ChatHistory = history
+                };
+                conversation.SetTokens(logRecords);
+                kernelStatus.Conversation = conversation;
+                kernelStatus.StepStatuses = new(kernelStatus.StepStatuses.Where(x => x.Status != StatusEnum.Thinking));
+
+                return kernelStatus;
+            }
+            catch (Exception)
             {
-                UserPrompt = prompt,
-                PlanTemplate = null,
-                Result = fullMessage,
-                StartTime = startTime,
-                EndTime = DateTime.Now,
-                ChatHistory = history
-            };
-            conversation.SetTokens(logRecords);
-            return conversation;
+                throw;
+            }
+            finally
+            {
+                OnKenelStatusUpdated -= onKenelStatusUpdatedCallback;
+            }
         }
 
         public async Task<Kernel> GetKernelWithRelevantFunctions(string query)
