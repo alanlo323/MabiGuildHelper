@@ -213,8 +213,6 @@ namespace DiscordBot.SemanticKernel
             return kernel;
         }
 
-        public event EventHandler<KernelStatus> OnKenelStatusUpdated;
-
         public async Task<Kernel> GetKernelWithRelevantFunctions(string query)
         {
             Kernel kernel = await GetKernelAsync();
@@ -295,12 +293,10 @@ namespace DiscordBot.SemanticKernel
         {
             try
             {
-                OnKenelStatusUpdated += onKenelStatusUpdatedCallback;
-
                 DateTime startTime = DateTime.Now;
                 KernelStatus kernelStatus = new();
                 ObservableCollection<LogRecord> logRecords = [];
-                AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, OnKenelStatusUpdated, showStatusPerSec: showStatusPerSec);
+                AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, onKenelStatusUpdatedCallback, showStatusPerSec: showStatusPerSec);
                 Kernel kernel = await GetKernelAsync(logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter);
 
                 ChatHistory history = [];
@@ -339,7 +335,7 @@ namespace DiscordBot.SemanticKernel
                 });
 
                 using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
-                statusReportTimer.Elapsed += (sender, e) => { OnKenelStatusUpdated?.Invoke(this, kernelStatus); };
+                statusReportTimer.Elapsed += (sender, e) => { onKenelStatusUpdatedCallback?.Invoke(this, kernelStatus); };
                 if (showStatusPerSec) statusReportTimer.Start();
 
                 HandlebarsPlan plan = await planner.CreatePlanAsync(kernel, prompt, arguments: new()
@@ -376,22 +372,16 @@ namespace DiscordBot.SemanticKernel
             {
                 throw;
             }
-            finally
-            {
-                OnKenelStatusUpdated -= onKenelStatusUpdatedCallback;
-            }
         }
 
         public async Task<KernelStatus> GenerateResponseFromStepwisePlanner(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, bool showStatusPerSec = false)
         {
             try
             {
-                OnKenelStatusUpdated += onKenelStatusUpdatedCallback;
-
                 DateTime startTime = DateTime.Now;
                 KernelStatus kernelStatus = new();
                 ObservableCollection<LogRecord> logRecords = [];
-                AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, OnKenelStatusUpdated, showStatusPerSec: showStatusPerSec);
+                AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, onKenelStatusUpdatedCallback, showStatusPerSec: showStatusPerSec);
                 Kernel kernel = await GetKernelAsync(logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter);
 
                 ChatHistory history = [];
@@ -429,7 +419,7 @@ namespace DiscordBot.SemanticKernel
                 using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
                 statusReportTimer.Elapsed += (sender, e) =>
                 {
-                    OnKenelStatusUpdated?.Invoke(this, kernelStatus);
+                    onKenelStatusUpdatedCallback?.Invoke(this, kernelStatus);
                 };
                 if (showStatusPerSec) statusReportTimer.Start();
                 FunctionCallingStepwisePlannerResult result = await planner.ExecuteAsync(kernel, prompt, chatHistoryForSteps: history);
@@ -457,10 +447,6 @@ namespace DiscordBot.SemanticKernel
             catch (Exception)
             {
                 throw;
-            }
-            finally
-            {
-                OnKenelStatusUpdated -= onKenelStatusUpdatedCallback;
             }
         }
 
@@ -526,18 +512,16 @@ namespace DiscordBot.SemanticKernel
         {
             try
             {
-                OnKenelStatusUpdated += onKenelStatusUpdatedCallback;
-
                 DateTime startTime = DateTime.Now;
                 KernelStatus kernelStatus = new();
                 ObservableCollection<LogRecord> logRecords = [];
-                AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, OnKenelStatusUpdated, showStatusPerSec: showStatusPerSec);
+                AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, onKenelStatusUpdatedCallback, showStatusPerSec: showStatusPerSec);
                 Kernel kernel = await GetKernelAsync(logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter);
                 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
                 string additionalPromptContext = $"""
                 {SystemPrompt}
-                問題都是關於"瑪奇Mabinogi", 你可以使用memory plugin在long term memory裡嘗試尋找答案
+                先使用memory plugin在long term memory裡嘗試尋找答案, 如果找不到(INFO NOT FOUND)才用其他方法 (在memory裡找到的資料需要附上來源和可信度[XX%])
                 使用繁體中文來回覆
                 """;
 
@@ -554,10 +538,7 @@ namespace DiscordBot.SemanticKernel
                 };
                 kernelStatus.StepStatuses.Enqueue(planStatus);
                 using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
-                statusReportTimer.Elapsed += (sender, e) =>
-                {
-                    OnKenelStatusUpdated?.Invoke(this, kernelStatus);
-                };
+                statusReportTimer.Elapsed += (sender, e) => { onKenelStatusUpdatedCallback?.Invoke(this, kernelStatus); };
 
                 OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
                 {
@@ -566,10 +547,6 @@ namespace DiscordBot.SemanticKernel
                     MaxTokens = 4000,
                     ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
                 };
-
-
-                // Stream the results
-                string fullMessage = string.Empty;
 
                 if (showStatusPerSec) statusReportTimer.Start();
                 var content = await chatCompletionService.GetChatMessageContentAsync(history, executionSettings: openAIPromptExecutionSettings, kernel: kernel);
@@ -596,10 +573,6 @@ namespace DiscordBot.SemanticKernel
             catch (Exception)
             {
                 throw;
-            }
-            finally
-            {
-                OnKenelStatusUpdated -= onKenelStatusUpdatedCallback;
             }
         }
     }
