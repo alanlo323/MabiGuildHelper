@@ -32,8 +32,8 @@ namespace DiscordBot.Db.Entity
         public int CompletionTokens { get; set; }
         public int TotalTokens { get; set; }
 
-        private readonly double promptCost = 0.01;   //  per 1000 tokens
-        private readonly double completionCost = 0.03;   //  per 1000 tokens
+        private readonly double promptCost = 0.005;   //  per 1000 tokens
+        private readonly double completionCost = 0.015;   //  per 1000 tokens
 
         [NotMapped]
         public double EstimatedCostInUSD { get => (PromptTokens * promptCost / 1000) + (CompletionTokens * completionCost / 1000); } 
@@ -47,7 +47,7 @@ namespace DiscordBot.Db.Entity
 
         public void SetTokens(ICollection<LogRecord> logRecords)
         {
-            var tokenLogs = logRecords.Where(x => x.CategoryName == "Microsoft.SemanticKernel.Connectors.OpenAI.AzureOpenAIChatCompletionService").ToList(); ;
+            var tokenLogs = logRecords.Where(x => x.CategoryName == "Microsoft.SemanticKernel.Connectors.OpenAI.AzureOpenAIChatCompletionService").ToList();
             SetTokens(tokenLogs, nameof(PromptTokens));
             SetTokens(tokenLogs, nameof(CompletionTokens));
             SetTokens(tokenLogs, nameof(TotalTokens));

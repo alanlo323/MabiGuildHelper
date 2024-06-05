@@ -212,7 +212,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
         // 傳回:
         //     The answer returned by the memory.
         [KernelFunction]
-        [Description("Use long term memory to answer a question")]
+        [Description("Use long term memory to answer a question. Return INFO NOT FOUND if not related information is found.")]
         public async Task<string> AskAsync([Description("The question to answer")] string question, [Description("Memories index to search for answers")][DefaultValue("")] string? index = null, [Description("Minimum relevance of the sources to consider")][DefaultValue(0.0)] double minRelevance = 0.0, [Description("Memories tags to search for information")][DefaultValue(null)] TagCollectionWrapper? tags = null, ILoggerFactory? loggerFactory = null, CancellationToken cancellationToken = default)
         {
             ConcurrentDictionary<string, WebPage> webPageDict = new();
