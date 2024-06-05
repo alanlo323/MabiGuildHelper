@@ -51,5 +51,26 @@ namespace DiscordBot.Util
             }
             return sanitizedUrl;
         }
+
+        /// <summary>
+        /// This function will check if the value stay unchanged with specify delay and return the confirmed value.
+        /// </summary>
+        /// <typeparam name="T">Return type</typeparam>
+        /// <param name="count">The number to check.</param>
+        /// <param name="func">Function to call to get the newest result.</param>
+        /// <param name="delay">Delay in millisecond.</param>
+        /// <returns></returns>
+        public static T WaitUntilValueConfirmed<T>(int count, int delay, Func<T> func)
+        {
+            T value = default;
+            do
+            {
+                Task.Delay(delay).Wait();
+                var resultSnapshot = func.Invoke();
+                if (Equals(value, resultSnapshot)) count--;
+                value = resultSnapshot;
+            } while (count > 0);
+            return value;
+        }
     }
 }

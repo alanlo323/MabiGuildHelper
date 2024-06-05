@@ -52,7 +52,7 @@ public sealed class WebSearchPlugin(ILogger<DataScrapingJob> logger, IWebSearchE
     /// <param name="query">The text to search for.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The return value contains the search results as an IEnumerable WebPage object serialized as a string</returns>
-    [KernelFunction, Description("Perform a web search and return complete results in JSON format.")]
+    //[KernelFunction, Description("Perform a web search and return complete results.")]
     public async Task<string> Search(
         [Description("Text to search for")] string query,
         Kernel kernel,
@@ -61,6 +61,7 @@ public sealed class WebSearchPlugin(ILogger<DataScrapingJob> logger, IWebSearchE
         string response = "INFO NOT FOUND";
         try
         {
+
             IEnumerable<WebPage> searchResults = await connector.SearchAsync<WebPage>(query, 3, 0, cancellationToken);
             searchResults = await dataScrapingHelper.GetWebContent(searchResults);
             foreach (WebPage webPage in searchResults!)
@@ -92,5 +93,28 @@ public sealed class WebSearchPlugin(ILogger<DataScrapingJob> logger, IWebSearchE
             throw;
         }
         return response;
+    }
+
+    /// <summary>
+    /// Performs a web search using the provided query, count, and offset.
+    /// </summary>
+    /// <param name="query">The text to search for.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The return value contains the search results as an IEnumerable WebPage object serialized as a string</returns>
+    [KernelFunction, Description("Perform a web search and return complete results.")]
+    public async Task<string> BingSearch(
+        [Description("Text to search for")] string query,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            string bingChatResult = await dataScrapingHelper.GetBingChatResult(query);
+            return bingChatResult;
+        }
+        catch (Exception ex)
+        {
+            logger.LogException(ex);
+            return "INFO NOT FOUND";
+        }
     }
 }
