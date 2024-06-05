@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
@@ -366,6 +367,39 @@ namespace DiscordBot.Helper
                 });
 
                 return webPages;
+            }
+            catch (Exception ex)
+            {
+                logger.LogException(ex);
+                return null;
+            }
+        }
+
+
+        public async Task<string> GetBingChatResult(string prompt)
+        {
+            try
+            {
+                BrowserFetcher browserFetcher = new();
+                await browserFetcher.DownloadAsync();
+
+                await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+                {
+                    Headless = false,
+                    DefaultViewport = null,
+                    Args = [$"--start-maximized"],
+                });
+
+                await using var page = await browser.NewPageAsync();
+                await page.GoToAsync("https://www.bing.com/chat", WaitUntilNavigation.Networkidle0);
+                await page.Keyboard.TypeAsync(prompt);
+                await page.Keyboard.PressAsync("Enter");
+                Task.Delay(5 * 1000).Wait();
+                string answerBoxExpression = """
+                    document.querySelector("#b_sydConvCont > cib-serp").shadowRoot.querySelector("#cib-conversation-main").shadowRoot.querySelector("#cib-chat-main > cib-chat-turn").shadowRoot.querySelector("cib-message-group.response-message-group").shadowRoot.querySelector("cib-message:nth-child(3)").shadowRoot.querySelector("cib-shared > div > div > div.ac-textBlock").innerText
+                    """;
+                string answer = MiscUtil.WaitUntilValueConfirmed(3, 1000, () => page.EvaluateExpressionAsync<string>(answerBoxExpression).GetAwaiter().GetResult());
+                return answer;
             }
             catch (Exception ex)
             {

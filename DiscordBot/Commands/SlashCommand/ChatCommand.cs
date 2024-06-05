@@ -99,6 +99,7 @@ namespace DiscordBot.Commands.SlashCommand
                     { "Writer-Translate", "翻譯文本" },
                     { "MathPlugin", "數學計算" },
                     { "WebSearchPlugin-Search", "搜尋網路資料" },
+                    { "WebSearchPlugin-BingSearch", "搜尋網路資料" },
                     { "ConversationSummaryPlugin-FindRelatedInformationWithGoal", "分析資料" },
                     { "FindRelatedInformationWithGoal", "尋找相關內容" },
                     { "AboutPlugin-GetBackgroundInformation", "獲得背景資料" },

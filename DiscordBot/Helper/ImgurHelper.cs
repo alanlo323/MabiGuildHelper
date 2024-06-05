@@ -83,14 +83,11 @@ namespace DiscordBot.Helper
 
         public async Task<string> GetAccessToken(string clientId, string clientSecret, string refreshToken)
         {
-            var options = new RestClientOptions(BaseUrl)
-            {
-                MaxTimeout = -1,
-            };
+            var options = new RestClientOptions(BaseUrl);
             var client = new RestClient(options);
             var request = new RestRequest("/oauth2/token", Method.Post)
             {
-                AlwaysMultipartFormData = true
+                AlwaysMultipartFormData = true,
             };
             request
                 .AddParameter("refresh_token", refreshToken)
@@ -113,10 +110,7 @@ namespace DiscordBot.Helper
         public async Task<string> UploadImage(Image image)
         {
             // image to base64
-            var options = new RestClientOptions(BaseUrl)
-            {
-                MaxTimeout = -1,
-            };
+            var options = new RestClientOptions(BaseUrl);
             var client = new RestClient(options);
             var request = new RestRequest("/3/image", Method.Post)
             {

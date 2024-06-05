@@ -130,7 +130,7 @@ namespace DiscordBot.SemanticKernel
                 //.AddFromType<WebFileDownloadPlugin>()
                 //.AddFromType<Plugins.About.AboutPlugin>()
                 .AddFromType<Plugins.Writer.Summary.ConversationSummaryPlugin>()
-                //.AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
+                .AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
                 .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
                 ;
 
