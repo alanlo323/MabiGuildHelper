@@ -122,7 +122,7 @@ namespace DiscordBot.SemanticKernel
                 //.AddFromType<HttpPlugin>()
                 //.AddFromType<TextPlugin>()
                 //.AddFromType<WaitPlugin>()
-                //.AddFromType<TimePlugin>()
+                .AddFromType<TimePlugin>()
                 //.AddFromType<FileIOPlugin>()
                 .AddFromType<WebSearchPlugin>()
                 //.AddFromType<SearchUrlPlugin>()
