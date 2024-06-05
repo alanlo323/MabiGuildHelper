@@ -106,6 +106,8 @@ namespace DiscordBot.Commands.SlashCommand
                     { "ConversationSummaryPlugin-SummarizeConversation", "總結內容" },
                     { "CreatePlan", "製定計劃" },
                     { "Thinking", "思考中" },
+                    { "TimePlugin-Now", "獲取當前時間" },
+                    { "TimePlugin-TimeZoneName", "獲取當前時區" },
                 };
                 List<string> ignoreList = [
                     "GetBackgroundInformation",
