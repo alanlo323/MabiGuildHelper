@@ -229,10 +229,10 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
             MemoryAnswer answer = await memoryClient.AskAsync(question, index ?? _defaultIndex, TagsToMemoryFilter(tags ?? defaultRetrievalTags), null, minRelevance, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
             if (answer.NoResult) return "INFO NOT FOUND";
 
-            var response = answer.Result + Environment.NewLine;
+            var response = $"{answer.Result}{Environment.NewLine}Source:";
             foreach (var x in answer.RelevantSources.OrderByDescending(x => x.Partitions.First().Relevance))
             {
-                string sourceDisplayName = string.Empty; 
+                string sourceDisplayName = string.Empty;
                 sourceDisplayName = x.SourceUrl != null
                     ? webPageDict.TryGetValue(x.SourceUrl, out WebPage? value) ? $"[{value.Name}]({x.SourceUrl})" : x.SourceUrl
                     : x.SourceName;
