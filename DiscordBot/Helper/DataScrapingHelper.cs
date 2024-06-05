@@ -385,7 +385,7 @@ namespace DiscordBot.Helper
 
                 await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
                 {
-                    Headless = false,
+                    Headless = true,
                     DefaultViewport = null,
                     Args = [$"--start-maximized"],
                 });

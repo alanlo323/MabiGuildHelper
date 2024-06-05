@@ -459,6 +459,7 @@ namespace DiscordBot.SemanticKernel
 
                 string additionalPromptContext = $"""
                 {SystemPrompt}
+                有些問題可能關於"瑪奇Mabinogi", 如有需要可以嘗試在long term memory裡找答案
                 使用繁體中文來回覆
                 """;
 
@@ -488,34 +489,21 @@ namespace DiscordBot.SemanticKernel
                     ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
                 };
 
-                if (showStatusPerSec) statusReportTimer.Start();
-                var result = chatCompletionService.GetStreamingChatMessageContentsAsync(
-                    history,
-                    executionSettings: openAIPromptExecutionSettings,
-                    kernel: kernel);
 
                 // Stream the results
-                string fullMessage = "";
-                bool first = true;
+                string fullMessage = string.Empty;
 
-                await foreach (var content in result)
+                if (showStatusPerSec) statusReportTimer.Start();
+                await foreach (var content in chatCompletionService.GetStreamingChatMessageContentsAsync(history, executionSettings: openAIPromptExecutionSettings, kernel: kernel))
                 {
-                    if (content.Role.HasValue && first)
-                    {
-                        first = false;
-                    }
                     if (string.IsNullOrWhiteSpace(content.Content)) continue;
                     fullMessage += content.Content;
                     kernelStatus.Conversation.Result = fullMessage;
                 }
                 if (showStatusPerSec) statusReportTimer.Stop();
 
-                //Console.WriteLine();
-                // Add the message from the agent to the chat history
-                //history.AddAssistantMessage(fullMessage);
-
                 StringBuilder sb1 = new();
-                foreach (var record in history!.Where(x=>x.Role != AuthorRole.System)) sb1.AppendLine(record.ToString());
+                foreach (var record in history!.Where(x => x.Role != AuthorRole.System)) sb1.AppendLine(record.ToString());
 
                 Conversation conversation = new()
                 {

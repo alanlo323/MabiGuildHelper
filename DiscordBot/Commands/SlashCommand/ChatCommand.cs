@@ -95,7 +95,7 @@ namespace DiscordBot.Commands.SlashCommand
             string GetResponseMessage(KernelStatus kernelStatus)
             {
                 Dictionary<string, string> replacementDict = new() {
-                    { "memory-Ask", "在長期記憶尋找相關資料" },
+                    { "memory-Ask", "搜尋核心記憶" },
                     { "Writer-Translate", "翻譯文本" },
                     { "MathPlugin", "數學計算" },
                     { "WebSearchPlugin-Search", "搜尋網路資料" },
