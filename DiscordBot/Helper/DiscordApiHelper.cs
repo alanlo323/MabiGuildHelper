@@ -63,15 +63,9 @@ namespace DiscordBot.Helper
 
         public async Task CreateNewMessage(BaseEntity entity, SocketTextChannel textChannel, string messageIdPropertyName, string content = null, string filePath = null, Embed embed = null, MessageComponent messageComponent = null)
         {
-            RestUserMessage message;
-            if (string.IsNullOrWhiteSpace(filePath))
-            {
-                message = await textChannel.SendMessageAsync(text: content, embed: embed, components: messageComponent);
-            }
-            else
-            {
-                message = await textChannel.SendFileAsync(filePath: filePath, text: content, embed: embed, components: messageComponent);
-            }
+            RestUserMessage message = string.IsNullOrWhiteSpace(filePath)
+                ? await textChannel.SendMessageAsync(text: content, embed: embed, components: messageComponent)
+                : await textChannel.SendFileAsync(filePath: filePath, text: content, embed: embed, components: messageComponent);
             entity.SetProperty(messageIdPropertyName, message.Id);
             await appDbContext.SaveChangesAsync();
         }

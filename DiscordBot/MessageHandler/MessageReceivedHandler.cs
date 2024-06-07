@@ -46,22 +46,21 @@ namespace DiscordBot.MessageHandler
 
         private async Task CheckWordTrigger(SocketUserMessage message)
         {
-            var triggeredWords = _funnyResponseConfig.TriggerWords.Where(x => message.Content.Contains(x, StringComparison.CurrentCultureIgnoreCase));
-            if (triggeredWords.Any())
-            {
-                string triggeredWord = triggeredWords.First();
-                string key = $"FunnyResponse:text:{message.Channel.Id}:{triggeredWord}";
-                DateTime lastTriggerTime = (DateTime)RuntimeDbUtil.DefaultRuntimeDb.GetValueOrDefault(key, DateTime.MinValue);
-                if (lastTriggerTime.AddMinutes(1) > DateTime.Now) return;   //  cooldown
-                RuntimeDbUtil.DefaultRuntimeDb[key] = DateTime.Now;
+            if (_funnyResponseConfig.TriggerWords.Length == 0) return;
 
-                bool replyMessage = false;
-                AppDataHelper appDataHelper = new();
-                FileAttachment[] fileAttachments = [new FileAttachment(appDataHelper.GetFunnyResponseFile().FullName)];
+            var triggeredWord = _funnyResponseConfig.TriggerWords.First(x => message.Content.Contains(x, StringComparison.CurrentCultureIgnoreCase));
+            string key = $"FunnyResponse:text:{message.Channel.Id}:{triggeredWord}";
+            DateTime lastTriggerTime = (DateTime)RuntimeDbUtil.DefaultRuntimeDb.GetValueOrDefault(key, DateTime.MinValue);
+            if (lastTriggerTime.AddMinutes(1) > DateTime.Now) return;   //  cooldown
+            RuntimeDbUtil.DefaultRuntimeDb[key] = DateTime.Now;
 
-                await message.Channel.SendFilesAsync(fileAttachments, messageReference: replyMessage ? new(message.Id) : null);
-                logger.LogInformation($"CheckFunnyResponse|${key}");
-            }
+            bool replyMessage = false;
+            AppDataHelper appDataHelper = new();
+            FileAttachment[] fileAttachments = [new FileAttachment(appDataHelper.GetFunnyResponseFile().FullName)];
+
+            await message.Channel.SendFilesAsync(fileAttachments, messageReference: replyMessage ? new(message.Id) : null);
+            logger.LogInformation($"CheckFunnyResponse|${key}");
+
         }
 
         private async Task CheckStickerTrigger(SocketUserMessage message)

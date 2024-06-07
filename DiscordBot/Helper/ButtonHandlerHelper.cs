@@ -18,7 +18,7 @@ namespace DiscordBot.Helper
 
         public IBaseButtonHandler GetButtonHandler(string id)
         {
-            return serviceProvider.GetServices<IBaseButtonHandler>().Single(x => x.Id == id);
+            return serviceProvider.GetServices<IBaseButtonHandler>().Single(x => x.Ids.Any(y => y == id));
         }
 
         public IBaseButtonHandler GetButtonHandler<T>() where T : IBaseButtonHandler

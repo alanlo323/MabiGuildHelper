@@ -14,26 +14,27 @@ namespace DiscordBot.Configuration
 
         public string DisplayName { get; set; }
         public DailyEffect[] DailyEffect { get; set; }
-        public DailyBankGift[] DailyBankGift { get; set; }
+        public DailyVipGift[] DailyVipGift { get; set; }
         public InstanceReset[] InstanceReset { get; set; }
 
         public bool Validate()
         {
-            return !string.IsNullOrEmpty(DisplayName) && DailyEffect != null && DailyBankGift != null && InstanceReset != null;
+            return !string.IsNullOrEmpty(DisplayName) && DailyEffect != null && DailyVipGift != null && InstanceReset != null;
         }
     }
 
     public class DailyEffect
     {
-        public string DayOfWeek { get; set; }
+        public DayOfWeek DayOfWeek { get; set; }
         public string ChannelName { get; set; }
         public string Title { get; set; }
         public string[] Effect { get; set; }
     }
 
-    public class DailyBankGift
+    public class DailyVipGift
     {
-        public string DayOfWeek { get; set; }
+        public int Id { get; set; }
+        public DayOfWeek DayOfWeek { get; set; }
         public string[] Items { get; set; }
     }
 
@@ -44,6 +45,7 @@ namespace DiscordBot.Configuration
             public static string Battle { get; } = "戰鬥";
             public static string Life { get; } = "生活";
             public static string Misc { get; } = "雜項";
+            public static string VipDailyGift { get; } = "VIP每日禮物";
             public static string ResetInOneDay { get; } = "一天內重置";
             public static string ResetToday { get; } = "已在今天重置";
         }

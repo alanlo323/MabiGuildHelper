@@ -26,13 +26,16 @@ namespace DiscordBot.ButtonHandler
 {
     public class PromptDetailButtonHandler(ILogger<PromptDetailButtonHandler> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper, SelectMenuHandlerHelper selectMenuHandlerHelper, PromptHelper promptHelper) : IBaseButtonHandler
     {
-        public string Lable { get; set; } = "詳細資訊";
-        public string Id { get; set; } = "PromptDetailButton";
+        public const string PromptDetailButtonIdLabel = "詳細資訊";
+        public const string PromptDetailButtonId = "PromptDetailButton";
+
+        public string[] Lables { get; set; } = [PromptDetailButtonIdLabel];
+        public string[] Ids { get; set; } = [PromptDetailButtonId];
 
         public MessageComponent GetMessageComponent()
         {
             ComponentBuilder componentBuilder = new ComponentBuilder()
-                .WithButton(label: Lable, emote: new Emoji("💭"), style: ButtonStyle.Primary, customId: Id);
+                .WithButton(label: PromptDetailButtonIdLabel, emote: new Emoji("💭"), style: ButtonStyle.Primary, customId: PromptDetailButtonId);
             return componentBuilder.Build();
         }
 

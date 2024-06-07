@@ -19,6 +19,7 @@ namespace DiscordBot.Db
         public DbSet<GuildUserSetting> GuildUserSettings { get; set; }
         public DbSet<GuildNewsOverride> GuildNewsOverrides { get; set; }
         public DbSet<InstanceReminderSetting> InstanceReminderSettings { get; set; }
+        public DbSet<DailyVipGiftReminderSetting> DailyVipGiftReminderSettings { get; set; }
         public DbSet<News> News { get; set; }
         public DbSet<GlobalSetting> GlobalSettings { get; set; }
         public DbSet<Conversation> Conversations { get; set; }
@@ -76,11 +77,20 @@ namespace DiscordBot.Db
                 ;
 
             modelBuilder.Entity<InstanceReminderSetting>()
-                .HasKey(e => new { e.GuildId, e.UserId, e.InstanceReminderId })
+                .HasKey(e => new { e.GuildId, e.UserId, e.ReminderId })
                 ;
             modelBuilder.Entity<InstanceReminderSetting>()
                 .HasOne(e => e.GuildUserSetting)
                 .WithMany(e => e.InstanceReminderSettings)
+                .HasForeignKey(e => new { e.GuildId, e.UserId })
+                ;
+
+            modelBuilder.Entity<DailyVipGiftReminderSetting>()
+                .HasKey(e => new { e.GuildId, e.UserId, e.ReminderId })
+                ;
+            modelBuilder.Entity<DailyVipGiftReminderSetting>()
+                .HasOne(e => e.GuildUserSetting)
+                .WithMany(e => e.DailyVipGiftReminderSettings)
                 .HasForeignKey(e => new { e.GuildId, e.UserId })
                 ;
 

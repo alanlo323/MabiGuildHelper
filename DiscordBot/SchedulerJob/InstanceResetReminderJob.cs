@@ -59,46 +59,93 @@ namespace DiscordBot.SchedulerJob
         public async Task SendNotification()
         {
             DateTime now = DateTime.Now;
-            var instanceResetList = _gameConfig.InstanceReset.ToDictionary(x => x.Id);
-            var guildUserSettings = appDbContext.GuildUserSettings.Include(x => x.InstanceReminderSettings).ToList();
+            Dictionary<int, InstanceReset> instanceResetList = _gameConfig.InstanceReset.ToDictionary(x => x.Id);
+            Dictionary<int, DailyVipGift> dailyVipGiftList = _gameConfig.DailyVipGift.ToDictionary(x => x.Id);
+            List<GuildUserSetting> guildUserSettings = [.. appDbContext.GuildUserSettings.Include(x => x.InstanceReminderSettings).Include(x => x.DailyVipGiftReminderSettings)];
             foreach (GuildUserSetting guildUserSetting in guildUserSettings)
             {
-                try
+                await SendInstanceResetReminder(instanceResetList, guildUserSetting, now);
+                await SendDailyVipGiftReminder(dailyVipGiftList, guildUserSetting, now);
+            }
+        }
+
+        private async Task SendInstanceResetReminder(Dictionary<int, InstanceReset> instanceResetList, GuildUserSetting guildUserSetting, DateTime now)
+        {
+            try
+            {
+                if (guildUserSetting.InstanceReminderSettings == null || guildUserSetting.InstanceReminderSettings.Count == 0) return;
+
+                var user = await client.GetUserAsync(guildUserSetting.UserId);
+                if (user == null) return;
+
+                List<string> reminders = [];
+
+                foreach (InstanceReminderSetting setting in guildUserSetting.InstanceReminderSettings)
                 {
-                    if (guildUserSetting.InstanceReminderSettings == null || guildUserSetting.InstanceReminderSettings.Count == 0) continue;
-
-                    var user = await client.GetUserAsync(guildUserSetting.UserId);
-                    if (user == null) continue;
-
-                    List<string> reminders = [];
-
-                    foreach (InstanceReminderSetting instanceReminderSetting in guildUserSetting.InstanceReminderSettings)
+                    try
                     {
-                        try
+                        InstanceReset instanceReset = instanceResetList[setting.ReminderId];
+                        if (instanceReset.ResetOnDayOfWeek == now.DayOfWeek && instanceReset.ResetOnTime.Hour == now.Hour && instanceReset.ResetOnTime.Minute == now.Minute)
                         {
-                            InstanceReset instanceReset = instanceResetList[instanceReminderSetting.InstanceReminderId];
-                            if (instanceReset.ResetOnDayOfWeek == now.DayOfWeek && instanceReset.ResetOnTime.Hour == now.Hour && instanceReset.ResetOnTime.Minute == now.Minute)
-                            {
-                                reminders.Add($"`{instanceReset.Name}`");
-                            }
+                            reminders.Add($"`{instanceReset.Name}`");
+                        }
 
-                        }
-                        catch (Exception e2)
-                        {
-                            logger.LogError(e2, e2.Message);
-                        }
                     }
-
-                    if (reminders.Count > 0)
+                    catch (Exception e2)
                     {
-                        string msg = $"小幫手提提您, {reminders.Aggregate((s1, s2) => $"{s1}、 {s2}")} 的每周限額已經重置囉~ 賺錢打寶的快去快去~";
-                        await user.SendMessageAsync(msg);
+                        logger.LogError(e2, e2.Message);
                     }
                 }
-                catch (Exception e1)
+
+                if (reminders.Count > 0)
                 {
-                    logger.LogError(e1, e1.Message);
+                    string msg = $"小幫手提提您, {reminders.Aggregate((s1, s2) => $"{s1}、 {s2}")} 的每周限額已經重置囉~ 賺錢打寶的快去快去~";
+                    await user.SendMessageAsync(msg);
                 }
+            }
+            catch (Exception e1)
+            {
+                logger.LogError(e1, e1.Message);
+            }
+        }
+
+        private async Task SendDailyVipGiftReminder(Dictionary<int, DailyVipGift> dailyVipGiftList, GuildUserSetting guildUserSetting, DateTime now)
+        {
+            try
+            {
+                if (guildUserSetting.DailyVipGiftReminderSettings == null || guildUserSetting.DailyVipGiftReminderSettings.Count == 0) return;
+
+                var user = await client.GetUserAsync(guildUserSetting.UserId);
+                if (user == null) return;
+
+                List<string> reminders = [];
+
+                foreach (DailyVipGiftReminderSetting setting in guildUserSetting.DailyVipGiftReminderSettings)
+                {
+                    try
+                    {
+                        DailyVipGift dailyVipGift = dailyVipGiftList[setting.ReminderId];
+                        if (dailyVipGift.DayOfWeek == now.DayOfWeek && (true || now.Hour == 7 && now.Minute == 0))    // Send on 7:00 a.m.
+                        {
+                            reminders.Add($"`{dailyVipGift.Items.Aggregate((s1, s2) => $"{s1}, {s2}")}`");
+                        }
+
+                    }
+                    catch (Exception e2)
+                    {
+                        logger.LogError(e2, e2.Message);
+                    }
+                }
+
+                if (reminders.Count > 0)
+                {
+                    string msg = $"今天的VIP禮物是 {reminders.Aggregate((s1, s2) => $"{s1}、 {s2}")} 記得上線領取喔~";
+                    await user.SendMessageAsync(msg);
+                }
+            }
+            catch (Exception e1)
+            {
+                logger.LogError(e1, e1.Message);
             }
         }
     }

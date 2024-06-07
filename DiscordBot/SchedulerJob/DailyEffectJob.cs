@@ -25,7 +25,7 @@ namespace DiscordBot.SchedulerJob
 
         public async Task Execute(IJobExecutionContext context)
         {
-            var today = DateTime.Now.DayOfWeek.ToString();
+            var today = DateTime.Now.DayOfWeek;
             var todayEffect = _gameConfig.DailyEffect.First(x => x.DayOfWeek == today);
             string channelName = $"{todayEffect.ChannelName}";
             var guildSettings = appDbContext.GuildSettings.ToList();

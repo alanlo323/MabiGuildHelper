@@ -9,12 +9,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DiscordBot.Db.Entity
 {
-    public class InstanceReminderSetting : BaseEntity
+    public class InstanceReminderSetting : BaseEntity, IReminderSetting
     {
         public GuildUserSetting GuildUserSetting { get; set; }
 
         public ulong GuildId { get; set; }
         public ulong UserId { get; set; }
-        public int InstanceReminderId { get; set; }
+        public int ReminderId { get; set; }
     }
 }
