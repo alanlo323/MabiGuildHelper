@@ -25,7 +25,7 @@ namespace DiscordBot.Extension
 
         public static T SetProperty<T>(this T obj, string propertyName, object value)
         {
-            var property = typeof(T).GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+            var property = obj.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.SetProperty);
             if (property != null && property.CanWrite)
             {
                 property.SetValue(obj, value);
@@ -35,7 +35,7 @@ namespace DiscordBot.Extension
 
         public static T GetProperty<T>(this object obj, string propertyName)
         {
-            var property = obj.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+            var property = obj.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.SetProperty);
             if (property != null && property.CanRead)
             {
                 return (T)property.GetValue(obj);

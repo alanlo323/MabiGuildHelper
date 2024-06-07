@@ -13,7 +13,7 @@ namespace DiscordBot.SelectMenuHandler
     {
         public string Id { get; set; }
 
-        public MessageComponent GetMessageComponent(IEnumerable<InstanceReminderSetting> InstanceReminderSettings);
+        public MessageComponent GetMessageComponent(IEnumerable<IReminderSetting> reminderSettings);
         public async Task Excute(SocketMessageComponent component) { }
     }
 }

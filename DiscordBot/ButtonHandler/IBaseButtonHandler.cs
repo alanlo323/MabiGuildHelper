@@ -10,8 +10,8 @@ namespace DiscordBot.ButtonHandler
 {
     public interface IBaseButtonHandler
     {
-        public string Lable { get; set; }
-        public string Id { get; set; }
+        public string[] Lables { get; set; }
+        public string[] Ids { get; set; }
 
         public MessageComponent GetMessageComponent();
         public async Task Excute(SocketMessageComponent component) { }

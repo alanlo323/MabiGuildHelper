@@ -5,7 +5,8 @@
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Local"
       },
-      "remoteDebugEnabled": false
+      "remoteDebugEnabled": false,
+      "authenticationMode": "Windows"
     },
     "WSL": {
       "commandName": "WSL2",

@@ -6,21 +6,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 
 namespace DiscordBot.Db.Entity
 {
-    public class GuildUserSetting : BaseEntity
+    public class DailyVipGiftReminderSetting : BaseEntity, IReminderSetting
     {
-        // Parent
-        public GuildSetting GuildSetting { get; set; }
+        public GuildUserSetting GuildUserSetting { get; set; }
 
         public ulong GuildId { get; set; }
         public ulong UserId { get; set; }
-
-        // Has children
-        public ICollection<InstanceReminderSetting> InstanceReminderSettings { get; set; } = [];
-        public ICollection<DailyVipGiftReminderSetting> DailyVipGiftReminderSettings { get; set; } = [];
-
+        public int ReminderId { get; set; }
     }
 }

@@ -49,7 +49,7 @@ namespace DiscordBot.Commands.SlashCommand
 
             DateTime startTime = DateTime.Now;
             string prompt = command.Data.Options.First(x => x.Name == "text").Value as string;
-            bool showStatusPerSec = command.User.Id == ulong.Parse(discordBotConfig.Value.AdminId);
+            bool showStatusPerSec = command.User.Id == ulong.Parse(discordBotConfig.Value.AdminId) || true;
             RestFollowupMessage restFollowupMessage = null;
             object lockObj = new();
 
@@ -61,6 +61,8 @@ namespace DiscordBot.Commands.SlashCommand
             answer = answer[..Math.Min(2000, answer.Length)];
             MessageComponent addReminderButtonComponent = buttonHandlerHelper.GetButtonHandler<PromptDetailButtonHandler>().GetMessageComponent();
             await FollowUpOrEditMessage(answer, components: addReminderButtonComponent);
+
+            //  TODO: Add support of reply message to continue the conversation
 
             conversation.DiscordMessageId = restFollowupMessage.Id;
             await databaseHelper.Add(conversation);

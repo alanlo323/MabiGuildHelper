@@ -25,14 +25,14 @@ namespace DiscordBot.Configuration
 
     public class AzureOpenAiConfig
     {
-        public Microsoft.KernelMemory.AzureOpenAIConfig GPT35 { get; set; }
-        public Microsoft.KernelMemory.AzureOpenAIConfig GPT4V { get; set; }
-        public Microsoft.KernelMemory.AzureOpenAIConfig GPT4_1106 { get; set; }
-        public Microsoft.KernelMemory.AzureOpenAIConfig GPT4_32K { get; set; }
-        public Microsoft.KernelMemory.AzureOpenAIConfig GPT4_Turbo_0409 { get; set; }
-        public Microsoft.KernelMemory.AzureOpenAIConfig GPT4O { get; set; }
-        public Microsoft.KernelMemory.AzureOpenAIConfig LLAMA3 { get; set; }
-        public Microsoft.KernelMemory.AzureOpenAIConfig Embedding { get; set; }
+        public AzureOpenAIConfig GPT35 { get; set; }
+        public AzureOpenAIConfig GPT4V { get; set; }
+        public AzureOpenAIConfig GPT4_1106 { get; set; }
+        public AzureOpenAIConfig GPT4_32K { get; set; }
+        public AzureOpenAIConfig GPT4_Turbo_0409 { get; set; }
+        public AzureOpenAIConfig GPT4O { get; set; }
+        public AzureOpenAIConfig LLAMA3 { get; set; }
+        public AzureOpenAIConfig Embedding { get; set; }
     }
 
     public class KernelMemoryConfig

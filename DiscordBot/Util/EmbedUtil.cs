@@ -31,9 +31,9 @@ namespace DiscordBot.Util
         public static Embed GetDailyEffectEmbed(GameConfig gameConfig)
         {
             DateTime today = DateTime.Now;
-            string todayOfWeek = today.DayOfWeek.ToString();
+            var todayOfWeek = today.DayOfWeek;
             DailyEffect todayEffect = gameConfig.DailyEffect.First(x => x.DayOfWeek == todayOfWeek);
-            DailyBankGift todayBankGift = gameConfig.DailyBankGift.First(x => x.DayOfWeek == todayOfWeek);
+            DailyVipGift todayBankGift = gameConfig.DailyVipGift.First(x => x.DayOfWeek == todayOfWeek);
 
             List<EmbedFieldBuilder> embedFieldBuilders = [];
 
@@ -44,7 +44,7 @@ namespace DiscordBot.Util
             embedFieldBuilders.Add(embedFieldEffect);
 
             EmbedFieldBuilder embedFieldBankGift = new EmbedFieldBuilder()
-                .WithName("今日銀行禮物")
+                .WithName("今日VIP禮物")
                 .WithValue(todayBankGift.Items.Aggregate((s1, s2) => $"{s1}\n{s2}"))
                 .WithIsInline(false);
             embedFieldBuilders.Add(embedFieldBankGift);
