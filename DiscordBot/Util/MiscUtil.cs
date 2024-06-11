@@ -72,5 +72,15 @@ namespace DiscordBot.Util
             } while (count > 0);
             return value;
         }
+
+        public static async Task DownloadFileAsync(string url, string destinationPath)
+        {
+            using HttpClient client = new();
+            using HttpResponseMessage response = await client.GetAsync(url);
+            using Stream stream = await response.Content.ReadAsStreamAsync();
+            using FileStream fileStream = new(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            await stream.CopyToAsync(fileStream);
+        }
+
     }
 }

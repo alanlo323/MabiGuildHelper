@@ -62,6 +62,8 @@ using static DiscordBot.Helper.PromptHelper;
 using Elastic.Clients.Elasticsearch;
 using DiscordBot.SemanticKernel.Plugins.About;
 using Azure.Core;
+using Discord;
+using DiscordBot.Util;
 
 namespace DiscordBot.SemanticKernel
 {
@@ -287,7 +289,7 @@ namespace DiscordBot.SemanticKernel
             return kernelWithRelevantFunctions;
         }
 
-        public async Task<KernelStatus> GenerateResponse(string prompt, SocketSlashCommand command, bool showStatusPerSec = false, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null) => await GenerateResponseWithChatCompletionService(prompt, command, showStatusPerSec: showStatusPerSec, onKenelStatusUpdatedCallback: onKenelStatusUpdatedCallback);
+        public async Task<KernelStatus> GenerateResponse(string prompt, SocketSlashCommand command, Uri? imageUri = null, bool showStatusPerSec = false, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null) => await GenerateResponseWithChatCompletionService(prompt, command, imageUri: imageUri, showStatusPerSec: showStatusPerSec, onKenelStatusUpdatedCallback: onKenelStatusUpdatedCallback);
 
         public async Task<KernelStatus> GenerateResponseFromHandlebarsPlanner(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, bool showStatusPerSec = false)
         {
@@ -508,7 +510,7 @@ namespace DiscordBot.SemanticKernel
             return conversation;
         }
 
-        public async Task<KernelStatus> GenerateResponseWithChatCompletionService(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, bool showStatusPerSec = false)
+        public async Task<KernelStatus> GenerateResponseWithChatCompletionService(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, bool showStatusPerSec = false, Uri? imageUri = null)
         {
             try
             {
@@ -526,9 +528,11 @@ namespace DiscordBot.SemanticKernel
                 使用繁體中文來回覆
                 """;
 
+                ChatMessageContentItemCollection userInput = [new TextContent(prompt)];
+                if (imageUri != null) userInput.Add(new ImageContent(imageUri));
                 ChatHistory history = [];
                 history.AddSystemMessage(additionalPromptContext);
-                history.AddUserMessage(prompt);
+                history.AddUserMessage(userInput);
 
                 StepStatus planStatus = new()
                 {
