@@ -39,6 +39,7 @@ namespace DiscordBot.Commands.SlashCommand
                 .WithName(Name)
                 .WithDescription(Description)
                 .AddOption("text", ApplicationCommandOptionType.String, "內容", isRequired: true, minLength: 1)
+                .AddOption("attachment", ApplicationCommandOptionType.Attachment, "附件 (只限圖片)", isRequired: false)
                 ;
             return command.Build();
         }
@@ -49,11 +50,18 @@ namespace DiscordBot.Commands.SlashCommand
 
             DateTime startTime = DateTime.Now;
             string prompt = command.Data.Options.First(x => x.Name == "text").Value as string;
-            bool showStatusPerSec = command.User.Id == ulong.Parse(discordBotConfig.Value.AdminId) || true;
+            Uri imageUri = command.Data.Options.FirstOrDefault(x => x.Name == "attachment")?.Value is Attachment attachment ? new Uri(attachment.ProxyUrl) : null;
+            if (await imageUri.IsImageUrl() != true)
+            {
+                await command.FollowupAsync("附件只支持圖片類型, 請檢查已選擇的附件");
+                return;
+            }
+
+            bool showStatusPerSec = true || command.User.Id == ulong.Parse(discordBotConfig.Value.AdminId);
             RestFollowupMessage restFollowupMessage = null;
             object lockObj = new();
 
-            KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(prompt, command, showStatusPerSec: showStatusPerSec, onKenelStatusUpdatedCallback: OnKenelStatusUpdated);
+            KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(prompt, command, imageUri: imageUri, showStatusPerSec: showStatusPerSec, onKenelStatusUpdatedCallback: OnKenelStatusUpdated);
             Conversation conversation = kernelStatus.Conversation;
 
             string responseMessage = GetResponseMessage(kernelStatus);
