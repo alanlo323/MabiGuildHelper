@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory.Extensions.Discord;
 using Microsoft.KernelMemory;
+using SemanticKernel.Assistants.AutoGen.Plugins;
 
 namespace DiscordBot.Configuration
 {
@@ -15,7 +16,7 @@ namespace DiscordBot.Configuration
         public AzureOpenAiConfig AzureOpenAI { get; set; }
         public KernelMemoryConfig KernelMemory { get; set; }
         public GoogleSearchApiConfig GoogleSearchApi { get; set; }
-        public ApplicationInsightsConfig ApplicationInsightsConfig { get; set; }
+        public CodeInterpretionPluginOptions CodeInterpreter { get; set; }
 
         public bool Validate()
         {
@@ -66,10 +67,5 @@ namespace DiscordBot.Configuration
     {
         public string ApiKey { get; set; }
         public string SearchEngineId { get; set; }
-    }
-
-    public class ApplicationInsightsConfig
-    {
-        public string ConnectionString { get; set; }
     }
 }
