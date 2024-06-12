@@ -13,19 +13,30 @@ namespace DiscordBot.SemanticKernel.Core
     {
         public async Task OnAutoFunctionInvocationAsync(AutoFunctionInvocationContext context, Func<AutoFunctionInvocationContext, Task> next)
         {
-            StepStatus stepStatus = GetStepStatus(context);
-            stepStatus.Status = StatusEnum.Running;
-            stepStatus.EndTime = default;
-            onKenelStatusUpdatedHandler?.Invoke(this, kernelStatus);
+            try
+            {
+                StepStatus stepStatus = GetStepStatus(context);
+                stepStatus.Status = StatusEnum.Running;
+                stepStatus.EndTime = default;
+                onKenelStatusUpdatedHandler?.Invoke(this, kernelStatus);
 
-            // Calling next filter in pipeline or function itself.
-            // By skipping this call, next filters and function won't be invoked, and function call loop will proceed to the next function.
-            await next(context);
+                // Calling next filter in pipeline or function itself.
+                // By skipping this call, next filters and function won't be invoked, and function call loop will proceed to the next function.
+                await next(context);
 
-            stepStatus = GetStepStatus(context);
-            stepStatus.Status = StatusEnum.Completed;
-            stepStatus.EndTime = DateTime.Now;
-            onKenelStatusUpdatedHandler?.Invoke(this, kernelStatus);
+                stepStatus = GetStepStatus(context);
+                stepStatus.Status = StatusEnum.Completed;
+                stepStatus.EndTime = DateTime.Now;
+                onKenelStatusUpdatedHandler?.Invoke(this, kernelStatus);
+            }
+            catch (Exception ex)
+            {
+                StepStatus stepStatus = GetStepStatus(context);
+                stepStatus.Status = StatusEnum.Failed;
+                stepStatus.EndTime = DateTime.Now;
+                onKenelStatusUpdatedHandler?.Invoke(this, kernelStatus);
+                throw;
+            }
         }
 
         public async Task OnFunctionInvocationAsync(FunctionInvocationContext context, Func<FunctionInvocationContext, Task> next)

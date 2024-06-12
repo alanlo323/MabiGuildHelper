@@ -51,7 +51,7 @@ namespace DiscordBot.Commands.SlashCommand
             DateTime startTime = DateTime.Now;
             string prompt = command.Data.Options.First(x => x.Name == "text").Value as string;
             Uri imageUri = command.Data.Options.FirstOrDefault(x => x.Name == "attachment")?.Value is Attachment attachment ? new Uri(attachment.ProxyUrl) : null;
-            if (await imageUri.IsImageUrl() != true)
+            if (imageUri != null && await imageUri.IsImageUrl() != true)
             {
                 await command.FollowupAsync("附件只支持圖片類型, 請檢查已選擇的附件");
                 return;
@@ -118,6 +118,7 @@ namespace DiscordBot.Commands.SlashCommand
                     { "Thinking", "思考中" },
                     { "TimePlugin-Now", "獲取當前時間" },
                     { "TimePlugin-TimeZoneName", "獲取當前時區" },
+                    { "CodeInterpretionPlugin-ExecutePythonCode", "執行Python程式碼" },
                 };
                 List<string> ignoreList = [
                     "GetBackgroundInformation",
@@ -145,6 +146,7 @@ namespace DiscordBot.Commands.SlashCommand
                             message = $"✅ {displayName}";
                             break;
                         case StatusEnum.Failed:
+                            message = $"❌ {displayName}";
                             break;
                         default:
                             break;

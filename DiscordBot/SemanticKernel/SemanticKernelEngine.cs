@@ -64,6 +64,10 @@ using DiscordBot.SemanticKernel.Plugins.About;
 using Azure.Core;
 using Discord;
 using DiscordBot.Util;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
+using DiscordBot.SemanticKernel.Plugins.KernelMemory.CodeInterpretion;
+using SemanticKernel.Assistants.AutoGen.Plugins;
+using CodeInterpretionPlugin = DiscordBot.SemanticKernel.Plugins.KernelMemory.CodeInterpretion.CodeInterpretionPlugin;
 
 namespace DiscordBot.SemanticKernel
 {
@@ -74,26 +78,22 @@ namespace DiscordBot.SemanticKernel
         bool isEngineStarted = false;
         AzureOpenAIConfig chatCompletionConfig;
         AzureOpenAIConfig embeddingConfig;
-        ApplicationInsightsConfig applicationInsightsConfig;
+        CodeInterpretionPluginOptions codeInterpreterConfig;
 
         public async Task StartEngine()
         {
             chatCompletionConfig = semanticKernelConfig.Value.AzureOpenAI.GPT4O;
             embeddingConfig = semanticKernelConfig.Value.AzureOpenAI.Embedding;
-            applicationInsightsConfig = semanticKernelConfig.Value.ApplicationInsightsConfig;
+            codeInterpreterConfig = semanticKernelConfig.Value.CodeInterpreter;
 
             using TracerProvider traceProvider = Sdk.CreateTracerProviderBuilder()
-                //.AddSource("Microsoft.SemanticKernel*")
                 .AddSource("SemanticKernel.Connectors.OpenAI")
                 .AddSource("Microsoft.SemanticKernel*")
-                //.AddAzureMonitorTraceExporter(options => options.ConnectionString = applicationInsightsConfig.ConnectionString)
                 .Build();
 
             using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                //.AddMeter("Microsoft.SemanticKernel*")
                 .AddMeter("SemanticKernel.Connectors.OpenAI")
                 .AddMeter("Microsoft.SemanticKernel*")
-                //.AddAzureMonitorMetricExporter(options => options.ConnectionString = applicationInsightsConfig.ConnectionString)
                 .Build();
 
             isEngineStarted = true;
@@ -110,10 +110,6 @@ namespace DiscordBot.SemanticKernel
                     chatCompletionConfig.Deployment,
                     chatCompletionConfig.Endpoint,
                      chatCompletionConfig.APIKey)
-                //.AddOpenAIChatCompletion(
-                //    chatCompletionConfig.Deployment,
-                //     chatCompletionConfig.APIKey,
-                //     httpClient: new(new CustomHttpMessageHandler(chatCompletionConfig)))
                 .AddAzureOpenAITextEmbeddingGeneration(
                     embeddingConfig.Deployment,
                     embeddingConfig.Endpoint,
@@ -130,6 +126,7 @@ namespace DiscordBot.SemanticKernel
                 //.AddFromType<SearchUrlPlugin>()
                 //.AddFromType<DocumentPlugin>()
                 //.AddFromType<TextMemoryPlugin>()
+                .AddFromType<CodeInterpretionPlugin>()
                 .AddFromType<Plugins.Math.MathPlugin>()
                 //.AddFromType<WebFileDownloadPlugin>()
                 //.AddFromType<Plugins.About.AboutPlugin>()
@@ -150,6 +147,7 @@ namespace DiscordBot.SemanticKernel
                         semanticKernelConfig.Value.GoogleSearchApi.SearchEngineId
                         );
                 })
+                .AddSingleton(codeInterpreterConfig)
                 ;
 
             builder.Services.AddLogging(loggingBuilder =>
