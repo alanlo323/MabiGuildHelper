@@ -16,12 +16,13 @@ public class ConversationSummaryPlugin
     /// <summary>
     /// The max tokens to process in a single prompt function call.
     /// </summary>
-    private const int MaxTokens = 4000;
+    private const int MaxTokens = 8000;
 
     private readonly KernelFunction _summarizeConversationFunction;
     private readonly KernelFunction _conversationActionItemsFunction;
     private readonly KernelFunction _conversationTopicsFunction;
     private readonly KernelFunction _findRelatedInformationWithGoalFunction;
+    private readonly KernelFunction _summarizeMabiNewsFunction;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConversationSummaryPlugin"/> class.
@@ -60,6 +61,12 @@ public class ConversationSummaryPlugin
             PromptFunctionConstants.FindRelatedInformationWithGoalDefinition,
             functionName: nameof(FindRelatedInformationWithGoalAsync).Replace("Async", string.Empty),
             description: "Analyze conversation transcripts and extract target-related information.",
+            executionSettings: settings);
+
+        _summarizeMabiNewsFunction = KernelFunctionFactory.CreateFromPrompt(
+            PromptFunctionConstants.SummarizeMabiNewsDefinition,
+            functionName: nameof(SummarizeMabiNewsAsync).Replace("Async", string.Empty),
+            description: "Given a section of a conversation transcript, summarize the part of the conversation.",
             executionSettings: settings);
     }
 
@@ -125,6 +132,17 @@ public class ConversationSummaryPlugin
 
         return string.Join("\n", results);
     }
+
+    /// <summary>
+    /// Given a long conversation transcript, summarize the conversation.
+    /// </summary>
+    /// <param name="input">A long conversation transcript.</param>
+    /// <param name="kernel">The <see cref="Kernel"/> containing services, plugins, and other state for use throughout the operation.</param>
+    [KernelFunction, Description("Summarize the mabinogi news.")]
+    public Task<string> SummarizeMabiNewsAsync(
+        [Description("Content to summarize")] string input,
+        Kernel kernel) =>
+        ProcessAsync(_summarizeMabiNewsFunction, input, kernel);
 
     private static async Task<string> ProcessAsync(KernelFunction func, string input, Kernel kernel)
     {

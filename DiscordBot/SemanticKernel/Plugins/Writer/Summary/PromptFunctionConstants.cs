@@ -16,7 +16,7 @@ Summary is in plain text, in complete sentences, with no markup or tags.
 Respond in the same language as the conversation.
 
 BEGIN SUMMARY:
-";   
+";
     internal const string FindRelatedInformationWithGoalDefinition =
         @"BEGIN CONTENT OF DATA:
 {{$INPUT}}
@@ -106,5 +106,14 @@ BEGIN SUMMARY:
         [Input]
         {{$INPUT}}
         [Output]
+        """;
+    internal const string SummarizeMabiNewsDefinition =
+        """
+        BEGIN CONTENT TO SUMMARIZE:
+        {{$INPUT}}
+        END CONTENT TO SUMMARIZE.
+
+        Summarize the content in 'CONTENT TO SUMMARIZE'.
+        Respond in the same language as the conversation.
         """;
 }
