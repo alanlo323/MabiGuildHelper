@@ -133,8 +133,9 @@ namespace DiscordBot.SemanticKernel
                 .AddFromType<Plugins.Writer.Summary.ConversationSummaryPlugin>()
                 .AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
                 .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
+                //  TODO: Add Screenshot plugin
                 ;
-
+            
             builder.Services
                 .AddScoped<IDocumentConnector, WordDocumentConnector>()
                 .AddScoped<IFileSystemConnector, LocalFileSystemConnector>()
@@ -287,7 +288,7 @@ namespace DiscordBot.SemanticKernel
             return kernelWithRelevantFunctions;
         }
 
-        public async Task<KernelStatus> GenerateResponse(string prompt, SocketSlashCommand command, Uri? imageUri = null, bool showStatusPerSec = false, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null) => await GenerateResponseWithChatCompletionService(prompt, command, imageUri: imageUri, showStatusPerSec: showStatusPerSec, onKenelStatusUpdatedCallback: onKenelStatusUpdatedCallback);
+        public async Task<KernelStatus> GenerateResponse(string prompt, SocketCommandBase command, Uri? imageUri = null, bool showStatusPerSec = false, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null) => await GenerateResponseWithChatCompletionService(prompt, command, imageUri: imageUri, showStatusPerSec: showStatusPerSec, onKenelStatusUpdatedCallback: onKenelStatusUpdatedCallback);
 
         public async Task<KernelStatus> GenerateResponseFromHandlebarsPlanner(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, bool showStatusPerSec = false)
         {
@@ -508,7 +509,7 @@ namespace DiscordBot.SemanticKernel
             return conversation;
         }
 
-        public async Task<KernelStatus> GenerateResponseWithChatCompletionService(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, bool showStatusPerSec = false, Uri? imageUri = null)
+        public async Task<KernelStatus> GenerateResponseWithChatCompletionService(string prompt, SocketCommandBase command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, bool showStatusPerSec = false, Uri? imageUri = null)
         {
             try
             {
