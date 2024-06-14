@@ -32,6 +32,7 @@ using Microsoft.KernelMemory;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory.Extensions.Discord;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.KernelMemory.Pipeline;
+using DiscordBot.SemanticKernel.QueneService;
 
 namespace DiscordBot
 {
@@ -78,6 +79,8 @@ namespace DiscordBot
                         optionsBuilder.UseSqlite(builder.Configuration.GetConnectionString(AppDbContext.ConnectionStringName));
                     }
                 })
+                //.AddHostedService<DiscordConnector>()
+                .AddHostedService<QueuedHostedService>()
                 .AddSingleton<Bot>()
                 .AddSingleton<ButtonHandlerHelper>()
                 .AddSingleton<DatabaseHelper>()
@@ -90,6 +93,7 @@ namespace DiscordBot
                 .AddSingleton<PromptHelper>()
                 .AddSingleton<MabinogiKernelMemoryFactory>()
                 .AddSingleton<SemanticKernelEngine>()
+                .AddSingleton<IBackgroundTaskQueue>(_ => new DefaultBackgroundTaskQueue(10))
                 .AddScoped<IBaseSlashCommand, DebugCommand>()
                 .AddScoped<IBaseSlashCommand, AboutCommand>()
                 .AddScoped<IBaseSlashCommand, HelpCommand>()
@@ -112,8 +116,7 @@ namespace DiscordBot
                 .AddScoped<ErinnTimeJob>()
                 .AddScoped<InstanceResetReminderJob>()
                 .AddScoped<DataScrapingJob>()
-                //.AddHostedService<DiscordConnector>()
-                ;
+            ;
 
             builder.Services
                 .AddQuartz(q =>
