@@ -68,10 +68,11 @@ using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory.CodeInterpretion;
 using SemanticKernel.Assistants.AutoGen.Plugins;
 using CodeInterpretionPlugin = DiscordBot.SemanticKernel.Plugins.KernelMemory.CodeInterpretion.CodeInterpretionPlugin;
+using DiscordBot.SemanticKernel.QueneService;
 
 namespace DiscordBot.SemanticKernel
 {
-    public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper, AppDbContext appDbContext)
+    public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper, AppDbContext appDbContext, IBackgroundTaskQueue taskQueue)
     {
         public const string SystemPrompt = "你是一個Discord Bot, 名字叫夏夜小幫手, 你在\"夏夜月涼\"伺服器裡為會員們服務.";
 
@@ -135,7 +136,7 @@ namespace DiscordBot.SemanticKernel
                 .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
                 //  TODO: Add Screenshot plugin
                 ;
-            
+
             builder.Services
                 .AddScoped<IDocumentConnector, WordDocumentConnector>()
                 .AddScoped<IFileSystemConnector, LocalFileSystemConnector>()
@@ -513,8 +514,19 @@ namespace DiscordBot.SemanticKernel
         {
             try
             {
-                DateTime startTime = DateTime.Now;
                 KernelStatus kernelStatus = new();
+                StepStatus pendingStatu = new()
+                {
+                    DisplayName = nameof(StatusEnum.Pending),
+                    Status = StatusEnum.Pending,
+                    StartTime = DateTime.Now,
+                    ShowElapsedTime = false
+                };
+                kernelStatus.StepStatuses.Enqueue(pendingStatu);
+                onKenelStatusUpdatedCallback?.Invoke(this, kernelStatus);
+
+                DateTime startTime = DateTime.Now;
+                ChatMessageContent result = default;
                 ObservableCollection<LogRecord> logRecords = [];
                 AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, onKenelStatusUpdatedCallback, showStatusPerSec: showStatusPerSec);
                 Kernel kernel = await GetKernelAsync(logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter);
@@ -533,28 +545,39 @@ namespace DiscordBot.SemanticKernel
                 history.AddSystemMessage(additionalPromptContext);
                 history.AddUserMessage(userInput);
 
-                StepStatus planStatus = new()
-                {
-                    DisplayName = "Thinking",
-                    Status = StatusEnum.Thinking,
-                    StartTime = DateTime.Now,
-                    ShowElapsedTime = showStatusPerSec
-                };
-                kernelStatus.StepStatuses.Enqueue(planStatus);
                 using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
                 statusReportTimer.Elapsed += (sender, e) => { onKenelStatusUpdatedCallback?.Invoke(this, kernelStatus); };
 
-                OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
+                StepStatus thinkingStatus = new()
                 {
-                    Temperature = 0.0,
-                    TopP = 0.1,
-                    MaxTokens = 4000,
-                    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
+                    DisplayName = nameof(StatusEnum.Thinking),
+                    Status = StatusEnum.Thinking,
+                    ShowElapsedTime = showStatusPerSec
                 };
 
-                if (showStatusPerSec) statusReportTimer.Start();
-                var content = await chatCompletionService.GetChatMessageContentAsync(history, executionSettings: openAIPromptExecutionSettings, kernel: kernel);
-                if (showStatusPerSec) statusReportTimer.Stop();
+                await taskQueue.QueueBackgroundWorkItemAsync(RunWorkloadAsync);
+                async ValueTask RunWorkloadAsync(CancellationToken token)
+                {
+                    startTime = DateTime.Now;
+                    thinkingStatus.StartTime = startTime;
+                    kernelStatus.StepStatuses = new(kernelStatus.StepStatuses.Where(x => pendingStatu.DisplayName != x.DisplayName));
+                    kernelStatus.StepStatuses.Enqueue(thinkingStatus);
+
+                    OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
+                    {
+                        Temperature = 0.0,
+                        TopP = 0.1,
+                        MaxTokens = 4000,
+                        ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
+                    };
+
+                    if (showStatusPerSec) statusReportTimer.Start();
+                    result = await chatCompletionService.GetChatMessageContentAsync(history, executionSettings: openAIPromptExecutionSettings, kernel: kernel, cancellationToken: token);
+                    if (showStatusPerSec) statusReportTimer.Stop();
+                }
+
+                // Wait for the result
+                while (result == default) { Task.Delay(100).Wait(); }
 
                 StringBuilder sb1 = new();
                 foreach (var record in history!.Where(x => x.Role != AuthorRole.System)) sb1.AppendLine(record.ToString());
@@ -563,14 +586,14 @@ namespace DiscordBot.SemanticKernel
                 {
                     UserPrompt = prompt,
                     PlanTemplate = sb1.ToString(),
-                    Result = $"{content}",
+                    Result = $"{result}",
                     StartTime = startTime,
                     EndTime = DateTime.Now,
                     ChatHistory = history
                 };
                 conversation.SetTokens(logRecords);
                 kernelStatus.Conversation = conversation;
-                kernelStatus.StepStatuses = new(kernelStatus.StepStatuses.Where(x => x.Status != StatusEnum.Thinking));
+                kernelStatus.StepStatuses = new(kernelStatus.StepStatuses.Where(x => thinkingStatus.DisplayName != x.DisplayName));
 
                 return kernelStatus;
             }

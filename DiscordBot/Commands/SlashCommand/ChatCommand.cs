@@ -16,6 +16,7 @@ using DiscordBot.Helper;
 using DiscordBot.SemanticKernel;
 using DiscordBot.SemanticKernel.Core;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory;
+using DiscordBot.SemanticKernel.QueneService;
 using DiscordBot.Util;
 using Humanizer;
 using Microsoft.Extensions.DependencyInjection;
@@ -115,7 +116,8 @@ namespace DiscordBot.Commands.SlashCommand
                     { "AboutPlugin-GetBackgroundInformation", "獲得背景資料" },
                     { "ConversationSummaryPlugin-SummarizeConversation", "總結內容" },
                     { "CreatePlan", "製定計劃" },
-                    { "Thinking", "思考中" },
+                    { nameof(StatusEnum.Thinking), "思考中" },
+                    { nameof(StatusEnum.Pending), "等待處理" },
                     { "TimePlugin-Now", "獲取當前時間" },
                     { "TimePlugin-TimeZoneName", "獲取當前時區" },
                     { "CodeInterpretionPlugin-ExecutePythonCode", "執行Python程式碼" },
@@ -136,6 +138,9 @@ namespace DiscordBot.Commands.SlashCommand
                     string message = $"{displayName} is {stepStatus.Status}";
                     switch (stepStatus.Status)
                     {
+                        case StatusEnum.Pending:
+                            message = $"🕘{displayName}";
+                            break;
                         case StatusEnum.Thinking:
                             message = $"💭{displayName}";
                             break;

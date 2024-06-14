@@ -39,6 +39,7 @@ namespace DiscordBot.SemanticKernel.Core
 
     public enum StatusEnum
     {
+        Pending,
         Thinking,
         Running,
         Completed,
