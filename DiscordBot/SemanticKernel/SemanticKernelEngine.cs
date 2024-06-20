@@ -572,13 +572,21 @@ namespace DiscordBot.SemanticKernel
                     };
 
                     if (showStatusPerSec) statusReportTimer.Start();
-                    result = await chatCompletionService.GetChatMessageContentAsync(history, executionSettings: openAIPromptExecutionSettings, kernel: kernel, cancellationToken: token);
+                    try
+                    {
+                        result = await chatCompletionService.GetChatMessageContentAsync(history, executionSettings: openAIPromptExecutionSettings, kernel: kernel, cancellationToken: token);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, ex.Message);
+                        result = new() { Content = ex.Message };
+                    }
                     if (showStatusPerSec) statusReportTimer.Stop();
                 }
 
                 // Wait for the result
                 while (result == default) { Task.Delay(100).Wait(); }
-
+                history.AddAssistantMessage($"{Environment.NewLine}{result}");
                 StringBuilder sb1 = new();
                 foreach (var record in history!.Where(x => x.Role != AuthorRole.System)) sb1.AppendLine(record.ToString());
 
