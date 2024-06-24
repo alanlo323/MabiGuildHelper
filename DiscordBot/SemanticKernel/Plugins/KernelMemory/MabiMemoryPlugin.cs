@@ -177,7 +177,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
         [Description("Store in memory the information extracted from a file")]
         public async Task<string> SaveFileAsync([Description("Path of the file to save in memory")] string filePath, [Description("The document ID associated with the information to save")][DefaultValue(null)] string? documentId = null, [Description("Memories index associated with the information to save")][DefaultValue(null)] string? index = null, [Description("Memories index associated with the information to save")][DefaultValue(null)] TagCollectionWrapper? tags = null, [Description("Steps to parse the information and store in memory")][DefaultValue(null)] ListOfStringsWrapper? steps = null, ILoggerFactory? loggerFactory = null, CancellationToken cancellationToken = default(CancellationToken))
         {
-            string id = await memoryClient.ImportDocumentAsync(filePath, documentId, tags ?? defaultIngestionTags, index ?? _defaultIndex, steps ?? defaultIngestionSteps, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+            string id = await memoryClient.ImportDocumentAsync(filePath, documentId, tags ?? defaultIngestionTags, index ?? _defaultIndex, steps ?? defaultIngestionSteps, cancellationToken: cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
             await WaitForDocumentReadinessAsync(id, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
             return id;
         }
@@ -186,7 +186,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
         [Description("Store in memory the information extracted from a web page")]
         public async Task<string> SaveWebPageAsync([Description("Complete URL of the web page to save")] string url, [Description("The document ID associated with the information to save")][DefaultValue(null)] string? documentId = null, [Description("Memories index associated with the information to save")][DefaultValue(null)] string? index = null, [Description("Memories index associated with the information to save")][DefaultValue(null)] TagCollectionWrapper? tags = null, [Description("Steps to parse the information and store in memory")][DefaultValue(null)] ListOfStringsWrapper? steps = null, ILoggerFactory? loggerFactory = null, CancellationToken cancellationToken = default(CancellationToken))
         {
-            string id = await memoryClient.ImportWebPageAsync(url, documentId, tags ?? defaultIngestionTags, index ?? _defaultIndex, steps ?? defaultIngestionSteps, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+            string id = await memoryClient.ImportWebPageAsync(url, documentId, tags ?? defaultIngestionTags, index ?? _defaultIndex, steps ?? defaultIngestionSteps, cancellationToken: cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
             await WaitForDocumentReadinessAsync(id, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
             return id;
         }
@@ -195,7 +195,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
         [Description("Return up to N memories related to the input text")]
         public async Task<string> SearchAsync([Description("The text to search in memory")] string query, [Description("Memories index to search for information")][DefaultValue("")] string? index = null, [Description("Minimum relevance of the memories to return")][DefaultValue(0.0)] double minRelevance = 0.0, [Description("Maximum number of memories to return")][DefaultValue(1)] int limit = 1, [Description("Memories tags to search for information")][DefaultValue(null)] TagCollectionWrapper? tags = null, CancellationToken cancellationToken = default(CancellationToken))
         {
-            SearchResult searchResult = await memoryClient.SearchAsync(query, index ?? _defaultIndex, TagsToMemoryFilter(tags ?? defaultRetrievalTags), null, minRelevance, limit, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+            SearchResult searchResult = await memoryClient.SearchAsync(query, index ?? _defaultIndex, TagsToMemoryFilter(tags ?? defaultRetrievalTags), null, minRelevance, limit, cancellationToken: cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
             if (searchResult.Results.Count == 0)
             {
                 return string.Empty;
@@ -226,7 +226,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                 webPageDict.TryAdd(webPage.Url, webPage);
             }
 
-            MemoryAnswer answer = await memoryClient.AskAsync(question, index ?? _defaultIndex, TagsToMemoryFilter(tags ?? defaultRetrievalTags), null, minRelevance, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+            MemoryAnswer answer = await memoryClient.AskAsync(question, index ?? _defaultIndex, TagsToMemoryFilter(tags ?? defaultRetrievalTags), null, minRelevance, cancellationToken: cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
             if (answer.NoResult) return "INFO NOT FOUND";
 
             var response = $"{answer.Result}{Environment.NewLine}Source:";

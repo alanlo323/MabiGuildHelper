@@ -33,6 +33,7 @@ using DiscordBot.SemanticKernel.Plugins.KernelMemory.Extensions.Discord;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.KernelMemory.Pipeline;
 using DiscordBot.SemanticKernel.QueneService;
+using DiscordBot.ReverseProxy;
 
 namespace DiscordBot
 {
@@ -81,6 +82,7 @@ namespace DiscordBot
                 })
                 //.AddHostedService<DiscordConnector>()
                 .AddHostedService<QueuedHostedService>()
+                .AddHostedService<MabinogiProxy>()
                 .AddSingleton<Bot>()
                 .AddSingleton<ButtonHandlerHelper>()
                 .AddSingleton<DatabaseHelper>()
