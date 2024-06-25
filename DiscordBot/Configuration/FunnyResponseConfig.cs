@@ -10,8 +10,8 @@ namespace DiscordBot.Configuration
     {
         public const string SectionName = "FunnyResponse";
 
-        public string[] TriggerWords { get; set; }
-        public string[] TriggerStickers { get; set; }
+        public required string[] TriggerWords { get; set; }
+        public required string[] TriggerStickers { get; set; }
 
         public bool Validate()
         {

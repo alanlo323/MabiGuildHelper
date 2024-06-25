@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 using Image = System.Drawing.Image;
 using PuppeteerSharp;
+using System.Diagnostics;
 
 namespace DiscordBot.Util
 {
@@ -82,5 +83,31 @@ namespace DiscordBot.Util
             await stream.CopyToAsync(fileStream);
         }
 
+        /// <summary>
+        /// Launch the application with some options set.
+        /// </summary>
+        public static void LaunchCommandLineApp(FileInfo fileInfo, string arguments)
+        {
+            // Use ProcessStartInfo class
+            ProcessStartInfo startInfo = new()
+            {
+                UseShellExecute = true,
+                WorkingDirectory = fileInfo?.Directory?.FullName,
+                FileName = fileInfo?.Name,
+                Arguments = arguments
+            };
+
+            try
+            {
+                // Start the process with the info we specified.
+                // Call WaitForExit and then the using statement will close.
+                using Process exeProcess = Process.Start(startInfo)!;
+                exeProcess.WaitForExit(5 * 1000);
+            }
+            catch
+            {
+                // Log error.
+            }
+        }
     }
 }

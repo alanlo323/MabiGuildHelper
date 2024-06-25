@@ -16,11 +16,11 @@ namespace DiscordBot.Extension
         {
             StringBuilder errorMsgBuilder = new();
             Exception currentException = ex;
-            do
+            while (currentException != null)
             {
-                errorMsgBuilder.AppendLine($"{currentException?.Message}");
-                currentException = currentException?.InnerException;
-            } while (currentException != null);
+                errorMsgBuilder.AppendLine($"{currentException.Message}");
+                currentException = currentException.InnerException;
+            }
             string errorMsg = errorMsgBuilder.ToString();
             logger.LogError(ex, errorMsg);
 

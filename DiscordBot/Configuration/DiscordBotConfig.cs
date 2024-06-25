@@ -11,10 +11,10 @@ namespace DiscordBot.Configuration
     {
         public const string SectionName = "DiscordBot";
 
-        public string ProductionToken { get; set; }
-        public string BetaToken { get; set; }
-        public string AdminId { get; set; }
-        public string AdminServerId { get; set; }
+        public required string ProductionToken { get; set; }
+        public required string BetaToken { get; set; }
+        public required string AdminId { get; set; }
+        public required string AdminServerId { get; set; }
 
         public string Token { get => EnvironmentUtil.IsProduction() ? ProductionToken : BetaToken; }
 
