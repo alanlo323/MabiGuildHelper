@@ -13,10 +13,10 @@ namespace DiscordBot.Configuration
     {
         public const string SectionName = "SemanticKernel";
 
-        public AzureOpenAiConfig AzureOpenAI { get; set; }
-        public KernelMemoryConfig KernelMemory { get; set; }
-        public GoogleSearchApiConfig GoogleSearchApi { get; set; }
-        public CodeInterpretionPluginOptions CodeInterpreter { get; set; }
+        public required AzureOpenAiConfig AzureOpenAI { get; set; }
+        public required KernelMemoryConfig KernelMemory { get; set; }
+        public required GoogleSearchApiConfig GoogleSearchApi { get; set; }
+        public required CodeInterpretionPluginOptions CodeInterpreter { get; set; }
 
         public bool Validate()
         {
@@ -26,46 +26,46 @@ namespace DiscordBot.Configuration
 
     public class AzureOpenAiConfig
     {
-        public AzureOpenAIConfig GPT35 { get; set; }
-        public AzureOpenAIConfig GPT4V { get; set; }
-        public AzureOpenAIConfig GPT4_1106 { get; set; }
-        public AzureOpenAIConfig GPT4_32K { get; set; }
-        public AzureOpenAIConfig GPT4_Turbo_0409 { get; set; }
-        public AzureOpenAIConfig GPT4O { get; set; }
-        public AzureOpenAIConfig LLAMA3 { get; set; }
-        public AzureOpenAIConfig Embedding { get; set; }
+        public required AzureOpenAIConfig GPT35 { get; set; }
+        public required AzureOpenAIConfig GPT4V { get; set; }
+        public required AzureOpenAIConfig GPT4_1106 { get; set; }
+        public required AzureOpenAIConfig GPT4_32K { get; set; }
+        public required AzureOpenAIConfig GPT4_Turbo_0409 { get; set; }
+        public required AzureOpenAIConfig GPT4O { get; set; }
+        public required AzureOpenAIConfig LLAMA3 { get; set; }
+        public required AzureOpenAIConfig Embedding { get; set; }
     }
 
     public class KernelMemoryConfig
     {
-        public string TokenEncodingName { get; set; }
-        public Ollama Ollama { get; set; }
-        public DataSource DataSource { get; set; }
-        public DiscordConnectorConfig Discord { get; set; }
+        public required string TokenEncodingName { get; set; }
+        public required Ollama Ollama { get; set; }
+        public required DataSource DataSource { get; set; }
+        public required DiscordConnectorConfig Discord { get; set; }
     }
 
     public class Ollama
     {
-        public string Url { get; set; }
-        public string Model { get; set; }
+        public required string Url { get; set; }
+        public required string Model { get; set; }
     }
 
     public class DataSource
     {
-        public Website[] Website { get; set; }
+        public required Website[] Website { get; set; }
     }
 
     public class Website
     {
-        public string Name { get; set; }
-        public string XPath { get; set; }
-        public string Url { get; set; }
-        public string[] Tag { get; set; }
+        public required string Name { get; set; }
+        public required string XPath { get; set; }
+        public required string Url { get; set; }
+        public required string[] Tag { get; set; }
     }
 
     public class GoogleSearchApiConfig
     {
-        public string ApiKey { get; set; }
-        public string SearchEngineId { get; set; }
+        public required string ApiKey { get; set; }
+        public required string SearchEngineId { get; set; }
     }
 }

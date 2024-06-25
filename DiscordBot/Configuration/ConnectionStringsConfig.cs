@@ -11,7 +11,7 @@ namespace DiscordBot.Configuration
     {
         public const string SectionName = "ConnectionStrings";
 
-        public string MabiDb { get; set; }
+        public required string MabiDb { get; set; }
 
         public bool Validate()
         {

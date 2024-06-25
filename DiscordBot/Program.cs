@@ -34,6 +34,7 @@ using Google.Protobuf.WellKnownTypes;
 using Microsoft.KernelMemory.Pipeline;
 using DiscordBot.SemanticKernel.QueneService;
 using DiscordBot.ReverseProxy;
+using System.Net;
 
 namespace DiscordBot
 {
@@ -54,6 +55,7 @@ namespace DiscordBot
             builder.Services.AddOptions<ImgurConfig>().Bind(builder.Configuration.GetSection(ImgurConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<FunnyResponseConfig>().Bind(builder.Configuration.GetSection(FunnyResponseConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<SemanticKernelConfig>().Bind(builder.Configuration.GetSection(SemanticKernelConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
+            builder.Services.AddOptions<ReverseProxyConfig>().Bind(builder.Configuration.GetSection(ReverseProxyConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
 
             builder.Services.AddLogging(loggingBuilder =>
             {

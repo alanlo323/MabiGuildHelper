@@ -12,10 +12,10 @@ namespace DiscordBot.Configuration
     {
         public const string SectionName = "Game";
 
-        public string DisplayName { get; set; }
-        public DailyEffect[] DailyEffect { get; set; }
-        public DailyVipGift[] DailyVipGift { get; set; }
-        public InstanceReset[] InstanceReset { get; set; }
+        public required string DisplayName { get; set; }
+        public required DailyEffect[] DailyEffect { get; set; }
+        public required DailyVipGift[] DailyVipGift { get; set; }
+        public required InstanceReset[] InstanceReset { get; set; }
 
         public bool Validate()
         {
@@ -25,17 +25,17 @@ namespace DiscordBot.Configuration
 
     public class DailyEffect
     {
-        public DayOfWeek DayOfWeek { get; set; }
-        public string ChannelName { get; set; }
-        public string Title { get; set; }
-        public string[] Effect { get; set; }
+        public required DayOfWeek DayOfWeek { get; set; }
+        public required string ChannelName { get; set; }
+        public required string Title { get; set; }
+        public required string[] Effect { get; set; }
     }
 
     public class DailyVipGift
     {
-        public int Id { get; set; }
-        public DayOfWeek DayOfWeek { get; set; }
-        public string[] Items { get; set; }
+        public required int Id { get; set; }
+        public required DayOfWeek DayOfWeek { get; set; }
+        public required string[] Items { get; set; }
     }
 
     public class InstanceReset
@@ -50,10 +50,10 @@ namespace DiscordBot.Configuration
             public static string ResetToday { get; } = "已在今天重置";
         }
 
-        public int Id { get; set; }
-        public string Type { get; set; }
-        public string Name { get; set; }
-        public string ResetOn { get; set; }
+        public required int Id { get; set; }
+        public required string Type { get; set; }
+        public required string Name { get; set; }
+        public required string ResetOn { get; set; }
         public DayOfWeek ResetOnDayOfWeek
         {
             get

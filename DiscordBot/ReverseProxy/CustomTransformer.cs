@@ -1,0 +1,43 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Yarp.ReverseProxy.Forwarder;
+using Yarp.ReverseProxy.Transforms;
+
+namespace DiscordBot.ReverseProxy
+{
+    internal class CustomTransformer : HttpTransformer
+    {
+        /// <summary>
+        /// A callback that is invoked prior to sending the proxied request. All HttpRequestMessage
+        /// fields are initialized except RequestUri, which will be initialized after the
+        /// callback if no value is provided. The string parameter represents the destination
+        /// URI prefix that should be used when constructing the RequestUri. The headers
+        /// are copied by the base implementation, excluding some protocol headers like HTTP/2
+        /// pseudo headers (":authority").
+        /// </summary>
+        /// <param name="httpContext">The incoming request.</param>
+        /// <param name="proxyRequest">The outgoing proxy request.</param>
+        /// <param name="destinationPrefix">The uri prefix for the selected destination server which can be used to create
+        /// the RequestUri.</param>
+        public override async ValueTask TransformRequestAsync(HttpContext httpContext, HttpRequestMessage proxyRequest, string destinationPrefix, CancellationToken cancellationToken)
+        {
+            // Copy all request headers
+            await base.TransformRequestAsync(httpContext, proxyRequest, destinationPrefix, cancellationToken);
+
+            // Customize the query string:
+            var queryContext = new QueryTransformContext(httpContext.Request);
+            //queryContext.Collection["q"] = queryContext.Collection["s"];
+            //queryContext.Collection.Remove("s");
+
+            // Assign the custom uri. Be careful about extra slashes when concatenating here. RequestUtilities.MakeDestinationAddress is a safe default.
+            proxyRequest.RequestUri = RequestUtilities.MakeDestinationAddress(destinationPrefix, httpContext.Request.Path, queryContext.QueryString);
+
+            // Suppress the original request header, use the one from the destination Uri.
+            proxyRequest.Headers.Host = null;
+        }
+    }
+}
