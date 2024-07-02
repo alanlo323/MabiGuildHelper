@@ -82,9 +82,6 @@ namespace DiscordBot
                         optionsBuilder.UseSqlite(builder.Configuration.GetConnectionString(AppDbContext.ConnectionStringName));
                     }
                 })
-                //.AddHostedService<DiscordConnector>()
-                .AddHostedService<QueuedHostedService>()
-                .AddHostedService<MabinogiProxy>()
                 .AddSingleton<Bot>()
                 .AddSingleton<ButtonHandlerHelper>()
                 .AddSingleton<DatabaseHelper>()
@@ -120,6 +117,9 @@ namespace DiscordBot
                 .AddScoped<ErinnTimeJob>()
                 .AddScoped<InstanceResetReminderJob>()
                 .AddScoped<DataScrapingJob>()
+            //.AddHostedService<DiscordConnector>()
+            .AddHostedService<QueuedHostedService>()
+            //.AddHostedService<MabinogiProxy>()
             ;
 
             builder.Services

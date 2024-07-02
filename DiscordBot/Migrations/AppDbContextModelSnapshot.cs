@@ -58,7 +58,7 @@ namespace DiscordBot.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Conversations");
+                    b.ToTable("Conversations", (string)null);
                 });
 
             modelBuilder.Entity("DiscordBot.Db.Entity.DailyVipGiftReminderSetting", b =>
@@ -80,7 +80,7 @@ namespace DiscordBot.Migrations
 
                     b.HasKey("GuildId", "UserId", "ReminderId");
 
-                    b.ToTable("DailyVipGiftReminderSettings");
+                    b.ToTable("DailyVipGiftReminderSettings", (string)null);
                 });
 
             modelBuilder.Entity("DiscordBot.Db.Entity.GlobalSetting", b =>
@@ -111,7 +111,7 @@ namespace DiscordBot.Migrations
 
                     b.HasKey("Key");
 
-                    b.ToTable("GlobalSettings");
+                    b.ToTable("GlobalSettings", (string)null);
                 });
 
             modelBuilder.Entity("DiscordBot.Db.Entity.GuildNewsOverride", b =>
@@ -145,7 +145,7 @@ namespace DiscordBot.Migrations
 
                     b.HasKey("GuildId", "NewsId");
 
-                    b.ToTable("GuildNewsOverrides");
+                    b.ToTable("GuildNewsOverrides", (string)null);
                 });
 
             modelBuilder.Entity("DiscordBot.Db.Entity.GuildSetting", b =>
@@ -204,7 +204,7 @@ namespace DiscordBot.Migrations
 
                     b.HasKey("GuildId");
 
-                    b.ToTable("GuildSettings");
+                    b.ToTable("GuildSettings", (string)null);
                 });
 
             modelBuilder.Entity("DiscordBot.Db.Entity.GuildUserSetting", b =>
@@ -223,7 +223,7 @@ namespace DiscordBot.Migrations
 
                     b.HasKey("GuildId", "UserId");
 
-                    b.ToTable("GuildUserSettings");
+                    b.ToTable("GuildUserSettings", (string)null);
                 });
 
             modelBuilder.Entity("DiscordBot.Db.Entity.InstanceReminderSetting", b =>
@@ -245,7 +245,7 @@ namespace DiscordBot.Migrations
 
                     b.HasKey("GuildId", "UserId", "ReminderId");
 
-                    b.ToTable("InstanceReminderSettings");
+                    b.ToTable("InstanceReminderSettings", (string)null);
                 });
 
             modelBuilder.Entity("DiscordBot.Db.Entity.News", b =>
@@ -284,7 +284,7 @@ namespace DiscordBot.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("News");
+                    b.ToTable("News", (string)null);
                 });
 
             modelBuilder.Entity("DiscordBot.SemanticKernel.Plugins.KernelMemory.Extensions.Discord.DiscordDbMessage", b =>
@@ -359,7 +359,7 @@ namespace DiscordBot.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Messages");
+                    b.ToTable("Messages", (string)null);
                 });
 
             modelBuilder.Entity("DiscordBot.Db.Entity.DailyVipGiftReminderSetting", b =>
