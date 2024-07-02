@@ -11,9 +11,11 @@ using DiscordBot.Configuration;
 using DiscordBot.Extension;
 using DiscordBot.SemanticKernel;
 using DiscordBot.Util;
+using Docker.DotNet.Models;
 using DocumentFormat.OpenXml.InkML;
 using Google.Protobuf.WellKnownTypes;
 using HandlebarsDotNet;
+using Humanizer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -29,13 +31,25 @@ namespace DiscordBot.ReverseProxy
     public class MabinogiProxy(ILogger<MabinogiProxy> logger, IOptionsSnapshot<ReverseProxyConfig> reverseProxyConfig) : IHostedService
     {
         private WebApplication? Proxy { get; set; }
+        private Dictionary<string, string> OriginalMappings { get; set; } = [];
+        private Dictionary<string, string> ModifiedMappings { get; set; } = [];
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             logger.LogInformation($"Starting proxy");
             var builder = WebApplication.CreateBuilder();
             builder.Services.AddHttpForwarder();
             Proxy = builder.Build();
-            foreach (var mapping in reverseProxyConfig.Value.Mappings) Proxy.Urls.Add($"http://localhost:{mapping.Port}");
+
+            Proxy.Urls.Add($"http://{reverseProxyConfig.Value.Main.Host}:{reverseProxyConfig.Value.Main.Port}");
+            foreach (var mapping in reverseProxyConfig.Value.Mappings)
+            {
+                if (int.TryParse(mapping.Value, out int port))
+                {
+                    var host = reverseProxyConfig.Value.Mappings.FirstOrDefault(x => x.Name == mapping.Linkage)?.Value;
+                    if (string.IsNullOrWhiteSpace(host)) continue;
+                    //Proxy.Urls.Add($"http://{host}:{port}");
+                }
+            }
 
             // Rest of the code...
             // Configure our own HttpMessageInvoker for outbound calls for proxy operations
@@ -63,19 +77,29 @@ namespace DiscordBot.ReverseProxy
             Proxy.Map("/StartClient/{argsPath}", async (string argsPath) => await StartClient(argsPath));
             Proxy.Map("/{**catch-all}", async (HttpContext httpContext, IHttpForwarder forwarder) =>
             {
-                var req = httpContext.Request;
-                string destinationPrefix = req.Host.Value switch
+                try
                 {
-                    "mabinogi.nexon.net" => "https://mabinogi.nexon.net",
-                    _ => "https://www.google.com",
-                };
-                var error = await forwarder.SendAsync(httpContext, $"locas", httpClient, requestConfig, transformer);
-                // Check if the operation was successful
-                if (error != ForwarderError.None)
+                    var req = httpContext.Request;
+                    if (!ModifiedMappings.Any(x => x.Value == req.Host.Port?.ToString())) return;
+
+                    var modifiedMapping = ModifiedMappings.First(x => x.Value == req.Host.Port?.ToString());
+                    var oriPort = OriginalMappings.First(x => x.Key == modifiedMapping.Key);
+                    var linkage = reverseProxyConfig.Value.Mappings.First(x => x.Value == req.Host.Port?.ToString())?.Linkage;
+                    var oriHost = OriginalMappings.First(x => x.Key == linkage).Value;
+
+                    string destinationPrefix = oriHost;
+                    var error = await forwarder.SendAsync(httpContext, destinationPrefix, httpClient, requestConfig, transformer);
+                    // Check if the operation was successful
+                    if (error != ForwarderError.None)
+                    {
+                        var errorFeature = httpContext.GetForwarderErrorFeature();
+                        var exception = errorFeature?.Exception;
+                        logger.LogException(exception);
+                    }
+                }
+                catch (Exception ex)
                 {
-                    var errorFeature = httpContext.GetForwarderErrorFeature();
-                    var exception = errorFeature?.Exception;
-                    logger.LogException(exception);
+                    logger.LogException(ex);
                 }
             });
             await Proxy.StartAsync(cancellationToken);
@@ -99,9 +123,17 @@ namespace DiscordBot.ReverseProxy
                 {
                     FileInfo argsFile = new(argsPath);
                     string[] args = File.ReadAllLines(argsFile.FullName);
-                    Dictionary<string, string> mapping = args.ToDictionary(x => x.Split(":")[0], x => x.Split(":")[1]);
-                    string arg = args.Aggregate((s1, s2) => $"{s1} {s2}");
-                    { }
+                    OriginalMappings = args.ToDictionary(x => x.Split(":")[0], x => x.Split(":").Skip(1).Aggregate((s1, s2) => $"{s1}:{s2}"));
+
+                    foreach (var mapping in OriginalMappings)
+                    {
+                        var modifiedValue = reverseProxyConfig.Value.Mappings.FirstOrDefault(x => x.Name == mapping.Key)?.Value ?? mapping.Value;
+                        ModifiedMappings[mapping.Key] = modifiedValue;
+
+                        // Disable Port Forwarding
+                        ModifiedMappings[mapping.Key] = mapping.Value;
+                    }
+                    string arg = ModifiedMappings.Select(x => $"{x.Key}:{x.Value}").Aggregate((s1, s2) => $"{s1} {s2}");
                     string mabinogiFolder = "G:\\Nexon\\Mabinogi";
                     FileInfo realExe = new(Path.Combine(mabinogiFolder, "Client.bak.exe"));
                     if (!realExe.Exists)
@@ -110,8 +142,8 @@ namespace DiscordBot.ReverseProxy
                         return;
                     }
 
-                    logger.LogInformation($"Starting process: {realExe.FullName}");
-                    MiscUtil.LaunchCommandLineApp(realExe, args.Aggregate((s1, s2) => $"{s1} {s2}"));
+                    logger.LogInformation($"Starting process: {realExe.FullName} {arg}");
+                    MiscUtil.LaunchCommandLineApp(realExe, arg);
                     logger.LogInformation($"Process started");
                 }
                 catch (Exception ex)

@@ -64,16 +64,16 @@ public sealed class WebSearchPlugin(ILogger<DataScrapingJob> logger, IWebSearchE
 
             IEnumerable<WebPage> searchResults = await connector.SearchAsync<WebPage>(query, 3, 0, cancellationToken);
             searchResults = await dataScrapingHelper.GetWebContent(searchResults);
-            foreach (WebPage webPage in searchResults!)
-            {
-                string snippetSummary = await kernel.InvokeAsync<string>("ConversationSummaryPlugin", "FindRelatedInformationWithGoal", new()
-                {
-                    { "input", webPage.Snippet },
-                    { "goal", query },
-                    { "kernel", kernel },
-                }, cancellationToken);
-                webPage.Snippet = snippetSummary!;
-            }
+            //foreach (WebPage webPage in searchResults!)
+            //{
+            //    string snippetSummary = await kernel.InvokeAsync<string>("ConversationSummaryPlugin", "FindRelatedInformationWithGoal", new()
+            //    {
+            //        { "input", webPage.Snippet },
+            //        { "goal", query },
+            //        { "kernel", kernel },
+            //    }, cancellationToken);
+            //    webPage.Snippet = snippetSummary!;
+            //}
             if (!searchResults.Any())
             {
                 throw new InvalidOperationException("Failed to get a response from the web search engine.");
@@ -101,7 +101,7 @@ public sealed class WebSearchPlugin(ILogger<DataScrapingJob> logger, IWebSearchE
     /// <param name="query">The text to search for.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The return value contains the search results as an IEnumerable WebPage object serialized as a string</returns>
-    [KernelFunction, Description("Perform a web search and return complete results.")]
+    [KernelFunction, Description("Perform a web search with Microsoft Bing AI and return complete results.")]
     public async Task<string> BingSearch(
         [Description("Text to search for")] string query,
         CancellationToken cancellationToken = default)
