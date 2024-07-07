@@ -2,6 +2,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using DiscordBot.SemanticKernel.Core.Utilities;
 
 namespace DiscordBot.SemanticKernel.Core.Text;
 

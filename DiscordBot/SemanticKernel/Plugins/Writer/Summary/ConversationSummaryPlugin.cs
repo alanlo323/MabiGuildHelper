@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel;
 using DiscordBot.SemanticKernel.Core.Text;
+using Microsoft.SemanticKernel.Text;
 
 namespace DiscordBot.SemanticKernel.Plugins.Writer.Summary;
 /// <summary>

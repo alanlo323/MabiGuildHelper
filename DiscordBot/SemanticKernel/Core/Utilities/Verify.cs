@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using Microsoft.SemanticKernel;
 
 namespace DiscordBot.SemanticKernel.Core.Utilities;
 
