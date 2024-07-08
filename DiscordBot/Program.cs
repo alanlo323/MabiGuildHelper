@@ -117,10 +117,10 @@ namespace DiscordBot
                 .AddScoped<ErinnTimeJob>()
                 .AddScoped<InstanceResetReminderJob>()
                 .AddScoped<DataScrapingJob>()
-            //.AddHostedService<DiscordConnector>()
-            .AddHostedService<QueuedHostedService>()
-            //.AddHostedService<MabinogiProxy>()
-            ;
+                //.AddHostedService<DiscordConnector>()
+                .AddHostedService<QueuedHostedService>()
+                //.AddHostedService<MabinogiProxy>()
+                ;
 
             builder.Services
                 .AddQuartz(q =>

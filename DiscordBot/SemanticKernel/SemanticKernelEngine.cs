@@ -122,7 +122,7 @@ namespace DiscordBot.SemanticKernel
                 //.AddFromType<WaitPlugin>()
                 .AddFromType<TimePlugin>()
                 //.AddFromType<FileIOPlugin>()
-                .AddFromType<WebSearchPlugin>()
+                .AddFromType<WebPlugin>()
                 //.AddFromType<SearchUrlPlugin>()
                 //.AddFromType<DocumentPlugin>()
                 //.AddFromType<TextMemoryPlugin>()
@@ -135,7 +135,7 @@ namespace DiscordBot.SemanticKernel
                 .AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
                 .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
                 //  TODO: Add Screenshot plugin
-                //  TODO: Add 魔力賦稅 plugin
+                //  TODO: Add 魔力賦予 plugin
                 //  TODO: Add Get web content plugin
                 ;
 
