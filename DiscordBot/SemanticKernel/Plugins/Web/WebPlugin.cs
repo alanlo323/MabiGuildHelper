@@ -65,28 +65,9 @@ public sealed class WebPlugin(ILogger<DataScrapingJob> logger, IWebSearchEngineC
         {
             IEnumerable<WebPage> searchResults = await connector.SearchAsync<WebPage>(query, count, 0, cancellationToken);
             searchResults = await dataScrapingHelper.GetWebContent(searchResults);
-            //foreach (WebPage webPage in searchResults!)
-            //{
-            //    string snippetSummary = await kernel.InvokeAsync<string>("ConversationSummaryPlugin", "FindRelatedInformationWithGoal", new()
-            //    {
-            //        { "input", webPage.Snippet },
-            //        { "goal", query },
-            //        { "kernel", kernel },
-            //    }, cancellationToken);
-            //    webPage.Snippet = snippetSummary!;
-            //}
-            if (!searchResults.Any())
-            {
-                throw new InvalidOperationException("Failed to get a response from the web search engine.");
-            }
+            if (!searchResults.Any()) throw new InvalidOperationException("Failed to get a response from the web search engine.");
 
             string resultSnippet = string.Join($"{Environment.NewLine}{Environment.NewLine}", searchResults.Select((x, index) => $"RESULT {index + 1}:{Environment.NewLine}Source Url: {x.Url}{Environment.NewLine}BEGIN RESULT {index + 1} CONTENT:{Environment.NewLine}{x.Snippet}{Environment.NewLine}END RESULT {index + 1} CONTENT"));
-            //string finalSummary = await kernel.InvokeAsync<string>("ConversationSummaryPlugin", "SummarizeConversation", new()
-            //    {
-            //        { "input", resultSnippet },
-            //        { "kernel", kernel },
-            //    }, cancellationToken);
-            //response = finalSummary!;
             response = resultSnippet!;
         }
         catch (Exception ex)
@@ -103,7 +84,7 @@ public sealed class WebPlugin(ILogger<DataScrapingJob> logger, IWebSearchEngineC
     /// <param name="query">The text to search for.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The return value contains the search results as an IEnumerable WebPage object serialized as a string</returns>
-    [KernelFunction, Description("Perform a web search with Microsoft Bing AI and return complete results.")]
+    [KernelFunction, Description("Perform a advanced web search with Microsoft Bing AI and return complete results.")]
     public async Task<string> BingAiSearch(
         [Description("Text to search for")] string query,
         CancellationToken cancellationToken = default)
