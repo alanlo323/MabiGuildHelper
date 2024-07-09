@@ -32,6 +32,8 @@ using DiscordBot.Commands.MessageCommand;
 using static DiscordBot.Commands.IBaseCommand;
 using Quartz.Util;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory;
+using Discord.Interactions;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace DiscordBot
 {
@@ -82,6 +84,7 @@ namespace DiscordBot
             client.MessageReceived += MessageHandler;
             client.MessageCommandExecuted += MessageCommandHandler;
             client.ModalSubmitted += ModalSubmittedHandler;
+            client.AutocompleteExecuted += AutocompleteHandler;
         }
 
         private Task LogAsync(LogMessage msg)
@@ -346,6 +349,32 @@ namespace DiscordBot
                 Thread newThread = new(async () =>
                 {
                     await instance.Execute(modal);
+                });
+                newThread.Start();
+            }
+            catch (Exception ex)
+            {
+                logger.LogCritical(ex, ex.Message);
+            }
+        }
+
+        private async Task AutocompleteHandler(SocketAutocompleteInteraction interaction)
+        {
+            try
+            {
+                IBaseAutocompleteHandler instance = serviceProvider.GetServices<IBaseAutocompleteHandler>().Single(x => x.CommandName == interaction.Data.CommandName);
+                SocketUser user = interaction.User;
+                logger.LogInformation($"{user.GlobalName}({user.Username}:{user.Id}) used {instance.GetType().Name}");
+                Thread newThread = new(async () =>
+                {
+                    try
+                    {
+                        await instance.Excute(interaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogCritical(ex, ex.Message);
+                    }
                 });
                 newThread.Start();
             }
