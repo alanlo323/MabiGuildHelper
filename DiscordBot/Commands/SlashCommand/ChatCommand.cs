@@ -123,6 +123,7 @@ namespace DiscordBot.Commands.SlashCommand
                     { "TimePlugin-Today", "獲取當前日期" },
                     { "TimePlugin-TimeZoneName", "獲取當前時區" },
                     { "CodeInterpretionPlugin-ExecutePythonCode", "執行Python程式碼" },
+                    { "EnchantmentPlugin-GetEnchantmentInfo", "查詢魔力賦予API" },
                 };
                 List<string> ignoreList = [
                     "GetBackgroundInformation",

@@ -69,6 +69,7 @@ using DiscordBot.SemanticKernel.Plugins.KernelMemory.CodeInterpretion;
 using SemanticKernel.Assistants.AutoGen.Plugins;
 using CodeInterpretionPlugin = DiscordBot.SemanticKernel.Plugins.KernelMemory.CodeInterpretion.CodeInterpretionPlugin;
 using DiscordBot.SemanticKernel.QueneService;
+using DiscordBot.SemanticKernel.Plugins.Mabinogi;
 
 namespace DiscordBot.SemanticKernel
 {
@@ -123,6 +124,7 @@ namespace DiscordBot.SemanticKernel
                 .AddFromType<TimePlugin>()
                 //.AddFromType<FileIOPlugin>()
                 .AddFromType<WebPlugin>()
+                .AddFromType<EnchantmentPlugin>()
                 //.AddFromType<SearchUrlPlugin>()
                 //.AddFromType<DocumentPlugin>()
                 //.AddFromType<TextMemoryPlugin>()

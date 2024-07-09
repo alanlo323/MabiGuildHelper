@@ -227,7 +227,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
             }
 
             MemoryAnswer answer = await memoryClient.AskAsync(question, index ?? _defaultIndex, TagsToMemoryFilter(tags ?? defaultRetrievalTags), null, minRelevance, cancellationToken: cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
-            if (answer.NoResult) return "INFO NOT FOUND";
+            if (answer.NoResult) throw new Exception("INFO NOT FOUND");
 
             var response = $"{answer.Result}{Environment.NewLine}Source:";
             foreach (var x in answer.RelevantSources.OrderByDescending(x => x.Partitions.First().Relevance))
