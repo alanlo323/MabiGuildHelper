@@ -5,10 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
 using DiscordBot.ButtonHandler;
 using DiscordBot.Configuration;
+using DiscordBot.DataObject;
 using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Extension;
@@ -28,7 +30,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Commands.SlashCommand
 {
-    public class ChatCommand(ILogger<ChatCommand> logger, DiscordSocketClient client, SemanticKernelEngine semanticKernelEngine, DatabaseHelper databaseHelper, ButtonHandlerHelper buttonHandlerHelper, IOptionsSnapshot<DiscordBotConfig> discordBotConfig) : IBaseSlashCommand
+    public class ChatCommand(ILogger<ChatCommand> logger, DiscordSocketClient client, SemanticKernelEngine semanticKernelEngine, DatabaseHelper databaseHelper, ButtonHandlerHelper buttonHandlerHelper, EnchantmentHelper enchantmentHelper, IOptionsSnapshot<DiscordBotConfig> discordBotConfig) : IBaseSlashCommand
     {
         public string Name { get; set; } = "chat";
         public string Description { get; set; } = "和小幫手對話";
@@ -39,7 +41,7 @@ namespace DiscordBot.Commands.SlashCommand
             var command = new SlashCommandBuilder()
                 .WithName(Name)
                 .WithDescription(Description)
-                .AddOption("text", ApplicationCommandOptionType.String, "內容", isRequired: true, minLength: 1)
+                .AddOption("text", ApplicationCommandOptionType.String, "內容", isRequired: true, minLength: 1, isAutocomplete: true)
                 .AddOption("attachment", ApplicationCommandOptionType.Attachment, "附件 (只限圖片)", isRequired: false)
                 ;
             return command.Build();
@@ -58,9 +60,23 @@ namespace DiscordBot.Commands.SlashCommand
                 return;
             }
 
-            bool showStatusPerSec = true || command.User.Id == ulong.Parse(discordBotConfig.Value.AdminId);
             RestFollowupMessage restFollowupMessage = null;
             object lockObj = new();
+
+            #region Check Enchantment
+            if (prompt!.StartsWith("魔力賦予"))
+            {
+                EnchantmentResponseDto enchantmentResponseDto = await enchantmentHelper.GetEnchantmentsAsync(prompt);
+                if (enchantmentResponseDto?.Data.Total == 1)
+                {
+                    Embed enchantmentEmbed = EmbedUtil.GetEnchantmentEmbed(enchantmentResponseDto.Data.Enchantments.Single());
+                    await FollowUpOrEditMessage(string.Empty, embed: enchantmentEmbed);
+                    return;
+                }
+            }
+            #endregion
+
+            bool showStatusPerSec = true || command.User.Id == ulong.Parse(discordBotConfig.Value.AdminId);
 
             KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(prompt, command, imageUri: imageUri, showStatusPerSec: showStatusPerSec, onKenelStatusUpdatedCallback: OnKenelStatusUpdated);
             Conversation conversation = kernelStatus.Conversation;
@@ -84,13 +100,13 @@ namespace DiscordBot.Commands.SlashCommand
                 await FollowUpOrEditMessage(responseMessage);
             }
 
-            async Task FollowUpOrEditMessage(string message, MessageComponent? components = null)
+            async Task FollowUpOrEditMessage(string message, MessageComponent? components = null, Embed? embed = null)
             {
                 lock (lockObj)
                 {
                     if (restFollowupMessage == null)
                     {
-                        restFollowupMessage = command.FollowupAsync(message, components: components).GetAwaiter().GetResult();
+                        restFollowupMessage = command.FollowupAsync(message, components: components, embed: embed).GetAwaiter().GetResult();
                     }
                     else
                     {
@@ -98,6 +114,7 @@ namespace DiscordBot.Commands.SlashCommand
                         {
                             x.Content = message;
                             x.Components = components;
+                            x.Embed = embed;
                         }).GetAwaiter().GetResult();
                     }
                 }

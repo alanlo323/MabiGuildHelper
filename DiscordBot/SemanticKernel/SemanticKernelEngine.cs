@@ -73,7 +73,7 @@ using DiscordBot.SemanticKernel.Plugins.Mabinogi;
 
 namespace DiscordBot.SemanticKernel
 {
-    public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper, AppDbContext appDbContext, IBackgroundTaskQueue taskQueue)
+    public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper, EnchantmentHelper enchantmentHelper, AppDbContext appDbContext, IBackgroundTaskQueue taskQueue)
     {
         public const string SystemPrompt = "你是一個Discord Bot, 名字叫夏夜小幫手, 你在\"夏夜月涼\"伺服器裡為會員們服務.";
 
@@ -137,7 +137,6 @@ namespace DiscordBot.SemanticKernel
                 .AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
                 .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
                 //  TODO: Add Screenshot plugin
-                //  TODO: Add 魔力賦予 plugin
                 //  TODO: Add Get web content plugin
                 ;
 
@@ -154,6 +153,7 @@ namespace DiscordBot.SemanticKernel
                         );
                 })
                 .AddSingleton(codeInterpreterConfig)
+                .AddSingleton(enchantmentHelper)
                 ;
 
             builder.Services.AddLogging(loggingBuilder =>

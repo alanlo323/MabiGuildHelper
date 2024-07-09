@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Discord;
 using DiscordBot.Configuration;
 using DiscordBot.DataEntity;
+using DiscordBot.DataObject;
 using DiscordBot.Db.Entity;
 using DiscordBot.Helper;
 using Newtonsoft.Json.Linq;
@@ -130,6 +131,16 @@ namespace DiscordBot.Util
                 .WithImageUrl($"attachment://{news.SnapshotTempFile.Name}")
                 ;
 
+            return embed.Build();
+        }
+
+        public static Embed GetEnchantmentEmbed(Enchantment enchantment)
+        {
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Blue)
+                .WithTitle($"{enchantment.LocalName} / {enchantment.Name}")
+                .WithDescription(enchantment.ToString(includeName: false))
+                ;
             return embed.Build();
         }
     }
