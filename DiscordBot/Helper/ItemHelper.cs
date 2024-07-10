@@ -17,39 +17,38 @@ namespace DiscordBot.Helper
     public class ItemHelper(ILogger<ItemHelper> logger)
     {
         public const string BaseAddress = "https://mabinogi.io";
-        public const string Endpoint = "napi/enchantments/search";
-        public const string CacheDbName = "EnchantmentsCache";
+        public const string Endpoint = "napi/items/search";
+        public const string CacheDbName = "ItemsCache";
 
-        public async Task<EnchantmentResponseDto> GetItemsAsync(string keyword)
+        public async Task<ItemResponseDto> GetItemAsync(string keyword)
         {
             try
             {
                 string name = keyword;
-                string strToRemove = "魔力賦予卷軸";
+                string strToRemove = "物品";
                 foreach (char c in strToRemove) name = name.Replace(c.ToString(), string.Empty);
                 name = name!
                     .Replace(" ", string.Empty)
-                    .Replace("Enchant", string.Empty)
-                    .Replace("Enchantment", string.Empty)
+                    .Replace("Item", string.Empty, StringComparison.CurrentCultureIgnoreCase)
                     .Split("/")[0]
                     .Trim()
                     ;
-                if (string.IsNullOrWhiteSpace(name)) return new() { Data = new() { Total = 0, Enchantments = [] } };
+                if (string.IsNullOrWhiteSpace(name)) return new() { Data = new() { Total = 0, Items = [] } };
 
-                Dictionary<string, EnchantmentResponseDto> db = RuntimeDbUtil.GetRuntimeDb<string, EnchantmentResponseDto>(CacheDbName);
+                Dictionary<string, ItemResponseDto> db = RuntimeDbUtil.GetRuntimeDb<string, ItemResponseDto>(CacheDbName);
 
-                if (!db.TryGetValue(name, out EnchantmentResponseDto responseObj))
+                if (!db.TryGetValue(name, out ItemResponseDto responseObj))
                 {
                     logger.LogInformation($"Calling {BaseAddress}/{Endpoint} to search for keyword: {name}");
 
-                    EnchantmentRequestDtoQ[] requestDtoQ = [
+                    ItemRequestDtoQ[] requestDtoQ = [
                         new () {
                             Seq= 1,
                             Mode= "name",
                             Val= name
                         }
                         ];
-                    EnchantmentRequestDto requestDto = new()
+                    ItemRequestDto requestDto = new()
                     {
                         Q = requestDtoQ.ToJsonString()
                     };
@@ -62,7 +61,7 @@ namespace DiscordBot.Helper
                     request.AddStringBody(requestDto.ToJsonString(), DataFormat.Json);
                     var response = await client.PostAsync(request);
                     if (!response.IsSuccessStatusCode) throw new Exception(response.Content);
-                    responseObj = JsonConvert.DeserializeObject<EnchantmentResponseDto>(response.Content);
+                    responseObj = JsonConvert.DeserializeObject<ItemResponseDto>(response.Content);
                     db[name] = responseObj!;
                 }
 

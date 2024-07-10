@@ -29,8 +29,8 @@ namespace DiscordBot.Helper
                 foreach (char c in strToRemove) name = name.Replace(c.ToString(), string.Empty);
                 name = name!
                     .Replace(" ", string.Empty)
-                    .Replace("Enchant", string.Empty)
-                    .Replace("Enchantment", string.Empty)
+                    .Replace("Enchant", string.Empty, StringComparison.CurrentCultureIgnoreCase)
+                    .Replace("Enchantment", string.Empty, StringComparison.CurrentCultureIgnoreCase)
                     .Split("/")[0]
                     .Trim()
                     ;

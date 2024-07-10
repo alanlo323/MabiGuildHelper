@@ -95,6 +95,7 @@ namespace DiscordBot
                 .AddSingleton<MabinogiKernelMemoryFactory>()
                 .AddSingleton<SemanticKernelEngine>()
                 .AddSingleton<EnchantmentHelper>()
+                .AddSingleton<ItemHelper>()
                 .AddSingleton<IBackgroundTaskQueue>(_ => new DefaultBackgroundTaskQueue(10))
                 .AddScoped<IBaseSlashCommand, DebugCommand>()
                 .AddScoped<IBaseSlashCommand, AboutCommand>()

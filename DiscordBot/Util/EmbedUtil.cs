@@ -143,5 +143,17 @@ namespace DiscordBot.Util
                 ;
             return embed.Build();
         }
+
+        public static Embed GetItemEmbed(Item item)
+        {
+            EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(Color.Blue)
+                .WithTitle($"{item.TextName1}")
+                .WithDescription(item.TextDesc1)
+                .WithUrl(item.Url)
+                .WithImageUrl(item.ImageUrl)
+                ;
+            return embed.Build();
+        }
     }
 }

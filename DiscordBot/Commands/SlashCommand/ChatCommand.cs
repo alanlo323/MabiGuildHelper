@@ -30,7 +30,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Commands.SlashCommand
 {
-    public class ChatCommand(ILogger<ChatCommand> logger, DiscordSocketClient client, SemanticKernelEngine semanticKernelEngine, DatabaseHelper databaseHelper, ButtonHandlerHelper buttonHandlerHelper, EnchantmentHelper enchantmentHelper, IOptionsSnapshot<DiscordBotConfig> discordBotConfig) : IBaseSlashCommand
+    public class ChatCommand(ILogger<ChatCommand> logger, DiscordSocketClient client, SemanticKernelEngine semanticKernelEngine, DatabaseHelper databaseHelper, ButtonHandlerHelper buttonHandlerHelper, EnchantmentHelper enchantmentHelper, ItemHelper itemHelper, IOptionsSnapshot<DiscordBotConfig> discordBotConfig) : IBaseSlashCommand
     {
         public string Name { get; set; } = "chat";
         public string Description { get; set; } = "和小幫手對話";
@@ -71,6 +71,19 @@ namespace DiscordBot.Commands.SlashCommand
                 {
                     Embed enchantmentEmbed = EmbedUtil.GetEnchantmentEmbed(enchantmentResponseDto.Data.Enchantments.Single());
                     await FollowUpOrEditMessage(string.Empty, embed: enchantmentEmbed);
+                    return;
+                }
+            }
+            #endregion
+
+            #region Check Item
+            if (prompt!.StartsWith("物品"))
+            {
+                ItemResponseDto itemResponseDto = await itemHelper.GetItemAsync(prompt);
+                if (itemResponseDto?.Data.Total == 1)
+                {
+                    Embed itemEmbed = EmbedUtil.GetItemEmbed(itemResponseDto.Data.Items.Single());
+                    await FollowUpOrEditMessage(string.Empty, embed: itemEmbed);
                     return;
                 }
             }
