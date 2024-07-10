@@ -40,7 +40,7 @@ public class EnchantmentPlugin(EnchantmentHelper enchantmentHelper)
         try
         {
             var responseObj = await enchantmentHelper.GetEnchantmentsAsync(name);
-            if (responseObj?.Data.Total < 1) throw new Exception($"There is no Enchantment related to {name}");
+            if (responseObj.Data.Total < 1) throw new Exception($"There is no Enchantment related to {name}");
             string responseContent = responseObj!.ToString();
             return responseContent;
         }
