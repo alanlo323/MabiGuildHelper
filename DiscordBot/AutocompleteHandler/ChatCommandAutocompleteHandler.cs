@@ -20,6 +20,8 @@ namespace DiscordBot.ButtonHandler
         public async Task Excute(SocketAutocompleteInteraction interaction)
         {
             List<AutocompleteResult> results = [];
+            await interaction.RespondAsync(results);
+            return;
             string keyword = interaction.Data.Options.First(x => x.Name == "text").Value as string;
             #region Check Enchantment
             EnchantmentResponseDto enchantmentResponseDto = await enchantmentHelper.GetEnchantmentsAsync(keyword);

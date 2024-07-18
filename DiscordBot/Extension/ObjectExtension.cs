@@ -11,13 +11,13 @@ namespace DiscordBot.Extension
 {
     public static class ObjectExtension
     {
-        public static string ToJsonString(this object obj)
+        public static string ToJsonString(this object obj, bool indentedFormatting = true)
         {
             return JsonConvert.SerializeObject(obj, new JsonSerializerSettings()
             {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
                 NullValueHandling = NullValueHandling.Ignore,
-                Formatting = Formatting.Indented,
+                Formatting = indentedFormatting ? Formatting.Indented : Formatting.None,
                 MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
                 PreserveReferencesHandling = PreserveReferencesHandling.None,
             });

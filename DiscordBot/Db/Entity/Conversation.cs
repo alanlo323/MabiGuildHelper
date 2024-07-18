@@ -44,6 +44,8 @@ namespace DiscordBot.Db.Entity
         public TimeSpan? ElapsedTime { get => EndTime - StartTime; }
         [NotMapped]
         public ChatHistory? ChatHistory { get; set; }
+        [NotMapped]
+        public string? ChatHistoryJson { get; set; }
 
         public void SetTokens(ICollection<LogRecord> logRecords)
         {

@@ -67,7 +67,7 @@ public sealed class WebPlugin(ILogger<DataScrapingJob> logger, IWebSearchEngineC
             searchResults = await dataScrapingHelper.GetWebContent(searchResults);
             if (!searchResults.Any()) throw new InvalidOperationException("Failed to get a response from the web search engine.");
 
-            string resultSnippet = string.Join($"{Environment.NewLine}{Environment.NewLine}", searchResults.Select((x, index) => $"RESULT {index + 1}:{Environment.NewLine}Source Url: {x.Url}{Environment.NewLine}BEGIN RESULT {index + 1} CONTENT:{Environment.NewLine}{x.Snippet}{Environment.NewLine}END RESULT {index + 1} CONTENT"));
+            string resultSnippet = string.Join($"{Environment.NewLine}{Environment.NewLine}", searchResults.Select((x, index) => $"RESULT {index + 1}:{Environment.NewLine}Source Url: {x.Url}{Environment.NewLine}BEGIN RESULT {index + 1} CONTENT:{Environment.NewLine}{x.Snippet[..System.Math.Min(x.Snippet.Length, 3000)]}{Environment.NewLine}END RESULT {index + 1} CONTENT"));
             response = resultSnippet!;
         }
         catch (Exception ex)
