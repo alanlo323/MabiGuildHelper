@@ -187,6 +187,7 @@ namespace DiscordBot
             await host.Services.GetRequiredService<DatabaseHelper>().EnsureDatabaseReady();
             await host.Services.GetService<MabinogiKernelMemoryFactory>()!.Prepare();
             await host.Services.GetRequiredService<Bot>().Start();
+            await host.Services.GetRequiredService<DataScrapingJob>().Execute(null);
             host.Run();
         }
     }

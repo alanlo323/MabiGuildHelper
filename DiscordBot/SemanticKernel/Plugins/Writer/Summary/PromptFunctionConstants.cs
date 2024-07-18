@@ -107,6 +107,7 @@ BEGIN SUMMARY:
         {{$INPUT}}
         [Output]
         """;
+
     internal const string SummarizeMabiNewsDefinition =
         """
         BEGIN CONTENT TO SUMMARIZE:
@@ -114,6 +115,20 @@ BEGIN SUMMARY:
         END CONTENT TO SUMMARIZE.
 
         Summarize the content in 'CONTENT TO SUMMARIZE'.
+        Respond in the same language as the conversation.
+        """;
+
+    internal const string SummarizeMabiNewsHtmlDefinition =
+        """
+        BEGIN CONTENT TO SUMMARIZE:
+        {{$INPUT}}
+        END CONTENT TO SUMMARIZE.
+
+        Summarize the content in 'CONTENT TO SUMMARIZE'.
+        Content is in HTML format.
+        Keep the hyperlinks with Markdown format.
+        Remove title.
+        Do not use '####' for sub title. 
         Respond in the same language as the conversation.
         """;
 }

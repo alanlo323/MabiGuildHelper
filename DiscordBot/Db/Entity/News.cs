@@ -31,6 +31,8 @@ namespace DiscordBot.Db.Entity
         public ItemTag? ItemTag { get; set; }
         public string? Title { get; set; }
         public string? Content { get; set; }
+        public string? HtmlContent { get; set; }
+        public string? AiContent { get; set; }
         public string? ImageUrl { get; set; }
         public DateTime? PublishDate { get; set; }
         public string? Base64Snapshot { get; set; }

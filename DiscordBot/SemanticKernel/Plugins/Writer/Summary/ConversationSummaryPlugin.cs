@@ -24,6 +24,7 @@ public class ConversationSummaryPlugin
     private readonly KernelFunction _conversationTopicsFunction;
     private readonly KernelFunction _findRelatedInformationWithGoalFunction;
     private readonly KernelFunction _summarizeMabiNewsFunction;
+    private readonly KernelFunction _summarizeMabiNewsHtmlFunction;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConversationSummaryPlugin"/> class.
@@ -68,6 +69,12 @@ public class ConversationSummaryPlugin
             PromptFunctionConstants.SummarizeMabiNewsDefinition,
             functionName: nameof(SummarizeMabiNewsAsync).Replace("Async", string.Empty),
             description: "Given a section of a conversation transcript, summarize the part of the conversation.",
+            executionSettings: settings);
+
+        _summarizeMabiNewsHtmlFunction = KernelFunctionFactory.CreateFromPrompt(
+            PromptFunctionConstants.SummarizeMabiNewsHtmlDefinition,
+            functionName: nameof(SummarizeMabiNewsAsync).Replace("Async", string.Empty),
+            description: "Given a section of a conversation transcript that build of HTML, summarize the part of the conversation. ",
             executionSettings: settings);
     }
 
@@ -144,6 +151,17 @@ public class ConversationSummaryPlugin
         [Description("Content to summarize")] string input,
         Kernel kernel) =>
         ProcessAsync(_summarizeMabiNewsFunction, input, kernel);
+
+    /// <summary>
+    /// Given a long conversation transcript, summarize the conversation.
+    /// </summary>
+    /// <param name="input">A long conversation transcript.</param>
+    /// <param name="kernel">The <see cref="Kernel"/> containing services, plugins, and other state for use throughout the operation.</param>
+    [KernelFunction, Description("Summarize the mabinogi news.")]
+    public Task<string> SummarizeMabiNewsHtmlAsync(
+        [Description("Content to summarize")] string input,
+        Kernel kernel) =>
+        ProcessAsync(_summarizeMabiNewsHtmlFunction, input, kernel);
 
     private static async Task<string> ProcessAsync(KernelFunction func, string input, Kernel kernel)
     {
