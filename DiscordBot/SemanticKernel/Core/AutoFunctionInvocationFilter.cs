@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DiscordBot.Extension;
 using DocumentFormat.OpenXml.Drawing;
 using Microsoft.Identity.Client;
 using Microsoft.SemanticKernel;
@@ -57,6 +58,7 @@ namespace DiscordBot.SemanticKernel.Core
         private StepStatus GetStepStatus(AutoFunctionInvocationContext context)
         {
             string key = $"{context.Function.Name}";
+            KernelArguments? kernelArguments = context.Arguments;
             if (!string.IsNullOrWhiteSpace(context.Function.PluginName)) key = $"{context.Function.PluginName}-{key}";
 
             string displayName = string.Empty;
@@ -65,12 +67,13 @@ namespace DiscordBot.SemanticKernel.Core
             if (runningSteps.Any()) displayName += " ";
             displayName += $"{key}";
 
-            StepStatus stepStatus = kernelStatus.StepStatuses.FirstOrDefault(x => x.Key == key);
+            StepStatus stepStatus = kernelStatus.StepStatuses.FirstOrDefault(x => x.GetQueueKey() == $"{key}-{kernelArguments.ToKey()}");
             if (stepStatus == null)
             {
                 stepStatus = new StepStatus
                 {
                     Key = key,
+                    KernelArguments = kernelArguments,
                     DisplayName = displayName,
                     StartTime = DateTime.Now,
                     ShowElapsedTime = showStatusPerSec
@@ -83,6 +86,7 @@ namespace DiscordBot.SemanticKernel.Core
         private StepStatus GetStepStatus(FunctionInvocationContext context)
         {
             string key = $"{context.Function.Name}";
+            KernelArguments? kernelArguments = context.Arguments;
             if (!string.IsNullOrWhiteSpace(context.Function.PluginName)) key = $"{context.Function.PluginName}-{key}";
 
             string displayName = string.Empty;
@@ -91,7 +95,7 @@ namespace DiscordBot.SemanticKernel.Core
             if (runningSteps.Any()) displayName += " ";
             displayName += $"{key}";
 
-            StepStatus stepStatus = kernelStatus.StepStatuses.FirstOrDefault(x => x.Key == key);
+            StepStatus stepStatus = kernelStatus.StepStatuses.FirstOrDefault(x => x.GetQueueKey() == $"{key}-{kernelArguments.ToKey()}");
             if (stepStatus == null)
             {
                 stepStatus = new StepStatus

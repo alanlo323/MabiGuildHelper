@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DiscordBot.Db.Entity;
+using DiscordBot.Extension;
 using DocumentFormat.OpenXml.Drawing;
+using Microsoft.SemanticKernel;
 
 namespace DiscordBot.SemanticKernel.Core
 {
@@ -19,6 +21,7 @@ namespace DiscordBot.SemanticKernel.Core
         public string Key { get; set; }
         public string DisplayName { get; set; }
         public StatusEnum Status { get; set; }
+        public KernelArguments? KernelArguments { get; set; }
         public string Message { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
@@ -35,6 +38,11 @@ namespace DiscordBot.SemanticKernel.Core
         }
 
         public bool ShowElapsedTime { get; set; } = false;
+
+        public string GetQueueKey()
+        {
+            return KernelArguments == null ? $"{Key}" : $"{Key}-{KernelArguments.ToKey()}";
+        }
     }
 
     public enum StatusEnum

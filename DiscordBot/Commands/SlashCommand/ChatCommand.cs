@@ -172,23 +172,24 @@ namespace DiscordBot.Commands.SlashCommand
                     switch (stepStatus.Status)
                     {
                         case StatusEnum.Pending:
-                            message = $"🕘{displayName}";
+                            message = $"🕘 {displayName}";
                             break;
                         case StatusEnum.Thinking:
-                            message = $"💭{displayName}";
+                            message = $"💭 {displayName}";
                             break;
                         case StatusEnum.Running:
-                            message = $"⌛{displayName}";
+                            message = $"⌛ ✨{displayName}✨";
                             break;
                         case StatusEnum.Completed:
-                            message = $"✅ {displayName}";
+                            message = $"✅ ✨{displayName}✨";
                             break;
                         case StatusEnum.Failed:
-                            message = $"❌ {displayName}";
+                            message = $"❌ ✨{displayName}✨";
                             break;
                         default:
                             break;
                     }
+                    message += $"{stepStatus.KernelArguments.ToDisplayName()}";
                     if (stepStatus.ElapsedTime.HasValue) message += $" ({stepStatus.ElapsedTime?.Humanize(precision: 2, minUnit: Humanizer.Localisation.TimeUnit.Second, collectionSeparator: " ", culture: new CultureInfo("zh-tw"))})";
                     statusList.Add(message);
                 }
