@@ -442,7 +442,8 @@ namespace DiscordBot.SemanticKernel
                     Result = result.FinalAnswer,
                     StartTime = startTime,
                     EndTime = DateTime.Now,
-                    ChatHistory = history
+                    ChatHistory = history,
+                    ChatHistoryJson = history.ToJsonString()
                 };
                 conversation.SetTokens(logRecords);
                 kernelStatus.Conversation = conversation;
