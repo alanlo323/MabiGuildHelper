@@ -118,17 +118,6 @@ namespace DiscordBot.Helper
 
             logger.LogInformation($"All News content updated");
 
-            if (EnvironmentUtil.IsLocal())
-            {
-                News tempNews = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), newsFromWebsite[0].Url } });
-                tempNews.PublishDate = DateTime.Now;
-                News tempNews1 = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), newsFromWebsite[1].Url } });
-                tempNews1.PublishDate = DateTime.Now;
-                News tempNews2 = await databaseHelper.GetOrCreateEntityByKeys<News>(new() { { nameof(News.Url), newsFromWebsite[2].Url } });
-                tempNews2.PublishDate = DateTime.Now;
-                await databaseHelper.SaveChange();
-            }
-
             var sameKeyNews = appDbContext.News.ToList().Where(x => newsFromWebsite.Any(y => y.Url == x.Url)).ToList();
             var updatedNews = sameKeyNews.Where(x => newsFromWebsite.Any(y => y.Url == x.Url && !y.Equals(x))).ToList();
             var newNews = newsFromWebsite.Where(x => !sameKeyNews.Any(y => y.Url == x.Url)).ToList();
@@ -196,6 +185,7 @@ namespace DiscordBot.Helper
                 await page.WaitForSelectorAsync(contentElementQuery);
                 var contentElementHandle = await page.QuerySelectorAsync(contentElementQuery);
                 var contentInnerText = await contentElementHandle.GetPropertyAsync("innerText");
+                var contentInnerHtml = await contentElementHandle.GetPropertyAsync("innerHTML");
 
                 var contentElementSreenshot = await contentElementHandle.ScreenshotBase64Async(
                     new ElementScreenshotOptions
@@ -206,6 +196,7 @@ namespace DiscordBot.Helper
                 );
 
                 news.Base64Snapshot = contentElementSreenshot;
+                news.HtmlContent = contentInnerHtml.RemoteObject.Value.ToString();
                 news.Content = contentInnerText.RemoteObject.Value.ToString()
                     .Replace(news.Title, string.Empty)
                     .Replace($"{news.PublishDate:yyyy/MM/dd}", string.Empty)

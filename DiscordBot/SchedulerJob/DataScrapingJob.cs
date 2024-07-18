@@ -25,26 +25,28 @@ namespace DiscordBot.SchedulerJob
 
         public async Task Execute(IJobExecutionContext context)
         {
-            var dataScrapingResult = await dataScrapingHelper.GetMabinogiNews();
+            logger.LogInformation("Checking news");
 
+            var dataScrapingResult = await dataScrapingHelper.GetMabinogiNews();
             var guildSettings = appDbContext.GuildSettings.ToList();
 
             foreach (News news in dataScrapingResult.UpdatedNews.Concat(dataScrapingResult.NewNews))
             {
                 var kernel = await semanticKernelEngine.GetKernelAsync();
-                string summary = await kernel.InvokeAsync<string>("ConversationSummaryPlugin", "SummarizeMabiNews", arguments: new()
+                string summary = await kernel.InvokeAsync<string>("ConversationSummaryPlugin", "SummarizeMabiNewsHtml", arguments: new()
                 {
-                    { "input", news.Content },
+                    { "input", news.HtmlContent },
                     { "kernel", kernel },
                 });
+                news.AiContent = summary;
+                await appDbContext.SaveChangesAsync();
 
                 Embed embed = EmbedUtil.GetMainogiNewsEmbed(news);
                 foreach (GuildSetting guildSetting in guildSettings)
                 {
                     if (!guildSetting.DataScapingNewsChannelId.HasValue) continue;
 
-                    var restUserMessage = await discordApiHelper.SendFile(guildSetting.GuildId, guildSetting.DataScapingNewsChannelId, news.SnapshotTempFile.FullName, embed: embed);
-                    await restUserMessage.ReplyAsync(summary);
+                    await discordApiHelper.SendFile(guildSetting.GuildId, guildSetting.DataScapingNewsChannelId, news.SnapshotTempFile.FullName, embed: embed);
                 }
             }
         }
