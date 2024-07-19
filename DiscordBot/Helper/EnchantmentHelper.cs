@@ -25,7 +25,7 @@ namespace DiscordBot.Helper
             try
             {
                 string name = keyword;
-                string strToRemove = "魔力賦予卷軸";
+                string strToRemove = "瑪奇魔力賦予卷軸";
                 foreach (char c in strToRemove) name = name.Replace(c.ToString(), string.Empty);
                 name = name!
                     .Replace(" ", string.Empty)
