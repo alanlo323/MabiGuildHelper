@@ -67,7 +67,12 @@ namespace DiscordBot.SemanticKernel.Core
             if (runningSteps.Any()) displayName += " ";
             displayName += $"{key}";
 
-            StepStatus stepStatus = kernelStatus.StepStatuses.FirstOrDefault(x => x.GetQueueKey() == $"{key}-{kernelArguments.ToKey()}");
+            StepStatus tempStepStatus = new()
+            {
+                Key = key,
+                KernelArguments = kernelArguments
+            };
+            StepStatus stepStatus = kernelStatus.StepStatuses.FirstOrDefault(x => x.GetQueueKey() == $"{tempStepStatus.GetQueueKey()}");
             if (stepStatus == null)
             {
                 stepStatus = new StepStatus

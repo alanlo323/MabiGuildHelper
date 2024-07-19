@@ -154,6 +154,7 @@ namespace DiscordBot.Commands.SlashCommand
                     { "TimePlugin-TimeZoneName", "獲取當前時區" },
                     { "CodeInterpretionPlugin-ExecutePythonCode", "執行Python程式碼" },
                     { "EnchantmentPlugin-GetEnchantmentInfo", "查詢魔力賦予API" },
+                    { "Internal Error", "發生內部錯誤" },
                 };
                 List<string> ignoreList = [
                     "GetBackgroundInformation",
@@ -185,6 +186,9 @@ namespace DiscordBot.Commands.SlashCommand
                             break;
                         case StatusEnum.Failed:
                             message = $"❌ ✨{displayName}✨";
+                            break;
+                        case StatusEnum.Error:
+                            message = $"⚠️ {displayName}";
                             break;
                         default:
                             break;
