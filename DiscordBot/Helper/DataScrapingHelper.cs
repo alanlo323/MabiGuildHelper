@@ -362,7 +362,7 @@ namespace DiscordBot.Helper
             catch (Exception ex)
             {
                 logger.LogException(ex);
-                return null;
+                return webPages;
             }
         }
 

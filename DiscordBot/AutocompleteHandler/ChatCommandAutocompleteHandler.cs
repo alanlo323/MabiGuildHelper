@@ -15,6 +15,7 @@ namespace DiscordBot.ButtonHandler
 {
     public class ChatCommandAutocompleteHandler(EnchantmentHelper enchantmentHelper, ItemHelper itemHelper) : IBaseAutocompleteHandler
     {
+        public const string PrefixMabi = "瑪奇";
         public const string PrefixEnchantment = "魔力賦予";
         public const string PrefixItem = "物品";
 
@@ -23,8 +24,6 @@ namespace DiscordBot.ButtonHandler
         public async Task Excute(SocketAutocompleteInteraction interaction)
         {
             List<AutocompleteResult> results = [];
-            //await interaction.RespondAsync(results);
-            //return;
             string keyword = interaction.Data.Options.First(x => x.Name == "text").Value as string;
             await CheckEnchantment(results, keyword);
             await CheckItem(results, keyword);
@@ -34,7 +33,7 @@ namespace DiscordBot.ButtonHandler
 
         private async Task CheckEnchantment(List<AutocompleteResult> results, string keyword)
         {
-            if (!keyword.Any(x => PrefixEnchantment.Any(y => x == y))) return;
+            if (!keyword.Any(x => PrefixMabi.Any(y => x == y))) return;
 
             EnchantmentResponseDto enchantmentResponseDto = await enchantmentHelper.GetEnchantmentsAsync(keyword);
             foreach (Enchantment enchantment in enchantmentResponseDto.Data.Enchantments.Take(25))
@@ -47,7 +46,7 @@ namespace DiscordBot.ButtonHandler
 
         private async Task CheckItem(List<AutocompleteResult> results, string keyword)
         {
-            if (!keyword.Any(x => PrefixItem.Any(y => x == y))) return;
+            if (!keyword.Any(x => PrefixMabi.Any(y => x == y))) return;
 
             ItemResponseDto itemResponseDto = await itemHelper.GetItemAsync(keyword);
             foreach (Item item in itemResponseDto.Data.Items.Take(25))
