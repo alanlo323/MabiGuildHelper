@@ -73,7 +73,7 @@ using DiscordBot.SemanticKernel.Plugins.Mabinogi;
 
 namespace DiscordBot.SemanticKernel
 {
-    public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper, EnchantmentHelper enchantmentHelper, AppDbContext appDbContext, IBackgroundTaskQueue taskQueue)
+    public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper, EnchantmentHelper enchantmentHelper, AppDbContext appDbContext, IBackgroundTaskQueue taskQueue, DiscordSocketClient client)
     {
         public const string SystemPrompt = "你是一個Discord Bot, 名字叫夏夜小幫手, 你在\"夏夜月涼\"伺服器裡為會員們服務.";
 
@@ -531,17 +531,27 @@ namespace DiscordBot.SemanticKernel
                 onKenelStatusUpdatedCallback?.Invoke(this, kernelStatus);
 
                 DateTime startTime = DateTime.Now;
+                SocketGuildUser? user = command.User as SocketGuildUser;
+                SocketGuildChannel? channel = command.Channel as SocketGuildChannel;
                 ChatMessageContent result = default;
                 ObservableCollection<LogRecord> logRecords = [];
                 AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, onKenelStatusUpdatedCallback, showStatusPerSec: showStatusPerSec);
                 Kernel kernel = await GetKernelAsync(logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter);
                 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-
+                //string tempPrompt = $"""
+                //{SystemPrompt}
+                //先使用memory plugin在long term memory裡嘗試尋找答案, 如果找不到(INFO NOT FOUND)才用其他方法 (在memory裡找到的資料需要附上來源和可信度[XX%])
+                //如果memory裡沒有相關資料, 可在網上搜尋, 並在回答時附上來源
+                //""";
                 string additionalPromptContext = $"""
-                {SystemPrompt}
-                先使用memory plugin在long term memory裡嘗試尋找答案, 如果找不到(INFO NOT FOUND)才用其他方法 (在memory裡找到的資料需要附上來源和可信度[XX%])
-                如果memory裡沒有相關資料, 可在網上搜尋, 並在回答時附上來源
+                =====================
                 使用繁體中文來回覆
+                =====================
+                你的名字: {client.CurrentUser.Username}
+                目前所在伺服器: {channel?.Guild.Name}
+                目前所在頻道: {channel?.Name}
+                目前與你對話的用戶: {user?.DisplayName}
+                =====================
                 """;
 
                 ChatMessageContentItemCollection userInput = [new TextContent(prompt)];
@@ -584,7 +594,16 @@ namespace DiscordBot.SemanticKernel
                     catch (Exception ex)
                     {
                         logger.LogWarning(ex, ex.Message);
-                        result = new() { Content = ex.Message };
+                        StepStatus errorStatus = new()
+                        {
+                            DisplayName = "Internal Error",
+                            Status = StatusEnum.Error,
+                            ShowElapsedTime = false
+                        };
+                        kernelStatus.StepStatuses.Enqueue(errorStatus);
+                        history.AddUserMessage([new TextContent(ex.Message)]);
+                        result = new();
+                        //result = new() { Content = ex.Message.TrimToDiscordEmbedLimited().ToQuotation() };
                     }
                     if (showStatusPerSec) statusReportTimer.Stop();
                 }
