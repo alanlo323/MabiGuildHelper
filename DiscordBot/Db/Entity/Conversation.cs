@@ -15,6 +15,7 @@ using DiscordBot.Util;
 using Irony.Parsing;
 using Microsoft.SemanticKernel.ChatCompletion;
 using OpenTelemetry.Logs;
+using ChatHistory = Microsoft.SemanticKernel.ChatCompletion.ChatHistory;
 
 namespace DiscordBot.Db.Entity
 {
@@ -31,12 +32,13 @@ namespace DiscordBot.Db.Entity
         public int PromptTokens { get; set; }
         public int CompletionTokens { get; set; }
         public int TotalTokens { get; set; }
+        public string? ChatHistoryJson { get; set; }
 
         private readonly double promptCost = 0.005;   //  per 1000 tokens
         private readonly double completionCost = 0.015;   //  per 1000 tokens
 
         [NotMapped]
-        public double EstimatedCostInUSD { get => (PromptTokens * promptCost / 1000) + (CompletionTokens * completionCost / 1000); } 
+        public double EstimatedCostInUSD { get => (PromptTokens * promptCost / 1000) + (CompletionTokens * completionCost / 1000); }
         [NotMapped]
         //public string DisplayEstimatedCost { get => $"US${EstimatedCostInUSD.ToString("#,##0.#####", CultureInfo.CreateSpecificCulture("zh-us"))}"; }
         public string DisplayEstimatedCost { get => $"{(EstimatedCostInUSD * 7.8).ToString("C", CultureInfo.CreateSpecificCulture("zh-hk"))}, NT{(EstimatedCostInUSD * 32.3).ToString("C", CultureInfo.CreateSpecificCulture("zh-tw"))}"; }
@@ -44,8 +46,6 @@ namespace DiscordBot.Db.Entity
         public TimeSpan? ElapsedTime { get => EndTime - StartTime; }
         [NotMapped]
         public ChatHistory? ChatHistory { get; set; }
-        [NotMapped]
-        public string? ChatHistoryJson { get; set; }
 
         public void SetTokens(ICollection<LogRecord> logRecords)
         {

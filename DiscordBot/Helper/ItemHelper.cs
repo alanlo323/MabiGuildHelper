@@ -50,7 +50,7 @@ namespace DiscordBot.Helper
                         ];
                     ItemRequestDto requestDto = new()
                     {
-                        Q = requestDtoQ.ToJsonString()
+                        Q = requestDtoQ.Serialize()
                     };
 
                     RestClient client = new(BaseAddress);
@@ -58,7 +58,7 @@ namespace DiscordBot.Helper
                     {
                         RequestFormat = DataFormat.Json
                     };
-                    request.AddStringBody(requestDto.ToJsonString(), DataFormat.Json);
+                    request.AddStringBody(requestDto.Serialize(), DataFormat.Json);
                     var response = await client.PostAsync(request);
                     if (!response.IsSuccessStatusCode) throw new Exception(response.Content);
                     responseObj = JsonConvert.DeserializeObject<ItemResponseDto>(response.Content);

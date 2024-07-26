@@ -6,15 +6,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
-using DiscordBot.ButtonHandler;
 using DiscordBot.Db.Entity;
 using DiscordBot.Extension;
+using DiscordBot.ModalHandler;
 
 namespace DiscordBot.Util
 {
     public class ModalUtil
     {
-
         public static Modal GetEditNewsModal(GuildNewsOverride guildNewsOverride, SocketMessage socketMessage, string title)
         {
             var modalBuilder = new ModalBuilder()
@@ -49,6 +48,25 @@ namespace DiscordBot.Util
                     .WithStyle(TextInputStyle.Short)
                     .WithCustomId(EditNewsModalHandler.EditNewsModalReleatedMessageUrlPrefix)
                     .WithRequired(false)
+                    )
+                ;
+
+            return modalBuilder.Build();
+        }
+
+        public static Modal GetFollowUpConversationModal(Conversation conversation, string title)
+        {
+            var modalBuilder = new ModalBuilder()
+                .WithTitle(title)
+                .WithCustomId($"{ConversationFollowUpModalHandler.ConversationFollowUpModalMasterIdPrefix}_{conversation.Id}")
+                .AddTextInput(new TextInputBuilder()
+                    .WithLabel("內容")
+                    .WithPlaceholder("在這裡輸入內容")
+                    .WithMinLength(1)
+                    .WithMaxLength(4000)
+                    .WithStyle(TextInputStyle.Short)
+                    .WithCustomId(ConversationFollowUpModalHandler.ConversationFollowUpModalContentIdPrefix)
+                    .WithRequired(true)
                     )
                 ;
 

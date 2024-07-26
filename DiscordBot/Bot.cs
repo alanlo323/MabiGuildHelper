@@ -34,6 +34,7 @@ using Quartz.Util;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory;
 using Discord.Interactions;
 using DocumentFormat.OpenXml.Spreadsheet;
+using DiscordBot.ModalHandler;
 
 namespace DiscordBot
 {

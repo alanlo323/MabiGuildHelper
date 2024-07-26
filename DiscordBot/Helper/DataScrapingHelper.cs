@@ -325,7 +325,7 @@ namespace DiscordBot.Helper
             if (!directory.Exists) directory.Create();
 
             FileInfo json = new(Path.Combine(folderPath, $"WebPage.json"));
-            await File.AppendAllTextAsync(json.FullName, webPage.ToJsonString());
+            await File.AppendAllTextAsync(json.FullName, webPage.Serialize());
 
             if (string.IsNullOrWhiteSpace(webPage.Snippet)) return;
 

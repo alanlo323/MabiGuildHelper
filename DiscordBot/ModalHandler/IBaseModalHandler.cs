@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 
-namespace DiscordBot.ButtonHandler
+namespace DiscordBot.ModalHandler
 {
     public interface IBaseModalHandler
     {

@@ -3,24 +3,34 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Extension
 {
     public static class ObjectExtension
     {
-        public static string ToJsonString(this object obj, bool indentedFormatting = true)
+
+        public static string Serialize<T>(this T obj)
         {
-            return JsonConvert.SerializeObject(obj, new JsonSerializerSettings()
+            JsonSerializerOptions options = new()
             {
-                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                NullValueHandling = NullValueHandling.Ignore,
-                Formatting = indentedFormatting ? Formatting.Indented : Formatting.None,
-                MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-                PreserveReferencesHandling = PreserveReferencesHandling.None,
-            });
+                WriteIndented = true,
+                 IncludeFields = true,
+            };
+            return JsonSerializer.Serialize(obj, options);
+        }
+
+        public static T? Deserialize<T>(this string jsonString)
+        {
+            JsonSerializerOptions options = new()
+            {
+                WriteIndented = true,
+                IncludeFields = true,
+            };
+            return JsonSerializer.Deserialize<T>(jsonString, options);
         }
 
         public static T SetProperty<T>(this T obj, string propertyName, object value)

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
@@ -24,25 +26,51 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.ButtonHandler
 {
-    public class PromptDetailButtonHandler(ILogger<PromptDetailButtonHandler> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper, SelectMenuHandlerHelper selectMenuHandlerHelper, PromptHelper promptHelper) : IBaseButtonHandler
+    public class ConversationActionButtonHandler(ILogger<ConversationActionButtonHandler> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper, PromptHelper promptHelper) : IBaseButtonHandler
     {
         public const string PromptDetailButtonIdLabel = "詳細資訊";
         public const string PromptDetailButtonId = "PromptDetailButton";
+        public const string FollowUpButtonIdLabel = "繼續對話";
+        public const string FollowUpButtonId = "FollowUpButton";
 
-        public string[] Lables { get; set; } = [PromptDetailButtonIdLabel];
-        public string[] Ids { get; set; } = [PromptDetailButtonId];
+        public string[] Lables { get; set; } = [PromptDetailButtonIdLabel, FollowUpButtonIdLabel];
+        public string[] Ids { get; set; } = [PromptDetailButtonId, FollowUpButtonId];
 
         public MessageComponent GetMessageComponent()
         {
             ComponentBuilder componentBuilder = new ComponentBuilder()
-                .WithButton(label: PromptDetailButtonIdLabel, emote: new Emoji("💭"), style: ButtonStyle.Primary, customId: PromptDetailButtonId);
+                .WithButton(label: FollowUpButtonIdLabel, emote: new Emoji("💬"), style: ButtonStyle.Primary, customId: FollowUpButtonId)
+                .WithButton(label: PromptDetailButtonIdLabel, emote: new Emoji("💭"), style: ButtonStyle.Primary, customId: PromptDetailButtonId)
+                ;
             return componentBuilder.Build();
         }
 
         public async Task Excute(SocketMessageComponent component)
         {
+            Conversation conversation = await databaseHelper.GetOrCreateEntityByKeys<Conversation>(new() { { nameof(Conversation.DiscordMessageId), component.Message.Id } });
+
+            switch (component.Data.CustomId)
+            {
+                case FollowUpButtonId:
+                    await ExcuteFollowUpButton(component, conversation);
+                    break;
+                case PromptDetailButtonId:
+                    await ExcutePromptDetailButton(component, conversation);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private async Task ExcuteFollowUpButton(SocketMessageComponent component, Conversation conversation)
+        {
+            Modal modal = ModalUtil.GetFollowUpConversationModal(conversation, FollowUpButtonIdLabel);
+            await component.RespondWithModalAsync(modal);
+        }
+
+        private async Task ExcutePromptDetailButton(SocketMessageComponent component, Conversation conversation)
+        {
             await component.DeferAsync(ephemeral: true);
-            var conversation = await databaseHelper.GetOrCreateEntityByKeys<Conversation>(new() { { nameof(Conversation.DiscordMessageId), component.Message.Id } });
 
             StringBuilder sb = new();
             StringBuilder innerSb = new();

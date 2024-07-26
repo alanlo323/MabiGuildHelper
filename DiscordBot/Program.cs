@@ -35,6 +35,7 @@ using Microsoft.KernelMemory.Pipeline;
 using DiscordBot.SemanticKernel.QueneService;
 using DiscordBot.ReverseProxy;
 using System.Net;
+using DiscordBot.ModalHandler;
 
 namespace DiscordBot
 {
@@ -96,6 +97,7 @@ namespace DiscordBot
                 .AddSingleton<SemanticKernelEngine>()
                 .AddSingleton<EnchantmentHelper>()
                 .AddSingleton<ItemHelper>()
+                .AddSingleton<AiChatHelper>()
                 .AddSingleton<IBackgroundTaskQueue>(_ => new DefaultBackgroundTaskQueue(10))
                 .AddScoped<IBaseSlashCommand, DebugCommand>()
                 .AddScoped<IBaseSlashCommand, AboutCommand>()
@@ -109,10 +111,11 @@ namespace DiscordBot
                 .AddScoped<IBaseMessageCommand, EditNewsCommand>()
                 .AddScoped<IBaseMessageCommand, SummarizeCommand>()
                 .AddScoped<IBaseButtonHandler, ManageReminderButtonHandler>()
-                .AddScoped<IBaseButtonHandler, PromptDetailButtonHandler>()
+                .AddScoped<IBaseButtonHandler, ConversationActionButtonHandler>()
                 .AddScoped<IBaseSelectMenuHandler, AddInstanceResetReminderSelectMenuHandler>()
                 .AddScoped<IBaseSelectMenuHandler, AddDailyVipGiftReminderSelectMenuHandler>()
                 .AddScoped<IBaseModalHandler, EditNewsModalHandler>()
+                .AddScoped<IBaseModalHandler, ConversationFollowUpModalHandler>()
                 .AddScoped<IBaseAutocompleteHandler, ChatCommandAutocompleteHandler>()
                 .AddScoped<MessageReceivedHandler>()
                 .AddScoped<DailyDungeonInfoJob>()
