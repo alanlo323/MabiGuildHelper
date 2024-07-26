@@ -37,7 +37,11 @@ namespace DiscordBot.Extension
 
         public static string TrimToDiscordEmbedLimited(this string input)
         {
-            int maxLength = 3900;
+            return TrimToLimited(input, 3500);
+        }
+
+        public static string TrimToLimited(this string input, int maxLength)
+        {
             if (input.Length > maxLength)
             {
                 return $"{input[..maxLength]}...";

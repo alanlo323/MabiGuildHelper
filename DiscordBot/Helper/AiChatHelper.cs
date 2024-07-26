@@ -178,9 +178,13 @@ namespace DiscordBot.Helper
             }
 
             string stepStatusMessage = string.Join(Environment.NewLine, statusList);
-            string responseMessage = $"{stepStatusMessage}";
-            if (!string.IsNullOrWhiteSpace(kernelStatus.Conversation?.Result)) responseMessage += $"{Environment.NewLine}{Environment.NewLine}{kernelStatus.Conversation?.Result}";
+            StringBuilder responseBuilder = new();
+            responseBuilder.AppendLine(kernelStatus.Conversation?.UserPrompt?.TrimToLimited(200).ToQuotation());
+            responseBuilder.AppendJoin(Environment.NewLine, statusList);
+            if (statusList.Count > 0) responseBuilder.Append($"{Environment.NewLine}{Environment.NewLine}");
+            if (!string.IsNullOrWhiteSpace(kernelStatus.Conversation?.Result)) responseBuilder.Append(kernelStatus.Conversation?.Result);
 
+            string responseMessage = responseBuilder.ToString();
             return responseMessage;
         }
     }

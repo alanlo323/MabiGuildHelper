@@ -519,6 +519,8 @@ namespace DiscordBot.SemanticKernel
         {
             try
             {
+                DateTime startTime = DateTime.Now;
+
                 KernelStatus kernelStatus = new();
                 StepStatus pendingStatu = new()
                 {
@@ -528,10 +530,16 @@ namespace DiscordBot.SemanticKernel
                     ShowElapsedTime = false
                 };
                 kernelStatus.StepStatuses.Enqueue(pendingStatu);
+                Conversation conversation = new()
+                {
+                    UserPrompt = prompt,
+                    StartTime = startTime,
+                    EndTime = DateTime.Now,
+                };
+                kernelStatus.Conversation = conversation;
                 onKenelStatusUpdatedCallback?.Invoke(this, kernelStatus);
 
 
-                DateTime startTime = DateTime.Now;
                 SocketGuildUser? user = socketInteraction.User as SocketGuildUser;
                 SocketGuildChannel? channel = socketInteraction.Channel as SocketGuildChannel;
                 ChatMessageContent result = default;
@@ -634,7 +642,8 @@ namespace DiscordBot.SemanticKernel
                 //    chatMessagesStrs.Add(jsonStr);
                 //}
                 //ChatHistoryJsonDTO chatHistoryJsonDTO = new() { ChatMessagesStrs = chatMessagesStrs };
-                Conversation conversation = new()
+
+                kernelStatus.Conversation = new()
                 {
                     UserPrompt = prompt,
                     PlanTemplate = sb1.ToString(),
@@ -644,8 +653,7 @@ namespace DiscordBot.SemanticKernel
                     ChatHistory = history,
                     ChatHistoryJson = history.Serialize(),
                 };
-                conversation.SetTokens(logRecords);
-                kernelStatus.Conversation = conversation;
+                kernelStatus.Conversation.SetTokens(logRecords);
                 kernelStatus.StepStatuses = new(kernelStatus.StepStatuses.Where(x => thinkingStatus.DisplayName != x.DisplayName));
 
                 return kernelStatus;
