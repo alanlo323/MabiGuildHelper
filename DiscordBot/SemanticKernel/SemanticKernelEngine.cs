@@ -70,10 +70,11 @@ using SemanticKernel.Assistants.AutoGen.Plugins;
 using CodeInterpretionPlugin = DiscordBot.SemanticKernel.Plugins.KernelMemory.CodeInterpretion.CodeInterpretionPlugin;
 using DiscordBot.SemanticKernel.QueneService;
 using DiscordBot.SemanticKernel.Plugins.Mabinogi;
+using DiscordBot.DataObject;
 
 namespace DiscordBot.SemanticKernel
 {
-    public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper, EnchantmentHelper enchantmentHelper, AppDbContext appDbContext, IBackgroundTaskQueue taskQueue, DiscordSocketClient client)
+    public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper, EnchantmentHelper enchantmentHelper, AppDbContext appDbContext, IBackgroundTaskQueue taskQueue, DiscordSocketClient client)
     {
         public const string SystemPrompt = "你是一個Discord Bot, 名字叫夏夜小幫手, 你在\"夏夜月涼\"伺服器裡為會員們服務.";
 
@@ -293,7 +294,7 @@ namespace DiscordBot.SemanticKernel
             return kernelWithRelevantFunctions;
         }
 
-        public async Task<KernelStatus> GenerateResponse(string prompt, SocketCommandBase command, Uri? imageUri = null, bool showStatusPerSec = false, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null) => await GenerateResponseWithChatCompletionService(prompt, command, imageUri: imageUri, showStatusPerSec: showStatusPerSec, onKenelStatusUpdatedCallback: onKenelStatusUpdatedCallback);
+        public async Task<KernelStatus> GenerateResponse(string prompt, SocketInteraction socketInteraction, Uri? imageUri = null, ChatHistory? conversationChatHistory = null, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null) => await GenerateResponseWithChatCompletionService(prompt, socketInteraction, imageUri: imageUri, conversationChatHistory: conversationChatHistory, onKenelStatusUpdatedCallback: onKenelStatusUpdatedCallback);
 
         public async Task<KernelStatus> GenerateResponseFromHandlebarsPlanner(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, bool showStatusPerSec = false)
         {
@@ -443,7 +444,6 @@ namespace DiscordBot.SemanticKernel
                     StartTime = startTime,
                     EndTime = DateTime.Now,
                     ChatHistory = history,
-                    ChatHistoryJson = history.ToJsonString()
                 };
                 conversation.SetTokens(logRecords);
                 kernelStatus.Conversation = conversation;
@@ -515,7 +515,7 @@ namespace DiscordBot.SemanticKernel
             return conversation;
         }
 
-        public async Task<KernelStatus> GenerateResponseWithChatCompletionService(string prompt, SocketCommandBase command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, bool showStatusPerSec = false, Uri? imageUri = null)
+        public async Task<KernelStatus> GenerateResponseWithChatCompletionService(string prompt, SocketInteraction socketInteraction, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, Uri? imageUri = null, ChatHistory? conversationChatHistory = null)
         {
             try
             {
@@ -530,38 +530,44 @@ namespace DiscordBot.SemanticKernel
                 kernelStatus.StepStatuses.Enqueue(pendingStatu);
                 onKenelStatusUpdatedCallback?.Invoke(this, kernelStatus);
 
+
                 DateTime startTime = DateTime.Now;
-                SocketGuildUser? user = command.User as SocketGuildUser;
-                SocketGuildChannel? channel = command.Channel as SocketGuildChannel;
+                SocketGuildUser? user = socketInteraction.User as SocketGuildUser;
+                SocketGuildChannel? channel = socketInteraction.Channel as SocketGuildChannel;
                 ChatMessageContent result = default;
                 ObservableCollection<LogRecord> logRecords = [];
+                bool showStatusPerSec = true || socketInteraction.User.Id == ulong.Parse(discordBotConfig.Value.AdminId);
                 AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, onKenelStatusUpdatedCallback, showStatusPerSec: showStatusPerSec);
                 Kernel kernel = await GetKernelAsync(logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter);
                 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-                //string tempPrompt = $"""
-                //{SystemPrompt}
-                //先使用memory plugin在long term memory裡嘗試尋找答案, 如果找不到(INFO NOT FOUND)才用其他方法 (在memory裡找到的資料需要附上來源和可信度[XX%])
-                //如果memory裡沒有相關資料, 可在網上搜尋, 並在回答時附上來源
-                //""";
-                string additionalPromptContext = $"""
-                =====================
-                使用繁體中文來回覆
-                先使用memory plugin在long term memory裡嘗試尋找答案, 如果找不到(INFO NOT FOUND)才用其他方法 (在memory裡找到的資料需要附上來源和可信度[XX%])
-                如果memory裡沒有相關資料, 可在網上搜尋, 並在回答時附上來源
-                =====================
-                你的名字: {client.CurrentUser.Username}
-                目前所在伺服器: {channel?.Guild.Name}
-                目前所在頻道: {channel?.Name}
-                目前與你對話的用戶: {user?.DisplayName}
-                回答風格: 可愛, 有禮貌
-                性格: 傲嬌
-                =====================
-                """;
+
+                string basicSystemInstruc = $"""
+                    使用繁體中文來回覆
+                    先使用memory plugin在long term memory裡嘗試尋找答案, 如果找不到(INFO NOT FOUND)才用其他方法 (在memory裡找到的資料需要附上來源和可信度[XX%])
+                    如果memory裡沒有相關資料, 可在網上搜尋, 並在回答時附上來源
+                    """;
+                string currentInfo = $"""
+                    你的名字: {client.CurrentUser.Username}
+                    目前所在伺服器: {channel?.Guild.Name}
+                    目前所在頻道: {channel?.Name}
+                    目前與你對話的用戶: {user?.DisplayName}
+                    回答風格: 可愛, 有禮貌
+                    性格: 傲嬌
+                    """;
 
                 ChatMessageContentItemCollection userInput = [new TextContent(prompt)];
                 if (imageUri != null) userInput.Add(new ImageContent(imageUri));
-                ChatHistory history = [];
-                history.AddSystemMessage(additionalPromptContext);
+                ChatHistory history;
+                if (conversationChatHistory == null)
+                {
+                    history = [];
+                    history.AddSystemMessage(basicSystemInstruc);
+                }
+                else
+                {
+                    history = conversationChatHistory;
+                }
+                history.AddSystemMessage(currentInfo);
                 history.AddUserMessage(userInput);
 
                 using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
@@ -619,6 +625,15 @@ namespace DiscordBot.SemanticKernel
                 StringBuilder sb1 = new();
                 foreach (var record in history!.Where(x => x.Role != AuthorRole.System)) sb1.AppendLine(record.ToString());
 
+                //ChatMessageContent[] chatMessages = new ChatMessageContent[history.Count];
+                //history.CopyTo(chatMessages, 0);
+                //List<string> chatMessagesStrs = [];
+                //foreach (ChatMessageContent message in chatMessages)
+                //{
+                //    string jsonStr = message.ToJsonString(typeNameHandling: Newtonsoft.Json.TypeNameHandling.All);
+                //    chatMessagesStrs.Add(jsonStr);
+                //}
+                //ChatHistoryJsonDTO chatHistoryJsonDTO = new() { ChatMessagesStrs = chatMessagesStrs };
                 Conversation conversation = new()
                 {
                     UserPrompt = prompt,
@@ -626,7 +641,8 @@ namespace DiscordBot.SemanticKernel
                     Result = $"{result}",
                     StartTime = startTime,
                     EndTime = DateTime.Now,
-                    ChatHistory = history
+                    ChatHistory = history,
+                    ChatHistoryJson = history.Serialize(),
                 };
                 conversation.SetTokens(logRecords);
                 kernelStatus.Conversation = conversation;

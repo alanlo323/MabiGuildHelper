@@ -19,7 +19,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
-namespace DiscordBot.ButtonHandler
+namespace DiscordBot.ModalHandler
 {
     public class EditNewsModalHandler(ILogger<EditNewsModalHandler> logger, DiscordSocketClient client, AppDbContext appDbContext, IServiceProvider serviceProvider, DatabaseHelper databaseHelper, SelectMenuHandlerHelper selectMenuHandlerHelper, DiscordApiHelper discordApiHelper) : IBaseModalHandler
     {
@@ -66,7 +66,10 @@ namespace DiscordBot.ButtonHandler
                         x.Attachments = new List<FileAttachment>();
                     });
                     await modal.FollowupAsync($"通告編輯成功: {userMessage.GetJumpUrl()}", ephemeral: true);
+                    return;
                 }
+
+                throw new NotSupportedException("Message type is not supported.");
             }
             catch (Exception ex)
             {
