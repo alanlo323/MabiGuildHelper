@@ -74,7 +74,7 @@ namespace DiscordBot.Helper
             if (lastConversation != null) conversationChatHistory = lastConversation.ChatHistoryJson.Deserialize<ChatHistory>();
 
             KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(prompt, socketInteraction, imageUri: imageUri, conversationChatHistory: conversationChatHistory, onKenelStatusUpdatedCallback: OnKenelStatusUpdated);
-            Conversation conversation = kernelStatus.Conversation;
+            await Task.Delay(1000); // Wait for the status message to be sent
 
             string responseMessage = GetResponseMessage(kernelStatus);
             var answer = responseMessage ?? string.Empty;
@@ -82,8 +82,8 @@ namespace DiscordBot.Helper
             MessageComponent conversationActionButtonComponent = buttonHandlerHelper.GetButtonHandler<ConversationActionButtonHandler>().GetMessageComponent();
             FollowUpOrEditMessage(socketInteraction, answer, ref restFollowupMessage, components: conversationActionButtonComponent);
 
-            conversation.DiscordMessageId = restFollowupMessage!.Id;
-            await databaseHelper.Add(conversation);
+            kernelStatus.Conversation.DiscordMessageId = restFollowupMessage!.Id;
+            await databaseHelper.Add(kernelStatus.Conversation);
             await databaseHelper.SaveChange();
 
             #region Local Functions
