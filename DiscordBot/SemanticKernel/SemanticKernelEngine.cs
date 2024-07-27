@@ -120,25 +120,24 @@ namespace DiscordBot.SemanticKernel
                 ;
 
             builder.Plugins
+                .AddFromType<WebPlugin>()
+                .AddFromType<TimePlugin>()
                 //.AddFromType<TextPlugin>()
                 //.AddFromType<WaitPlugin>()
-                .AddFromType<TimePlugin>()
                 //.AddFromType<FileIOPlugin>()
-                .AddFromType<WebPlugin>()
-                .AddFromType<EnchantmentPlugin>()
                 //.AddFromType<SearchUrlPlugin>()
                 //.AddFromType<DocumentPlugin>()
+                .AddFromType<EnchantmentPlugin>()
                 //.AddFromType<TextMemoryPlugin>()
                 .AddFromType<CodeInterpretionPlugin>()
                 //.AddFromType<Plugins.Web.HttpPlugin>()
                 .AddFromType<Plugins.Math.MathPlugin>()
                 //.AddFromType<WebFileDownloadPlugin>()
                 //.AddFromType<Plugins.About.AboutPlugin>()
+                .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
                 .AddFromType<Plugins.Writer.Summary.ConversationSummaryPlugin>()
                 .AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
-                .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
                 //  TODO: Add Screenshot plugin
-                //  TODO: Add Get web content plugin
                 ;
 
             builder.Services
@@ -177,10 +176,6 @@ namespace DiscordBot.SemanticKernel
                 loggingBuilder.AddNLog(config);
                 loggingBuilder.AddOpenTelemetry(options =>
                 {
-                    //options
-                    //.AddAzureMonitorLogExporter(options => options.ConnectionString = applicationInsightsConfig.ConnectionString)
-                    //.AddConsoleExporter()
-                    //;
                     if (logRecords != null) options.AddInMemoryExporter(logRecords);
                     // Format log messages. This is default to false.
                     options.IncludeFormattedMessage = true;
@@ -294,228 +289,7 @@ namespace DiscordBot.SemanticKernel
             return kernelWithRelevantFunctions;
         }
 
-        public async Task<KernelStatus> GenerateResponse(string prompt, SocketInteraction socketInteraction, Uri? imageUri = null, ChatHistory? conversationChatHistory = null, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null) => await GenerateResponseWithChatCompletionService(prompt, socketInteraction, imageUri: imageUri, conversationChatHistory: conversationChatHistory, onKenelStatusUpdatedCallback: onKenelStatusUpdatedCallback);
-
-        public async Task<KernelStatus> GenerateResponseFromHandlebarsPlanner(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, bool showStatusPerSec = false)
-        {
-            try
-            {
-                DateTime startTime = DateTime.Now;
-                KernelStatus kernelStatus = new();
-                ObservableCollection<LogRecord> logRecords = [];
-                AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, onKenelStatusUpdatedCallback, showStatusPerSec: showStatusPerSec);
-                Kernel kernel = await GetKernelAsync(logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter);
-
-                ChatHistory history = [];
-                history.AddSystemMessage(SystemPrompt);
-                history.AddUserMessage(prompt);
-
-                StepStatus planStatus = new()
-                {
-                    DisplayName = "CreatePlan",
-                    Status = StatusEnum.Running,
-                    StartTime = DateTime.Now,
-                    ShowElapsedTime = showStatusPerSec
-                };
-                kernelStatus.StepStatuses.Enqueue(planStatus);
-
-                string additionalPromptContext = $"""
-                {SystemPrompt}
-                你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND)就向用戶道歉
-                最後使用繁體中文來回覆
-                """;
-                var planner = new HandlebarsPlanner(new HandlebarsPlannerOptions()
-                {
-                    // When using OpenAI models, we recommend using low values for temperature and top_p to minimize planner hallucinations.
-                    ExecutionSettings = new OpenAIPromptExecutionSettings()
-                    {
-                        ChatSystemPrompt = SystemPrompt,
-                        Temperature = 0.0,
-                        TopP = 0.1,
-                        MaxTokens = 4000,
-                        ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
-                    },
-                    // Use gpt-4 or newer models if you want to test with loops.
-                    // Older models like gpt-35-turbo are less recommended. They do handle loops but are more prone to syntax errors.
-                    AllowLoops = chatCompletionConfig.Deployment.Contains("gpt-4", StringComparison.OrdinalIgnoreCase),
-                    GetAdditionalPromptContext = async () => additionalPromptContext
-                });
-
-                using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
-                statusReportTimer.Elapsed += (sender, e) => { onKenelStatusUpdatedCallback?.Invoke(this, kernelStatus); };
-                if (showStatusPerSec) statusReportTimer.Start();
-
-                HandlebarsPlan plan = await planner.CreatePlanAsync(kernel, prompt, arguments: new()
-                {
-                    { "username", command.User.Username }
-                });
-                string planTemplate = promptHelper.GetPlanTemplateFromPlan(plan);
-                logger.LogInformation($"Plan steps: {Environment.NewLine}{planTemplate}");
-
-                planStatus.Status = StatusEnum.Completed;
-                planStatus.EndTime = DateTime.Now;
-
-                var planResult = (await plan.InvokeAsync(kernel)).Trim();
-                if (showStatusPerSec) statusReportTimer.Stop();
-
-                history.AddUserMessage(planTemplate);
-                history.AddAssistantMessage(planResult);
-
-                Conversation conversation = new()
-                {
-                    UserPrompt = prompt,
-                    PlanTemplate = planTemplate,
-                    Result = planResult,
-                    StartTime = startTime,
-                    EndTime = DateTime.Now,
-                    ChatHistory = history
-                };
-                conversation.SetTokens(logRecords);
-                kernelStatus.Conversation = conversation;
-
-                return kernelStatus;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        public async Task<KernelStatus> GenerateResponseFromStepwisePlanner(string prompt, SocketSlashCommand command, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, bool showStatusPerSec = false)
-        {
-            try
-            {
-                DateTime startTime = DateTime.Now;
-                KernelStatus kernelStatus = new();
-                ObservableCollection<LogRecord> logRecords = [];
-                AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, onKenelStatusUpdatedCallback, showStatusPerSec: showStatusPerSec);
-                Kernel kernel = await GetKernelAsync(logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter);
-
-                ChatHistory history = [];
-
-                StepStatus planStatus = new()
-                {
-                    DisplayName = "Thinking",
-                    Status = StatusEnum.Thinking,
-                    StartTime = DateTime.Now,
-                    ShowElapsedTime = showStatusPerSec
-                };
-                kernelStatus.StepStatuses.Enqueue(planStatus);
-
-                string additionalPromptContext = $"""
-                {SystemPrompt}
-                你主要回答關於"瑪奇Mabinogi"的問題, 可以在long term memory裡找答案, 如果找不到(INFO NOT FOUND)就向用戶道歉
-                最後使用繁體中文來回覆
-                """;
-                var config = new FunctionCallingStepwisePlannerOptions
-                {
-                    MaxIterations = 5,
-                    MaxTokens = 8000,
-                    ExecutionSettings = new OpenAIPromptExecutionSettings()
-                    {
-                        //ChatSystemPrompt = additionalPromptContext,
-                        Temperature = 0.0,
-                        TopP = 0.1,
-                        MaxTokens = 4000,
-                        ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
-                    },
-                };
-
-                var planner = new FunctionCallingStepwisePlanner(config);
-
-                using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
-                statusReportTimer.Elapsed += (sender, e) =>
-                {
-                    onKenelStatusUpdatedCallback?.Invoke(this, kernelStatus);
-                };
-                if (showStatusPerSec) statusReportTimer.Start();
-                FunctionCallingStepwisePlannerResult result = await planner.ExecuteAsync(kernel, prompt, chatHistoryForSteps: history);
-                if (showStatusPerSec) statusReportTimer.Stop();
-
-                history = result.ChatHistory;
-                StringBuilder sb1 = new();
-                foreach (var record in history!) sb1.AppendLine(record.ToString());
-
-                Conversation conversation = new()
-                {
-                    UserPrompt = prompt,
-                    PlanTemplate = sb1.ToString(),
-                    Result = result.FinalAnswer,
-                    StartTime = startTime,
-                    EndTime = DateTime.Now,
-                    ChatHistory = history,
-                };
-                conversation.SetTokens(logRecords);
-                kernelStatus.Conversation = conversation;
-                kernelStatus.StepStatuses = new(kernelStatus.StepStatuses.Where(x => x.Status != StatusEnum.Thinking));
-
-                return kernelStatus;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        public async Task<Conversation> GenerateResponseWithoutPlanner(string prompt)
-        {
-            DateTime startTime = DateTime.Now;
-            ObservableCollection<LogRecord> logRecords = [];
-            Kernel kernel = await GetKernelAsync(logRecords);
-
-            ChatHistory history = [];
-            history.AddSystemMessage(SystemPrompt);
-            history.AddUserMessage(prompt);
-
-            var memoryPrompt = @"
-            Question to Kernel Memory: {{$input}}
-
-            Kernel Memory Answer: {{memory.ask}}
-
-            If the answer is empty say 'I don't know', otherwise reply with a business mail to share the answer.
-            ";
-
-            OpenAIPromptExecutionSettings settings = new()
-            {
-                ChatSystemPrompt = SystemPrompt,
-                Temperature = 0.0,
-                TopP = 0.1,
-                MaxTokens = 4000,
-                ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-            };
-
-            KernelArguments arguments = new(settings)
-            {
-                { "input", prompt },
-            };
-            //+		ex	{"Missing argument for function parameter 'question'"}	System.Exception {Microsoft.SemanticKernel.KernelException}
-
-            var response = await kernel.InvokePromptAsync(memoryPrompt, arguments);
-            var result = response.GetValue<string>();
-
-            history.AddAssistantMessage(result);
-
-            var instructPrompt = $@"
-           Question to Kernel Memory: {prompt}
-
-           Kernel Memory Answer: {{memory.ask}}
-
-           If the answer is empty say 'I don't know', otherwise reply with the answer.
-           ";
-            Conversation conversation = new()
-            {
-                UserPrompt = prompt,
-                PlanTemplate = null,
-                Result = result,
-                StartTime = startTime,
-                EndTime = DateTime.Now,
-                ChatHistory = history
-            };
-            conversation.SetTokens(logRecords);
-            return conversation;
-        }
-
-        public async Task<KernelStatus> GenerateResponseWithChatCompletionService(string prompt, SocketInteraction socketInteraction, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, Uri? imageUri = null, ChatHistory? conversationChatHistory = null)
+        public async Task<KernelStatus> GenerateResponse(string prompt, SocketInteraction socketInteraction, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, Uri? imageUri = null, ChatHistory? conversationChatHistory = null)
         {
             try
             {
@@ -549,18 +323,21 @@ namespace DiscordBot.SemanticKernel
                 Kernel kernel = await GetKernelAsync(logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter);
                 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
-                string basicSystemInstruc = $"""
+                string basicSystemMessage = $"""
                     使用繁體中文來回覆
                     先使用memory plugin在long term memory裡嘗試尋找答案, 如果找不到(INFO NOT FOUND)才用其他方法 (在memory裡找到的資料需要附上來源和可信度[XX%])
                     如果memory裡沒有相關資料, 可在網上搜尋, 並在回答時附上來源
                     """;
-                string currentInfo = $"""
+                string basicInfo = $"""
                     你的名字: {client.CurrentUser.Username}
                     目前所在伺服器: {channel?.Guild.Name}
                     目前所在頻道: {channel?.Name}
-                    目前與你對話的用戶: {user?.DisplayName}
                     回答風格: 可愛, 有禮貌
                     性格: 傲嬌
+                    """;
+                string currentInfo = $"""
+                    目前與你對話的用戶: {user?.DisplayName}
+                    目前日期與時間(yyyy-mm-dd HH:mm:ss): {DateTime.Now:yyyy-mm-dd HH:mm:ss}
                     """;
 
                 ChatMessageContentItemCollection userInput = [new TextContent(prompt)];
@@ -569,7 +346,8 @@ namespace DiscordBot.SemanticKernel
                 if (conversationChatHistory == null)
                 {
                     history = [];
-                    history.AddSystemMessage(basicSystemInstruc);
+                    history.AddSystemMessage(basicSystemMessage);
+                    history.AddSystemMessage(basicInfo);
                 }
                 else
                 {
@@ -621,7 +399,6 @@ namespace DiscordBot.SemanticKernel
                         kernelStatus.StepStatuses.Enqueue(errorStatus);
                         history.AddUserMessage([new TextContent(ex.Message)]);
                         result = new();
-                        //result = new() { Content = ex.Message.TrimToDiscordEmbedLimited().ToQuotation() };
                     }
                     if (showStatusPerSec) statusReportTimer.Stop();
                 }
@@ -632,16 +409,6 @@ namespace DiscordBot.SemanticKernel
                 history.AddAssistantMessage($"{Environment.NewLine}{result}");
                 StringBuilder sb1 = new();
                 foreach (var record in history!.Where(x => x.Role != AuthorRole.System)) sb1.AppendLine(record.ToString());
-
-                //ChatMessageContent[] chatMessages = new ChatMessageContent[history.Count];
-                //history.CopyTo(chatMessages, 0);
-                //List<string> chatMessagesStrs = [];
-                //foreach (ChatMessageContent message in chatMessages)
-                //{
-                //    string jsonStr = message.ToJsonString(typeNameHandling: Newtonsoft.Json.TypeNameHandling.All);
-                //    chatMessagesStrs.Add(jsonStr);
-                //}
-                //ChatHistoryJsonDTO chatHistoryJsonDTO = new() { ChatMessagesStrs = chatMessagesStrs };
 
                 kernelStatus.Conversation = new()
                 {
