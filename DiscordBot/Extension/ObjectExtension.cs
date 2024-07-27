@@ -6,21 +6,40 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
+using DiscordBot.DataObject;
+using Newtonsoft.Json;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Extension
 {
     public static class ObjectExtension
     {
+        public static string SerializeWithNewtonsoft<T>(this T obj)
+        {
+            JsonSerializerSettings settings = new()
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                Formatting = Formatting.Indented,
+                NullValueHandling = NullValueHandling.Ignore,
+                MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+                PreserveReferencesHandling = PreserveReferencesHandling.None,
+            };
+            return JsonConvert.SerializeObject(obj, settings);
+        }
+
+        public static T? DeserializeWithNewtonsoft<T>(this string jsonString)
+        {
+            return JsonConvert.DeserializeObject<T>(jsonString);
+        }
 
         public static string Serialize<T>(this T obj)
         {
             JsonSerializerOptions options = new()
             {
                 WriteIndented = true,
-                 IncludeFields = true,
+                IncludeFields = true,
             };
-            return JsonSerializer.Serialize(obj, options);
+            return System.Text.Json.JsonSerializer.Serialize(obj, options);
         }
 
         public static T? Deserialize<T>(this string jsonString)
@@ -30,7 +49,7 @@ namespace DiscordBot.Extension
                 WriteIndented = true,
                 IncludeFields = true,
             };
-            return JsonSerializer.Deserialize<T>(jsonString, options);
+            return System.Text.Json.JsonSerializer.Deserialize<T>(jsonString, options);
         }
 
         public static T SetProperty<T>(this T obj, string propertyName, object value)

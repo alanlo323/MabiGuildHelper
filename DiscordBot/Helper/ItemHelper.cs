@@ -50,7 +50,7 @@ namespace DiscordBot.Helper
                         ];
                     ItemRequestDto requestDto = new()
                     {
-                        Q = requestDtoQ.Serialize()
+                        Q = requestDtoQ.SerializeWithNewtonsoft()
                     };
 
                     RestClient client = new(BaseAddress);
@@ -58,10 +58,10 @@ namespace DiscordBot.Helper
                     {
                         RequestFormat = DataFormat.Json
                     };
-                    request.AddStringBody(requestDto.Serialize(), DataFormat.Json);
+                    request.AddStringBody(requestDto.SerializeWithNewtonsoft(), DataFormat.Json);
                     var response = await client.PostAsync(request);
                     if (!response.IsSuccessStatusCode) throw new Exception(response.Content);
-                    responseObj = JsonConvert.DeserializeObject<ItemResponseDto>(response.Content);
+                    responseObj = response.Content.DeserializeWithNewtonsoft<ItemResponseDto>();
                     db[name] = responseObj!;
                 }
 
