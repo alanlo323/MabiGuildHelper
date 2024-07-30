@@ -24,15 +24,7 @@ namespace DiscordBot.Helper
         {
             try
             {
-                string name = keyword;
-                string strToRemove = "瑪奇物品";
-                foreach (char c in strToRemove) name = name.Replace(c.ToString(), string.Empty);
-                name = name!
-                    .Replace(" ", string.Empty)
-                    .Replace("Item", string.Empty, StringComparison.CurrentCultureIgnoreCase)
-                    .Split("/")[0]
-                    .Trim()
-                    ;
+                string name = GetItemName(keyword);
                 if (string.IsNullOrWhiteSpace(name)) return new() { Data = new() { Total = 0, Items = [] } };
 
                 Dictionary<string, ItemResponseDto> db = RuntimeDbUtil.GetRuntimeDb<string, ItemResponseDto>(CacheDbName);
@@ -71,6 +63,20 @@ namespace DiscordBot.Helper
             {
                 throw new Exception($"Please try another method. [{ex.Message}]");
             }
+        }
+
+        public string GetItemName(string input)
+        {
+            string output = input;
+            string strToRemove = "瑪奇物品";
+            foreach (char c in strToRemove) output = output.Replace(c.ToString(), string.Empty);
+            output = output
+                .Replace(" ", string.Empty)
+                .Replace("Item", string.Empty, StringComparison.CurrentCultureIgnoreCase)
+                .Split("/")[0]
+                .Trim()
+                ;
+            return output;
         }
     }
 }

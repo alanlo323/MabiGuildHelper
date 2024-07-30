@@ -46,10 +46,12 @@ namespace DiscordBot.Helper
             #region Check Enchantment
             if (prompt.StartsWith("魔力賦予"))
             {
-                EnchantmentResponseDto enchantmentResponseDto = await enchantmentHelper.GetEnchantmentsAsync(prompt);
-                if (enchantmentResponseDto?.Data.Total == 1)
+                string enchantmentName = enchantmentHelper.GetEnchantmentName(prompt);
+                EnchantmentResponseDto enchantmentResponseDto = await enchantmentHelper.GetEnchantmentsAsync(enchantmentName);
+                IEnumerable<Enchantment> enchantments = enchantmentResponseDto.Data.Enchantments.Where(x => x.LocalName == enchantmentName);
+                if (enchantments.Count() == 1)
                 {
-                    Embed enchantmentEmbed = EmbedUtil.GetEnchantmentEmbed(enchantmentResponseDto.Data.Enchantments.Single());
+                    Embed enchantmentEmbed = EmbedUtil.GetEnchantmentEmbed(enchantments.Single());
                     FollowUpOrEditMessage(socketInteraction, string.Empty, ref restFollowupMessage, embed: enchantmentEmbed);
                     return;
                 }
@@ -59,10 +61,12 @@ namespace DiscordBot.Helper
             #region Check Item
             if (prompt.StartsWith("物品"))
             {
-                ItemResponseDto itemResponseDto = await itemHelper.GetItemAsync(prompt);
-                if (itemResponseDto?.Data.Total == 1)
+                string itemName = itemHelper.GetItemName(prompt);
+                ItemResponseDto itemResponseDto = await itemHelper.GetItemAsync(itemName);
+                IEnumerable<Item> items = itemResponseDto.Data.Items.Where(x => x.TextName1 == itemName);
+                if (items.Count() == 1)
                 {
-                    Embed itemEmbed = EmbedUtil.GetItemEmbed(itemResponseDto.Data.Items.Single());
+                    Embed itemEmbed = EmbedUtil.GetItemEmbed(items.Single());
                     FollowUpOrEditMessage(socketInteraction, string.Empty, ref restFollowupMessage, embed: itemEmbed);
                     return;
                 }

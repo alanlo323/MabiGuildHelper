@@ -24,29 +24,20 @@ namespace DiscordBot.Helper
         {
             try
             {
-                string name = keyword;
-                string strToRemove = "瑪奇魔力賦予卷軸";
-                foreach (char c in strToRemove) name = name.Replace(c.ToString(), string.Empty);
-                name = name!
-                    .Replace(" ", string.Empty)
-                    .Replace("Enchant", string.Empty, StringComparison.CurrentCultureIgnoreCase)
-                    .Replace("Enchantment", string.Empty, StringComparison.CurrentCultureIgnoreCase)
-                    .Split("/")[0]
-                    .Trim()
-                    ;
-                if (string.IsNullOrWhiteSpace(name)) return new() { Data = new() { Total = 0, Enchantments = [] } };
+                string enchantmentName = GetEnchantmentName(keyword);
+                if (string.IsNullOrWhiteSpace(enchantmentName)) return new() { Data = new() { Total = 0, Enchantments = [] } };
 
                 Dictionary<string, EnchantmentResponseDto> db = RuntimeDbUtil.GetRuntimeDb<string, EnchantmentResponseDto>(CacheDbName);
 
-                if (!db.TryGetValue(name, out EnchantmentResponseDto responseObj))
+                if (!db.TryGetValue(enchantmentName, out EnchantmentResponseDto responseObj))
                 {
-                    logger.LogInformation($"Calling {BaseAddress}/{Endpoint} to search for keyword: {name}");
+                    logger.LogInformation($"Calling {BaseAddress}/{Endpoint} to search for keyword: {enchantmentName}");
 
                     EnchantmentRequestDtoQ[] requestDtoQ = [
                         new () {
                             Seq= 1,
                             Mode= "name",
-                            Val= name
+                            Val= enchantmentName
                         }
                         ];
                     EnchantmentRequestDto requestDto = new()
@@ -63,7 +54,7 @@ namespace DiscordBot.Helper
                     var response = await client.PostAsync(request);
                     if (!response.IsSuccessStatusCode) throw new Exception(response.Content);
                     responseObj = response.Content.DeserializeWithNewtonsoft<EnchantmentResponseDto>();
-                    db[name] = responseObj!;
+                    db[enchantmentName] = responseObj!;
                 }
 
                 return responseObj!;
@@ -72,6 +63,21 @@ namespace DiscordBot.Helper
             {
                 throw new Exception($"Please try another method. [{ex.Message}]");
             }
+        }
+
+        public string GetEnchantmentName(string input)
+        {
+            string output = input;
+            string strToRemove = "瑪奇魔力賦予卷軸";
+            foreach (char c in strToRemove) output = output.Replace(c.ToString(), string.Empty);
+            output = output
+                .Replace(" ", string.Empty)
+                .Replace("Enchant", string.Empty, StringComparison.CurrentCultureIgnoreCase)
+                .Replace("Enchantment", string.Empty, StringComparison.CurrentCultureIgnoreCase)
+                .Split("/")[0]
+                .Trim()
+                ;
+            return output;
         }
     }
 }
