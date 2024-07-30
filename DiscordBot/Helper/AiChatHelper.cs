@@ -48,11 +48,11 @@ namespace DiscordBot.Helper
             {
                 string enchantmentName = enchantmentHelper.GetEnchantmentName(prompt);
                 EnchantmentResponseDto enchantmentResponseDto = await enchantmentHelper.GetEnchantmentsAsync(enchantmentName);
-                IEnumerable<Enchantment> enchantments = enchantmentResponseDto.Data.Enchantments.Where(x => x.LocalName == enchantmentName);
-                if (enchantments.Count() == 1)
+                Enchantment enchantment = enchantmentResponseDto.Data.Enchantments.SingleOrDefault(x => x.LocalName == enchantmentName);
+                if (enchantment != default)
                 {
-                    Embed enchantmentEmbed = EmbedUtil.GetEnchantmentEmbed(enchantments.Single());
-                    FollowUpOrEditMessage(socketInteraction, string.Empty, ref restFollowupMessage, embed: enchantmentEmbed);
+                    Embed enchantmentEmbed = EmbedUtil.GetEnchantmentEmbed(enchantment);
+                    FollowUpOrEditMessage(socketInteraction, default!, ref restFollowupMessage, embed: enchantmentEmbed);
                     return;
                 }
             }
@@ -63,11 +63,11 @@ namespace DiscordBot.Helper
             {
                 string itemName = itemHelper.GetItemName(prompt);
                 ItemResponseDto itemResponseDto = await itemHelper.GetItemAsync(itemName);
-                IEnumerable<Item> items = itemResponseDto.Data.Items.Where(x => x.TextName1 == itemName);
-                if (items.Count() == 1)
+                Item item = itemResponseDto.Data.Items.SingleOrDefault(x => x.TextName1 == itemName);
+                if (item != default)
                 {
-                    Embed itemEmbed = EmbedUtil.GetItemEmbed(items.Single());
-                    FollowUpOrEditMessage(socketInteraction, string.Empty, ref restFollowupMessage, embed: itemEmbed);
+                    Embed itemEmbed = EmbedUtil.GetItemEmbed(item);
+                    FollowUpOrEditMessage(socketInteraction, default!, ref restFollowupMessage, embed: itemEmbed);
                     return;
                 }
             }
