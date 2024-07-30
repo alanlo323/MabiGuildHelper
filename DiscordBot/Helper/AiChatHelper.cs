@@ -62,12 +62,12 @@ namespace DiscordBot.Helper
             if (prompt.StartsWith("物品"))
             {
                 string itemName = itemHelper.GetItemName(prompt);
-                ItemResponseDto itemResponseDto = await itemHelper.GetItemAsync(itemName);
+                ItemResponseDto itemResponseDto = await itemHelper.GetItemAsync(itemName, withScreenshot: true);
                 Item item = itemResponseDto.Data.Items.SingleOrDefault(x => x.TextName1 == itemName);
                 if (item != default)
                 {
                     Embed itemEmbed = EmbedUtil.GetItemEmbed(item);
-                    FollowUpOrEditMessage(socketInteraction, default!, ref restFollowupMessage, embed: itemEmbed);
+                    FollowUpOrEditMessage(socketInteraction, default!, ref restFollowupMessage, fileInfo: item.SnapshotTempFile, embed: itemEmbed);
                     return;
                 }
             }
@@ -99,11 +99,13 @@ namespace DiscordBot.Helper
             #endregion
         }
 
-        private void FollowUpOrEditMessage(SocketInteraction socketInteraction, string content, ref RestFollowupMessage? restFollowupMessage, MessageComponent? components = null, Embed? embed = null)
+        private void FollowUpOrEditMessage(SocketInteraction socketInteraction, string content, ref RestFollowupMessage? restFollowupMessage, FileInfo? fileInfo = null, MessageComponent? components = null, Embed? embed = null)
         {
             if (restFollowupMessage == null)
             {
-                restFollowupMessage = socketInteraction.FollowupAsync(content, components: components, embed: embed).GetAwaiter().GetResult();
+                restFollowupMessage = fileInfo == default
+                    ? socketInteraction.FollowupAsync(content, components: components, embed: embed).GetAwaiter().GetResult()
+                    : socketInteraction.FollowupWithFileAsync(filePath: fileInfo.FullName, fileName: fileInfo.Name, text: content, components: components, embed: embed).GetAwaiter().GetResult();
             }
             else
             {
@@ -112,6 +114,7 @@ namespace DiscordBot.Helper
                     x.Content = content;
                     x.Components = components;
                     x.Embed = embed;
+                    if (fileInfo != default) x.Attachments = new List<FileAttachment>() { new(path: fileInfo.FullName, fileName: fileInfo.Name) };
                 }).GetAwaiter().GetResult();
             }
         }
