@@ -29,7 +29,7 @@ namespace DiscordBot.Helper
 {
     public class AiChatHelper(ILogger<AiChatHelper> logger, SemanticKernelEngine semanticKernelEngine, AppDbContext appDbContext, DatabaseHelper databaseHelper, ButtonHandlerHelper buttonHandlerHelper, EnchantmentHelper enchantmentHelper, ItemHelper itemHelper)
     {
-        public async Task ProcessChatRequest(SocketInteraction socketInteraction, string prompt, Uri imageUri = null, int? lastConversationId = null)
+        public async Task ProcessChatRequest(SocketInteraction socketInteraction, string prompt, Uri? imageUri = null, int? lastConversationId = null)
         {
             await socketInteraction.DeferAsync();
 
@@ -44,7 +44,7 @@ namespace DiscordBot.Helper
             RestFollowupMessage restFollowupMessage = null;
 
             #region Check Enchantment
-            if (prompt!.StartsWith("魔力賦予"))
+            if (prompt.StartsWith("魔力賦予"))
             {
                 EnchantmentResponseDto enchantmentResponseDto = await enchantmentHelper.GetEnchantmentsAsync(prompt);
                 if (enchantmentResponseDto?.Data.Total == 1)
@@ -57,7 +57,7 @@ namespace DiscordBot.Helper
             #endregion
 
             #region Check Item
-            if (prompt!.StartsWith("物品"))
+            if (prompt.StartsWith("物品"))
             {
                 ItemResponseDto itemResponseDto = await itemHelper.GetItemAsync(prompt);
                 if (itemResponseDto?.Data.Total == 1)
