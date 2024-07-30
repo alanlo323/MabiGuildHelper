@@ -53,7 +53,7 @@ namespace DiscordBot.MessageHandler
 
         private async Task CheckWordTrigger(SocketUserMessage message)
         {
-            if (_funnyResponseConfig.TriggerWords.Length == 0) return;
+            if (_funnyResponseConfig.TriggerWords == null || _funnyResponseConfig.TriggerWords?.Length == 0) return;
 
             var triggeredWord = _funnyResponseConfig.TriggerWords.First(x => message.Content.Contains(x, StringComparison.CurrentCultureIgnoreCase));
             string key = $"FunnyResponse:text:{message.Channel.Id}:{triggeredWord}";
@@ -72,6 +72,7 @@ namespace DiscordBot.MessageHandler
 
         private async Task CheckStickerTrigger(SocketUserMessage message)
         {
+            if (_funnyResponseConfig.TriggerStickers == null || _funnyResponseConfig.TriggerStickers?.Length == 0) return;
             var triggeredStickers = _funnyResponseConfig.TriggerStickers.Where(x => message.Stickers.Any(s => s.Name == x.ToLower()));
             if (triggeredStickers.Any())
             {

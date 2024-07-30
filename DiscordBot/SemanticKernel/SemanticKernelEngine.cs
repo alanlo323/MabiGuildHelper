@@ -414,7 +414,7 @@ namespace DiscordBot.SemanticKernel
                 {
                     UserPrompt = prompt,
                     PlanTemplate = sb1.ToString(),
-                    Result = $"{result}",
+                    Result = ReplaceEmoji($"{result}"),
                     StartTime = startTime,
                     EndTime = DateTime.Now,
                     ChatHistory = history,
@@ -429,6 +429,17 @@ namespace DiscordBot.SemanticKernel
             {
                 throw;
             }
+        }
+
+        private string ReplaceEmoji(string str)
+        {
+            Dictionary<string, string> mappings = new()
+            {
+                { "😊","<:mtheart:1199003689705275422>"},
+                { "😡","<a:MTAngercry:1148480164137812008>"}
+            };
+            foreach (var mapping in mappings) str = str.Replace(mapping.Key, Emote.Parse(mapping.Value).ToString());
+            return str;
         }
     }
 }
