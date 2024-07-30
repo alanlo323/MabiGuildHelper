@@ -366,7 +366,6 @@ namespace DiscordBot.Helper
             }
         }
 
-
         public async Task<string> GetBingChatResult(string prompt)
         {
             try
@@ -391,6 +390,42 @@ namespace DiscordBot.Helper
                     """;
                 string answer = MiscUtil.WaitUntilValueConfirmed(3, 1000, () => page.EvaluateExpressionAsync<string>(answerBoxExpression).GetAwaiter().GetResult());
                 return answer;
+            }
+            catch (Exception ex)
+            {
+                logger.LogException(ex);
+                return null;
+            }
+        }
+
+        public async Task<string> GetElementScreeshotBase64Async(string url, string selector)
+        {
+            try
+            {
+                BrowserFetcher browserFetcher = new();
+                await browserFetcher.DownloadAsync();
+
+                await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+                {
+                    Headless = true,
+                    DefaultViewport = null,
+                    Args = [$"--start-maximized"],
+                });
+
+                await using var page = await browser.NewPageAsync();
+                await page.GoToAsync(url, WaitUntilNavigation.Networkidle0);
+                await page.WaitForSelectorAsync(selector);
+                await Task.Delay(500);
+                var elementHandle = await page.QuerySelectorAsync(selector);
+                var sreenshotBase64 = await elementHandle.ScreenshotBase64Async(
+                    new ElementScreenshotOptions
+                    {
+                        Type = ScreenshotType.Png,
+                        OmitBackground = true,
+                        CaptureBeyondViewport = true,
+                    }
+                );
+                return sreenshotBase64;
             }
             catch (Exception ex)
             {
