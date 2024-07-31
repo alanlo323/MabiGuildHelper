@@ -12,7 +12,6 @@ using DiscordBot.DataObject;
 using DiscordBot.SemanticKernel.Core;
 using DiscordBot.SemanticKernel;
 using DiscordBot.Util;
-using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.Identity.Client;
 using DiscordBot.Db.Entity;
 using DiscordBot.Commands.SlashCommand;

@@ -41,5 +41,13 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory.Core
             OllamaSharp.Models.GenerateEmbeddingResponse result = await ollama.GenerateEmbeddings(text, cancellationToken);
             return new Embedding(result.Embedding.Select(x => (float)x).ToArray());
         }
+
+        /// <inheritdoc />
+        public IReadOnlyList<string> GetTokens(string text)
+        {
+            TikToken tikToken = TikToken.GetEncoding(TokenEncodingName);
+            var tokens = tikToken.Encode(text);
+            return [tokens.Count.ToString()];
+        }
     }
 }

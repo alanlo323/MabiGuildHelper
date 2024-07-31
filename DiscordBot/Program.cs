@@ -33,7 +33,6 @@ using DiscordBot.SemanticKernel.Plugins.KernelMemory.Extensions.Discord;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.KernelMemory.Pipeline;
 using DiscordBot.SemanticKernel.QueneService;
-using DiscordBot.ReverseProxy;
 using System.Net;
 using DiscordBot.ModalHandler;
 
