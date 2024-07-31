@@ -73,5 +73,12 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory.Core
 
             yield break;
         }
+
+        public IReadOnlyList<string> GetTokens(string text)
+        {
+            TikToken tikToken = TikToken.GetEncoding(TokenEncodingName);
+            var tokens = tikToken.Encode(text);
+            return [tokens.Count.ToString()];
+        }
     }
 }
