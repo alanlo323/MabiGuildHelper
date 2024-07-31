@@ -61,7 +61,7 @@ namespace DiscordBot.Helper
             if (prompt.StartsWith("物品"))
             {
                 string itemName = itemHelper.GetItemName(prompt);
-                ItemResponseDto itemResponseDto = await itemHelper.GetItemAsync(itemName, withScreenshot: true);
+                ItemSearchResponseDto itemResponseDto = await itemHelper.GetItemAsync(itemName, withScreenshot: true, withProductionInfo: true);
                 Item item = itemResponseDto.Data.Items.SingleOrDefault(x => x.TextName1 == itemName);
                 if (item != default)
                 {

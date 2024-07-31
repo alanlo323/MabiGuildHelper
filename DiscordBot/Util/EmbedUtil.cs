@@ -149,7 +149,7 @@ namespace DiscordBot.Util
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Blue)
                 .WithTitle($"{item.TextName1}")
-                .WithDescription(item.TextDesc1)
+                .WithDescription(item.ToString(includeName: false))
                 .WithUrl(item.Url)
                 .WithImageUrl(item.ImageUrl)
                 ;

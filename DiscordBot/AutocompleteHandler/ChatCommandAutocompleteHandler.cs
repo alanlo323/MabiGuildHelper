@@ -48,7 +48,7 @@ namespace DiscordBot.ButtonHandler
         {
             if (!keyword.Any(x => PrefixMabi.Any(y => x == y)) && !keyword.Any(x => PrefixItem.Any(y => x == y))) return;
 
-            ItemResponseDto itemResponseDto = await itemHelper.GetItemAsync(keyword);
+            ItemSearchResponseDto itemResponseDto = await itemHelper.GetItemAsync(keyword);
             foreach (Item item in itemResponseDto.Data.Items.Take(25))
             {
                 string autocomputeName = $"{PrefixItem} {item.TextName1}";
