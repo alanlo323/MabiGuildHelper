@@ -24,7 +24,7 @@ namespace DiscordBot.SemanticKernel.Plugins.Mabinogi;
 /// <summary>
 /// Semantic plugin that enables conversations summarization.
 /// </summary>
-public class EnchantmentPlugin(EnchantmentHelper enchantmentHelper)
+public class ItemPlugin(ItemHelper ItemHelper)
 {
 
     /// <summary>
@@ -32,15 +32,15 @@ public class EnchantmentPlugin(EnchantmentHelper enchantmentHelper)
     /// </summary>
     /// <param name="input">A long conversation transcript.</param>
     /// <param name="kernel">The <see cref="Kernel"/> containing services, plugins, and other state for use throughout the operation.</param>
-    [KernelFunction, Description("Get Mabinogi Enchantment(魔力賦予/魔賦) detail.")]
-    public async Task<string> GetEnchantmentInfoAsync(
-        [Description("Name of the enchantment")] string name,
+    [KernelFunction, Description("Get Mabinogi Item(魔力賦予/魔賦) detail.")]
+    public async Task<string> GetItemInfoAsync(
+        [Description("Name of the Item")] string name,
         Kernel kernel)
     {
         try
         {
-            var responseObj = await enchantmentHelper.GetEnchantmentsAsync(name);
-            if (responseObj.Data.Total < 1) throw new Exception($"There is no Enchantment related to {name}");
+            var responseObj = await ItemHelper.GetItemsAsync(name, withProductionInfo: true);
+            if (responseObj.Data.Total < 1) throw new Exception($"There is no Item related to {name}");
             string responseContent = responseObj.ToString();
             return responseContent;
         }

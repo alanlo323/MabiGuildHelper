@@ -23,7 +23,7 @@ namespace DiscordBot.Helper
         public const string CacheDbName = "ItemsCache";
         public const string ItemScreenshotSelector = "#__next > div > div > div.mabinogi-io-main-wrapper > article > div > div > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.MuiGrid-grid-sm-12.MuiGrid-grid-md-4.MuiGrid-grid-lg-3 > div > div.MabinogiItemBox_mabinogi_item_box__10Hah";
 
-        public async Task<ItemSearchResponseDto> GetItemAsync(string keyword, bool withScreenshot = false, bool withProductionInfo = false)
+        public async Task<ItemSearchResponseDto> GetItemsAsync(string keyword, bool withScreenshot = false, bool withProductionInfo = false)
         {
             try
             {

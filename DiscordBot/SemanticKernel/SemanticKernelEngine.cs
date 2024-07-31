@@ -74,7 +74,7 @@ using DiscordBot.DataObject;
 
 namespace DiscordBot.SemanticKernel
 {
-    public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper, EnchantmentHelper enchantmentHelper, AppDbContext appDbContext, IBackgroundTaskQueue taskQueue, DiscordSocketClient client)
+    public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper, EnchantmentHelper enchantmentHelper, ItemHelper itemHelper, AppDbContext appDbContext, IBackgroundTaskQueue taskQueue, DiscordSocketClient client)
     {
         public const string SystemPrompt = "你是一個Discord Bot, 名字叫夏夜小幫手, 你在\"夏夜月涼\"伺服器裡為會員們服務.";
 
@@ -120,6 +120,7 @@ namespace DiscordBot.SemanticKernel
                 ;
 
             builder.Plugins
+                .AddFromType<ItemPlugin>()
                 .AddFromType<WebPlugin>()
                 .AddFromType<TimePlugin>()
                 //.AddFromType<TextPlugin>()
@@ -154,6 +155,7 @@ namespace DiscordBot.SemanticKernel
                 })
                 .AddSingleton(codeInterpreterConfig)
                 .AddSingleton(enchantmentHelper)
+                .AddSingleton(itemHelper)
                 ;
 
             builder.Services.AddLogging(loggingBuilder =>
@@ -332,8 +334,8 @@ namespace DiscordBot.SemanticKernel
                     你的名字: {client.CurrentUser.Username}
                     目前所在伺服器: {channel?.Guild.Name}
                     目前所在頻道: {channel?.Name}
-                    回答風格: 可愛, 有禮貌
-                    性格: 傲嬌
+                    回答風格: 可愛, 有禮貌, 有點小幽默
+                    性格: 傲嬌, 有點小脾氣
                     """;
                 string currentInfo = $"""
                     目前與你對話的用戶: {user?.DisplayName}
@@ -436,7 +438,10 @@ namespace DiscordBot.SemanticKernel
             Dictionary<string, string> mappings = new()
             {
                 { "😊","<:mtheart:1199003689705275422>"},
-                { "😡","<a:MTAngercry:1148480164137812008>"}
+                { "😡","<a:MTAngercry:1148480164137812008>"},
+                { "🥲","<:MtCry:1199003857733300324>"},
+                { "😭","<:MtCry:1199003857733300324>"},
+                { "😳","<:Blaanidhorny:1123216443140489298>"},
             };
             foreach (var mapping in mappings) str = str.Replace(mapping.Key, Emote.Parse(mapping.Value).ToString());
             return str;

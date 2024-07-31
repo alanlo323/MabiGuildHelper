@@ -61,7 +61,7 @@ namespace DiscordBot.Helper
             if (prompt.StartsWith("物品"))
             {
                 string itemName = itemHelper.GetItemName(prompt);
-                ItemSearchResponseDto itemResponseDto = await itemHelper.GetItemAsync(itemName, withScreenshot: true, withProductionInfo: true);
+                ItemSearchResponseDto itemResponseDto = await itemHelper.GetItemsAsync(itemName, withScreenshot: true, withProductionInfo: true);
                 Item item = itemResponseDto.Data.Items.SingleOrDefault(x => x.TextName1 == itemName);
                 if (item != default)
                 {
@@ -139,6 +139,7 @@ namespace DiscordBot.Helper
                     { "TimePlugin-TimeZoneName", "獲取當前時區" },
                     { "CodeInterpretionPlugin-ExecutePythonCode", "執行Python程式碼" },
                     { "EnchantmentPlugin-GetEnchantmentInfo", "查詢魔力賦予API" },
+                    { "ItemPlugin-GetItemInfo", "查詢物品API" },
                     { "Internal Error", "發生內部錯誤" },
                 };
             List<string> ignoreList = [
