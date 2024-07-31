@@ -238,6 +238,16 @@ namespace DiscordBot.DataObject
     {
         [JsonProperty("data")]
         public ItemSearchResponseData Data { get; set; }
+        public override string ToString()
+        {
+            StringBuilder stringBuilder = new();
+            foreach (Item item in Data.Items)
+            {
+                stringBuilder.AppendLine($"{item.ToString()}");
+                stringBuilder.AppendLine();
+            }
+            return stringBuilder.ToString();
+        }
     }
 
     public class ItemSearchResponseData
@@ -311,7 +321,7 @@ namespace DiscordBot.DataObject
             StringBuilder stringBuilder = new();
             if (includeName) stringBuilder.AppendLine($"{TextName1}");
             stringBuilder.AppendLine($"{TextDesc1}");
-            Production production = Production.FirstOrDefault();
+            Production production = Production?.FirstOrDefault();
             if (production != default)
             {
                 stringBuilder.AppendLine();
