@@ -18,55 +18,41 @@ namespace DiscordBot.Helper
     public class ItemHelper(ILogger<ItemHelper> logger, DataScrapingHelper dataScrapingHelper)
     {
         public const string BaseAddress = "https://mabinogi.io";
-        public const string Endpoint = "napi/items/search";
+        public const string SearchEndpoint = "napi/items/search";
+        public const string ProductionEndpoint = "napi/items/production";
         public const string CacheDbName = "ItemsCache";
+        public const string ItemScreenshotSelector = "#__next > div > div > div.mabinogi-io-main-wrapper > article > div > div > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.MuiGrid-grid-sm-12.MuiGrid-grid-md-4.MuiGrid-grid-lg-3 > div > div.MabinogiItemBox_mabinogi_item_box__10Hah";
 
-        public async Task<ItemResponseDto> GetItemAsync(string keyword, bool withScreenshot = false)
+        public async Task<ItemSearchResponseDto> GetItemAsync(string keyword, bool withScreenshot = false, bool withProductionInfo = false)
         {
             try
             {
                 string name = GetItemName(keyword);
                 if (string.IsNullOrWhiteSpace(name)) return new() { Data = new() { Total = 0, Items = [] } };
 
-                Dictionary<string, ItemResponseDto> db = RuntimeDbUtil.GetRuntimeDb<string, ItemResponseDto>(CacheDbName);
+                Dictionary<string, ItemSearchResponseDto> db = RuntimeDbUtil.GetRuntimeDb<string, ItemSearchResponseDto>(CacheDbName);
 
-                if (!db.TryGetValue(name, out ItemResponseDto responseObj))
+                if (!db.TryGetValue(name, out ItemSearchResponseDto responseObj))
                 {
-                    logger.LogInformation($"Calling {BaseAddress}/{Endpoint} to search for keyword: {name}");
-
-                    ItemRequestDtoQ[] requestDtoQ = [
-                        new () {
-                            Seq= 1,
-                            Mode= "name",
-                            Val= name
-                        }
-                        ];
-                    ItemRequestDto requestDto = new()
-                    {
-                        Q = requestDtoQ.SerializeWithNewtonsoft()
-                    };
-
-                    RestClient client = new(BaseAddress);
-                    RestRequest request = new(Endpoint, method: Method.Post)
-                    {
-                        RequestFormat = DataFormat.Json
-                    };
-                    request.AddStringBody(requestDto.SerializeWithNewtonsoft(), DataFormat.Json);
-                    var response = await client.PostAsync(request);
-                    if (!response.IsSuccessStatusCode) throw new Exception(response.Content);
-                    responseObj = response.Content.DeserializeWithNewtonsoft<ItemResponseDto>()!;
+                    responseObj = await SearchItem(name);
                     db[name] = responseObj;
                 }
 
-                //  Get screenshot if only one item found
-                if (withScreenshot && responseObj?.Data?.Total == 1)
+                //   if only one item found
+                if (responseObj?.Data?.Total == 1)
                 {
                     foreach (Item item in responseObj.Data.Items)
                     {
-                        if (item.ItemFullImageBase64 != default) continue;
-                        string targetSelector = "#__next > div > div > div.mabinogi-io-main-wrapper > article > div > div > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.MuiGrid-grid-sm-12.MuiGrid-grid-md-4.MuiGrid-grid-lg-3 > div > div.MabinogiItemBox_mabinogi_item_box__10Hah";
-                        string screenshotBase64 = await dataScrapingHelper.GetElementScreeshotBase64Async(item.Url, targetSelector);
-                        item.ItemFullImageBase64 = screenshotBase64;
+                        if (withScreenshot && item.ItemFullImageBase64 == default)
+                        {
+                            string screenshotBase64 = await dataScrapingHelper.GetElementScreeshotBase64Async(item.Url, ItemScreenshotSelector);
+                            item.ItemFullImageBase64 = screenshotBase64;
+                        }
+                        if (withProductionInfo && item.Production == default)
+                        {
+                            ItemProductionResponseDto itemProductionResponseDto = await GetItemProduction(item);
+                            item.Production = itemProductionResponseDto.Data.Production;
+                        }
                     }
                 }
 
@@ -74,7 +60,7 @@ namespace DiscordBot.Helper
             }
             catch (Exception ex)
             {
-                throw new Exception($"Please try another method. [{ex.Message}]");
+                throw new Exception($"Cannot get Item: {keyword}. Please try another method. [{ex.Message}]");
             }
         }
 
@@ -90,6 +76,72 @@ namespace DiscordBot.Helper
                 .Trim()
                 ;
             return output;
+        }
+
+        private async Task<ItemSearchResponseDto> SearchItem(string name)
+        {
+            try
+            {
+                logger.LogInformation($"Calling {BaseAddress}/{SearchEndpoint} to search for keyword: {name}");
+
+                ItemSearchRequestDtoQ[] requestDtoQ = [
+                    new () {
+                            Seq= 1,
+                            Mode= "name",
+                            Val= name
+                        }
+                    ];
+                ItemSearchRequestDto requestDto = new()
+                {
+                    Q = requestDtoQ.SerializeWithNewtonsoft()
+                };
+
+                RestClient client = new(BaseAddress);
+                RestRequest request = new(SearchEndpoint, method: Method.Post)
+                {
+                    RequestFormat = DataFormat.Json
+                };
+                request.AddStringBody(requestDto.SerializeWithNewtonsoft(), DataFormat.Json);
+                var response = await client.PostAsync(request);
+                if (!response.IsSuccessStatusCode) throw new Exception(response.Content);
+
+                ItemSearchResponseDto responseObj = response.Content.DeserializeWithNewtonsoft<ItemSearchResponseDto>()!;
+                return responseObj;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        private async Task<ItemProductionResponseDto> GetItemProduction(Item item)
+        {
+            try
+            {
+                logger.LogInformation($"Calling {BaseAddress}/{ProductionEndpoint} to get production info for item: {item.Id} ({item.TextName1})");
+
+                ItemProductionRequestDto requestDto =
+                    new()
+                    {
+                        id = item.Id.ToString()
+                    };
+
+                RestClient client = new(BaseAddress);
+                RestRequest request = new(ProductionEndpoint, method: Method.Post)
+                {
+                    RequestFormat = DataFormat.Json
+                };
+                request.AddStringBody(requestDto.SerializeWithNewtonsoft(), DataFormat.Json);
+                var response = await client.PostAsync(request);
+                if (!response.IsSuccessStatusCode) throw new Exception(response.Content);
+
+                ItemProductionResponseDto responseObj = response.Content.DeserializeWithNewtonsoft<ItemProductionResponseDto>()!;
+                return responseObj;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
     }
 }
