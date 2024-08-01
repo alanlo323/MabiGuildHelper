@@ -174,36 +174,36 @@ public class CodeInterpretionPlugin
             Directory.CreateDirectory(outputDirectoryPath);
         }
 
-        List<string>? inputBindings = new List<string>();
+        List<string>? inputBindings = [];
 
         if (!string.IsNullOrEmpty(inputFiles))
         {
-            using MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(inputFiles));
+            using MemoryStream stream = new(Encoding.UTF8.GetBytes(inputFiles));
             inputBindings = await JsonSerializer.DeserializeAsync<List<string>>(stream).ConfigureAwait(false);
         }
 
-        inputBindings!.AddRange(new[]
-        {
+        inputBindings!.AddRange(
+        [
             $"{codeFilePath}:{CodeFilePath}:ro",
             $"{requirementFilePath}:{RequirementsFilePath}:ro",
             $"{outputDirectoryPath}:{OutputDirectoryPath}:rw"
-        });
+        ]);
 
 
         var containerCreateOptions = new CreateContainerParameters(config)
         {
             Image = this._options.DockerImage,
-            Entrypoint = new[] { "/bin/sh" },
+            Entrypoint = ["/bin/sh"],
             Tty = true,
             NetworkDisabled = false,
             HostConfig = new HostConfig()
             {
                 Binds = inputBindings
             },
-            Env = new[] {
+            Env = [
                 $"GOOGLE_SEARCH_API_KEY={this._options.GoogleSearchAPIKey}",
                 $"GOOGLE_SEARCH_ENGINE_ID={this._options.GoogleSearchEngineId}"
-            }
+            ]
         };
 
         this._logger.LogDebug("Creating container.");
