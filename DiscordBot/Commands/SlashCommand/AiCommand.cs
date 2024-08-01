@@ -122,7 +122,13 @@ namespace DiscordBot.Commands.SlashCommand
                 FollowUpOrEditMessage(command, $"{cleanUrl.ToHighLight()}{Environment.NewLine}正在匯入...", ref restFollowupMessage);
             }
 
-            documentId = await memory.ImportWebPageAsync(cleanUrl, documentId: documentId);
+            TagCollection tags = new()
+                    {
+                        { "SourceType", "WebPage" },
+                        { "Source", cleanUrl },
+                        { "Url", cleanUrl },
+                    };
+            documentId = await memory.ImportWebPageAsync(cleanUrl, documentId: documentId, tags: tags);
             FollowUpOrEditMessage(command, $"{cleanUrl.ToHighLight()}{Environment.NewLine}匯入完成 (documentId: {documentId})", ref restFollowupMessage);
         }
 

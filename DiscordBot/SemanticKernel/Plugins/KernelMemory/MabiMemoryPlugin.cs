@@ -157,9 +157,9 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
         //
         // 傳回:
         //     Document ID
-        //[KernelFunction]
+        [KernelFunction]
         [Description("Store in memory the given text")]
-        public async Task<string> SaveAsync([Description("The text to save in memory")] string input, [Description("The document ID associated with the information to save")][DefaultValue(null)] string? documentId = null, [Description("Memories index associated with the information to save")][DefaultValue(null)] string? index = null, [Description("Memories index associated with the information to save")][DefaultValue(null)] TagCollectionWrapper? tags = null, [Description("Steps to parse the information and store in memory")][DefaultValue(null)] ListOfStringsWrapper? steps = null, ILoggerFactory? loggerFactory = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<string> SaveTextAsync([Description("The text to save in memory")] string input, [Description("The document ID associated with the information to save")][DefaultValue(null)] string? documentId = null, [Description("Memories index associated with the information to save")][DefaultValue(null)] string? index = null, [Description("Memories index associated with the information to save")][DefaultValue(null)] TagCollectionWrapper? tags = null, [Description("Steps to parse the information and store in memory")][DefaultValue(null)] ListOfStringsWrapper? steps = null, ILoggerFactory? loggerFactory = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             string id = await memoryClient.ImportTextAsync(input, documentId, index: index ?? _defaultIndex, tags: tags ?? defaultIngestionTags, steps: steps ?? defaultIngestionSteps, cancellationToken: cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
             await WaitForDocumentReadinessAsync(id, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
@@ -182,7 +182,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
             return id;
         }
 
-        //[KernelFunction]
+        [KernelFunction]
         [Description("Store in memory the information extracted from a web page")]
         public async Task<string> SaveWebPageAsync([Description("Complete URL of the web page to save")] string url, [Description("The document ID associated with the information to save")][DefaultValue(null)] string? documentId = null, [Description("Memories index associated with the information to save")][DefaultValue(null)] string? index = null, [Description("Memories index associated with the information to save")][DefaultValue(null)] TagCollectionWrapper? tags = null, [Description("Steps to parse the information and store in memory")][DefaultValue(null)] ListOfStringsWrapper? steps = null, ILoggerFactory? loggerFactory = null, CancellationToken cancellationToken = default(CancellationToken))
         {

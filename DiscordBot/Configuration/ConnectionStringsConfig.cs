@@ -12,10 +12,11 @@ namespace DiscordBot.Configuration
         public const string SectionName = "ConnectionStrings";
 
         public required string MabiDb { get; set; }
+        public required string Redis { get; set; }
 
         public bool Validate()
         {
-            return !string.IsNullOrEmpty(MabiDb);
+            return !string.IsNullOrEmpty(MabiDb) && !string.IsNullOrEmpty(Redis);
         }
     }
 }
