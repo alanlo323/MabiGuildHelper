@@ -384,7 +384,11 @@ namespace DiscordBot.SemanticKernel
                         ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
                     };
 
-                    if (showStatusPerSec) statusReportTimer.Start();
+                    if (showStatusPerSec)
+                    {
+                        statusReportTimer.Start();
+                        onKenelStatusUpdatedCallback?.Invoke(this, kernelStatus);
+                    }
                     try
                     {
                         result = await chatCompletionService.GetChatMessageContentAsync(history, executionSettings: openAIPromptExecutionSettings, kernel: kernel, cancellationToken: token);
