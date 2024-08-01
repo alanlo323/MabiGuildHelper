@@ -30,6 +30,16 @@ using DiscordBot.SemanticKernel.Plugins.KernelMemory.Extensions.Discord;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.KernelMemory.DocumentStorage.DevTools;
+using StackExchange.Redis;
+using Microsoft.SemanticKernel.Memory;
+using Microsoft.SemanticKernel.Connectors.Redis;
+using Microsoft.SemanticKernel.Embeddings;
+using Microsoft.SemanticKernel;
+using DiscordBot.Constant;
+using NLog.Config;
+using NLog.Targets;
+using OpenTelemetry.Logs;
+using NLog.Extensions.Logging;
 
 namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
 {
@@ -42,9 +52,20 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
             try
             {
                 // TODO: Use reak db and storage
+
+                var tags = new Dictionary<string, char?>
+                {
+                    { "__part_n", '|' },
+                    { "SourceType", '|' },
+                    { "Source", '|' },
+                    { "Url", '|' },
+                    { "Name", '|' },
+                };
+
                 KernelMemoryBuilder kernelMemoryBuilder = new();
                 kernelMemoryBuilder
-                     .WithSimpleVectorDb(SimpleVectorDbConfig.Persistent)
+                     //.WithSimpleVectorDb(SimpleVectorDbConfig.Persistent)
+                     .WithRedisMemoryDb(new RedisConfig(tags: tags) { ConnectionString = connectionStringsConfig.Value.Redis })
                      .WithSimpleFileStorage(SimpleFileStorageConfig.Persistent)
                      .WithSearchClientConfig(new() { MaxMatchesCount = 1, AnswerTokens = 2000 })
                      .WithAzureOpenAITextGeneration(semanticKernelConfig.Value.AzureOpenAI.GPT4oMini, textTokenizer: new GPT4oTokenizer())
@@ -62,6 +83,27 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                 kernelMemoryBuilder.Services.AddSingleton(this);
                 kernelMemoryBuilder.Services.AddSingleton(semanticKernelConfig);
                 kernelMemoryBuilder.Services.AddSingleton(appDbContext);
+
+                kernelMemoryBuilder.Services.AddLogging(loggingBuilder =>
+                {
+                    loggingBuilder.ClearProviders();
+                    loggingBuilder.SetMinimumLevel(LogLevel.Trace);
+
+                    var config = new ConfigurationBuilder()
+                           .AddJsonFile("appsettings.json")
+                           .Build();
+                    IConfigurationSection section = config.GetSection(NLogConstant.SectionName);
+                    var loggingConfiguration = new LoggingConfiguration(new NLog.LogFactory());
+                    loggingConfiguration.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, new ConsoleTarget());
+                    loggingConfiguration.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, new FileTarget
+                    {
+                        FileName = section.GetValue<string>(NLogConstant.FileName),
+                        Layout = section.GetValue<string>(NLogConstant.Layout),
+                    });
+
+                    loggingBuilder.AddNLog(loggingConfiguration);
+                });
+
 
                 memory = kernelMemoryBuilder.Build();
                 (memory as MemoryServerless)!.Orchestrator.AddHandler<DiscordMessageHandler>(semanticKernelConfig.Value.KernelMemory.Discord.Steps[0]);

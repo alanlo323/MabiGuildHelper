@@ -141,6 +141,9 @@ namespace DiscordBot.Helper
                     { "EnchantmentPlugin-GetEnchantmentInfo", "查詢魔力賦予API" },
                     { "ItemPlugin-GetItemInfo", "查詢物品API" },
                     { "Internal Error", "發生內部錯誤" },
+                    { "memory-SaveWebPage", "記憶網頁內容" },
+                    { "memory-SaveText", "記憶文字內容" },
+                    { "memory-Search", "尋找相關記憶" },
                 };
             List<string> ignoreList = [
                 "GetBackgroundInformation",

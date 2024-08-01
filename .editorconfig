@@ -92,6 +92,9 @@ dotnet_diagnostic.KMEXP04.severity = silent
 # CA1416: 驗證平台相容性
 dotnet_diagnostic.CA1416.severity = silent
 
+# SKEXP0020: 類型僅供評估之用，可能會在未來更新中變更或移除。抑制此診斷以繼續。
+dotnet_diagnostic.SKEXP0020.severity = silent
+
 [*.vb]
 #### 命名樣式 ####
 

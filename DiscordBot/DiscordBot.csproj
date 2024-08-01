@@ -27,7 +27,8 @@
     <PackageReference Include="Microsoft.KernelMemory.SemanticKernelPlugin" Version="0.69.240727.1" />
     <PackageReference Include="Microsoft.SemanticKernel" Version="1.16.2" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.16.2" />
-    <PackageReference Include="Microsoft.SemanticKernel.Experimental.Orchestration.Flow" Version="1.15.1-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Redis" Version="1.16.2-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.Experimental.Orchestration.Flow" Version="1.16.2-alpha" />
     <PackageReference Include="Microsoft.SemanticKernel.Planners.Handlebars" Version="1.16.2-preview" />
     <PackageReference Include="Microsoft.SemanticKernel.Planners.OpenAI" Version="1.16.2-preview" />
     <PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.16.2-alpha" />
