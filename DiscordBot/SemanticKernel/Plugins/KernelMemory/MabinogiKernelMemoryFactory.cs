@@ -48,7 +48,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                      .WithSimpleFileStorage(SimpleFileStorageConfig.Persistent)
                      .WithSearchClientConfig(new() { MaxMatchesCount = 1, AnswerTokens = 2000 })
                      .WithAzureOpenAITextGeneration(semanticKernelConfig.Value.AzureOpenAI.GPT4oMini, textTokenizer: new GPT4oTokenizer())
-                     .WithAzureOpenAITextEmbeddingGeneration(semanticKernelConfig.Value.AzureOpenAI.Embedding, textTokenizer: new GPT4oTokenizer())
+                     .WithAzureOpenAITextEmbeddingGeneration(semanticKernelConfig.Value.AzureOpenAI.Embedding, textTokenizer: new GPT3Tokenizer())
                      //.WithCustomTextGenerator(new CustomModelTextGeneration(ollama, new() { MaxToken = 8 * 1024 }))
                      //.WithCustomEmbeddingGenerator(new CustomEmbeddingGenerator(ollama, new() { MaxToken = 8 * 1024, TokenEncodingName = kernelMemoryConfig.Value.TokenEncodingName }))
                      .WithCustomPromptProvider(new CustomPromptProvider())

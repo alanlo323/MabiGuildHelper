@@ -109,5 +109,26 @@ namespace DiscordBot.Util
                 // Log error.
             }
         }
+
+        public static async Task<bool> IsHtml(string url)
+        {
+            using HttpClient client = new();
+            try
+            {
+                HttpResponseMessage response = await client.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    string contentType = response.Content.Headers.ContentType?.MediaType;
+                    return contentType == "text/html";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle any exceptions that occur during the HTTP request
+                //Console.WriteLine($"Error checking image URL: {ex.Message}");
+            }
+
+            return false;
+        }
     }
 }
