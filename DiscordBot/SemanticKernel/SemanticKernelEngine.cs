@@ -85,7 +85,7 @@ namespace DiscordBot.SemanticKernel
 
         public async Task StartEngine()
         {
-            chatCompletionConfig = semanticKernelConfig.Value.AzureOpenAI.GPT4O;
+            chatCompletionConfig = semanticKernelConfig.Value.AzureOpenAI.GPT4oMini;
             embeddingConfig = semanticKernelConfig.Value.AzureOpenAI.Embedding;
             codeInterpreterConfig = semanticKernelConfig.Value.CodeInterpreter;
 
