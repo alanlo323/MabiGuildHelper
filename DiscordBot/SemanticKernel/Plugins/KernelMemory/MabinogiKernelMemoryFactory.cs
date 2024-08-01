@@ -41,6 +41,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
             if (memory != null) return;
             try
             {
+                // TODO: Use reak db and storage
                 KernelMemoryBuilder kernelMemoryBuilder = new();
                 kernelMemoryBuilder
                      .WithSimpleVectorDb(SimpleVectorDbConfig.Persistent)

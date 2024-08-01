@@ -21,6 +21,19 @@ namespace DiscordBot.SemanticKernel.Core
                 stepStatus.EndTime = default;
                 onKenelStatusUpdatedHandler?.Invoke(this, kernelStatus);
 
+                // Example of adding a custom approval step in the pipeline.
+                //if (context.Function.PluginName == "DynamicsPlugin" && context.Function.Name == "create_order")
+                //{
+                //    Console.WriteLine("System > The agent wants to create an approval, do you want to proceed? (Y/N)");
+                //    string shouldProceed = Console.ReadLine()!;
+
+                //    if (shouldProceed != "Y")
+                //    {
+                //        context.Result = new FunctionResult(context.Result, "The order creation was not approved by the user");
+                //        return;
+                //    }
+                //}
+
                 // Calling next filter in pipeline or function itself.
                 // By skipping this call, next filters and function won't be invoked, and function call loop will proceed to the next function.
                 await next(context);
