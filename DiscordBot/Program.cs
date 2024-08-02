@@ -56,6 +56,7 @@ namespace DiscordBot
             builder.Services.AddOptions<FunnyResponseConfig>().Bind(builder.Configuration.GetSection(FunnyResponseConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<SemanticKernelConfig>().Bind(builder.Configuration.GetSection(SemanticKernelConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<ReverseProxyConfig>().Bind(builder.Configuration.GetSection(ReverseProxyConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
+            builder.Services.AddOptions<RabbitMqConfig>().Bind(builder.Configuration.GetSection("RabbitMQ"));
 
             builder.Services.AddLogging(loggingBuilder =>
             {
@@ -64,8 +65,8 @@ namespace DiscordBot
 
                 IConfigurationSection section = builder.Configuration.GetSection(NLogConstant.SectionName);
                 var loggingConfiguration = new LoggingConfiguration(new NLog.LogFactory());
-                loggingConfiguration.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, new ConsoleTarget());
-                loggingConfiguration.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, new FileTarget
+                loggingConfiguration.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, new ConsoleTarget());
+                loggingConfiguration.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, new FileTarget
                 {
                     FileName = section.GetValue<string>(NLogConstant.FileName),
                     Layout = section.GetValue<string>(NLogConstant.Layout),
