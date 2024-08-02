@@ -40,12 +40,14 @@ using NLog.Config;
 using NLog.Targets;
 using OpenTelemetry.Logs;
 using NLog.Extensions.Logging;
+using DiscordBot.Extension;
 
 namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
 {
-    public class MabinogiKernelMemoryFactory(ILogger<MabinogiKernelMemoryFactory> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, IOptionsSnapshot<ConnectionStringsConfig> connectionStringsConfig, DataScrapingHelper dataScrapingHelper, AppDbContext appDbContext)
+    public class MabinogiKernelMemoryFactory(ILogger<MabinogiKernelMemoryFactory> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, IOptionsSnapshot<RabbitMqConfig> rabbitMqConfig, IOptionsSnapshot<ConnectionStringsConfig> connectionStringsConfig, DataScrapingHelper dataScrapingHelper, AppDbContext appDbContext)
     {
         IKernelMemory? memory;
+
         public async Task Prepare()
         {
             if (memory != null) return;
@@ -61,9 +63,30 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                     { "Url", '|' },
                     { "Name", '|' },
                 };
+                var hostBuilder = Host.CreateApplicationBuilder();
+                hostBuilder.Services.AddLogging(loggingBuilder =>
+                {
+                    loggingBuilder.ClearProviders();
+                    loggingBuilder.SetMinimumLevel(LogLevel.Trace);
 
-                KernelMemoryBuilder kernelMemoryBuilder = new();
+                    var config = new ConfigurationBuilder()
+                           .AddJsonFile("appsettings.json")
+                           .Build();
+                    IConfigurationSection section = config.GetSection(NLogConstant.SectionName);
+                    var loggingConfiguration = new LoggingConfiguration(new NLog.LogFactory());
+                    loggingConfiguration.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, new ConsoleTarget());
+                    loggingConfiguration.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, new FileTarget
+                    {
+                        FileName = section.GetValue<string>(NLogConstant.FileName),
+                        Layout = section.GetValue<string>(NLogConstant.Layout),
+                    });
+
+                    loggingBuilder.AddNLog(loggingConfiguration);
+                });
+
+                KernelMemoryBuilder kernelMemoryBuilder = new(hostBuilder.Services);
                 kernelMemoryBuilder
+                     .WithRabbitMQOrchestration(rabbitMqConfig.Value)
                      //.WithSimpleVectorDb(SimpleVectorDbConfig.Persistent)
                      .WithRedisMemoryDb(new RedisConfig(tags: tags) { ConnectionString = connectionStringsConfig.Value.Redis })
                      .WithSimpleFileStorage(SimpleFileStorageConfig.Persistent)
@@ -83,32 +106,25 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                 kernelMemoryBuilder.Services.AddSingleton(this);
                 kernelMemoryBuilder.Services.AddSingleton(semanticKernelConfig);
                 kernelMemoryBuilder.Services.AddSingleton(appDbContext);
-
-                kernelMemoryBuilder.Services.AddLogging(loggingBuilder =>
-                {
-                    loggingBuilder.ClearProviders();
-                    loggingBuilder.SetMinimumLevel(LogLevel.Trace);
-
-                    var config = new ConfigurationBuilder()
-                           .AddJsonFile("appsettings.json")
-                           .Build();
-                    IConfigurationSection section = config.GetSection(NLogConstant.SectionName);
-                    var loggingConfiguration = new LoggingConfiguration(new NLog.LogFactory());
-                    loggingConfiguration.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, new ConsoleTarget());
-                    loggingConfiguration.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, new FileTarget
-                    {
-                        FileName = section.GetValue<string>(NLogConstant.FileName),
-                        Layout = section.GetValue<string>(NLogConstant.Layout),
-                    });
-
-                    loggingBuilder.AddNLog(loggingConfiguration);
-                });
-
+                kernelMemoryBuilder.Services.AddSingleton<DiscordMessageHandler>();
 
                 memory = kernelMemoryBuilder.Build();
-                (memory as MemoryServerless)!.Orchestrator.AddHandler<DiscordMessageHandler>(semanticKernelConfig.Value.KernelMemory.Discord.Steps[0]);
+                if (memory is MemoryServerless memoryServerless)
+                {
+                    memoryServerless.Orchestrator.AddHandler<DiscordMessageHandler>(semanticKernelConfig.Value.KernelMemory.Discord.Steps[0]);
+                }
+                if (memory is MemoryService memoryService)
+                {
+                    IPipelineOrchestrator orchestrator = memoryService.GetField<IPipelineOrchestrator>("_orchestrator");
+                    IServiceProvider serviceProvider = hostBuilder.Services.BuildServiceProvider();
+                    DiscordMessageHandler discordMessageHandler = ActivatorUtilities.CreateInstance<DiscordMessageHandler>(serviceProvider, semanticKernelConfig.Value.KernelMemory.Discord.Steps[0]);
+                    await orchestrator.AddHandlerAsync(discordMessageHandler);
+                }
 
                 await ImportData();
+
+                var host = hostBuilder.Build();
+                await host.StartAsync();
             }
             catch
             {
@@ -124,7 +140,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
 
         private async Task ImportData()
         {
-            //await ImportAppData();
+            await ImportAppData();
             await ImportWebData();
         }
 
@@ -200,11 +216,14 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                 FileInfo fileInfo = new(path);
 
                 var documentIsReady = await memory.IsDocumentReadyAsync(fileInfo.Name);
-                if (documentIsReady)
-                {
-                    continue;
-                }
-                //await memory.ImportDocumentAsync(fileInfo.FullName, documentId: fileInfo.Name, tags: new TagCollection() { fileInfo.Name });
+                if (documentIsReady) continue;
+
+                TagCollection tags = new()
+                    {
+                        { "SourceType", "File" },
+                        { "Name", fileInfo.Name},
+                    };
+                await memory.ImportDocumentAsync(fileInfo.FullName, documentId: fileInfo.Name, tags: tags);
             }
         }
     }

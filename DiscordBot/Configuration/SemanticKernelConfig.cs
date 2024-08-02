@@ -15,6 +15,7 @@ namespace DiscordBot.Configuration
 
         public required AzureOpenAiConfig AzureOpenAI { get; set; }
         public required KernelMemoryConfig KernelMemory { get; set; }
+        public required RabbitMQ RabbitMQ { get; set; }
         public required GoogleSearchApiConfig GoogleSearchApi { get; set; }
         public required CodeInterpretionPluginOptions CodeInterpreter { get; set; }
 
@@ -62,6 +63,15 @@ namespace DiscordBot.Configuration
         public required string XPath { get; set; }
         public required string Url { get; set; }
         public required string[] Tag { get; set; }
+    }
+
+    public class RabbitMQ
+    {
+        public required string Host { get; set; }
+        public required int Port { get; set; }
+        public required string Username { get; set; }
+        public required string Password { get; set; }
+        public required string VirtualHost { get; set; }
     }
 
     public class GoogleSearchApiConfig
