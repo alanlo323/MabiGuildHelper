@@ -44,7 +44,7 @@ using DiscordBot.Extension;
 
 namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
 {
-    public class MabinogiKernelMemoryFactory(ILogger<MabinogiKernelMemoryFactory> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, IOptionsSnapshot<RabbitMqConfig> rabbitMqConfig, IOptionsSnapshot<ConnectionStringsConfig> connectionStringsConfig, DataScrapingHelper dataScrapingHelper, AppDbContext appDbContext)
+    public class MabinogiKernelMemoryFactory(ILogger<MabinogiKernelMemoryFactory> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, IOptionsSnapshot<RabbitMqConfig> rabbitMqConfig, IOptionsSnapshot<QdrantConfig> qdrantConfig, IOptionsSnapshot<ConnectionStringsConfig> connectionStringsConfig, IOptionsSnapshot<AzureBlobsConfig> azureBlobsConfig, DataScrapingHelper dataScrapingHelper, AppDbContext appDbContext)
     {
         IKernelMemory? memory;
 
@@ -53,7 +53,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
             if (memory != null) return;
             try
             {
-                // TODO: Use reak db and storage
+                // TODO: Use real db and storage
 
                 var tags = new Dictionary<string, char?>
                 {
@@ -86,15 +86,16 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
 
                 KernelMemoryBuilder kernelMemoryBuilder = new(hostBuilder.Services);
                 kernelMemoryBuilder
-                     .WithRabbitMQOrchestration(rabbitMqConfig.Value)
                      //.WithSimpleVectorDb(SimpleVectorDbConfig.Persistent)
-                     .WithRedisMemoryDb(new RedisConfig(tags: tags) { ConnectionString = connectionStringsConfig.Value.Redis })
-                     .WithSimpleFileStorage(SimpleFileStorageConfig.Persistent)
-                     .WithSearchClientConfig(new() { MaxMatchesCount = 1, AnswerTokens = 2000 })
-                     .WithAzureOpenAITextGeneration(semanticKernelConfig.Value.AzureOpenAI.GPT4oMini, textTokenizer: new GPT4oTokenizer())
-                     .WithAzureOpenAITextEmbeddingGeneration(semanticKernelConfig.Value.AzureOpenAI.Embedding, textTokenizer: new GPT3Tokenizer())
+                     //.WithSimpleFileStorage(SimpleFileStorageConfig.Persistent)
                      //.WithCustomTextGenerator(new CustomModelTextGeneration(ollama, new() { MaxToken = 8 * 1024 }))
                      //.WithCustomEmbeddingGenerator(new CustomEmbeddingGenerator(ollama, new() { MaxToken = 8 * 1024, TokenEncodingName = kernelMemoryConfig.Value.TokenEncodingName }))
+                     .WithRabbitMQOrchestration(rabbitMqConfig.Value)
+                     .WithRedisMemoryDb(new RedisConfig(tags: tags) { ConnectionString = connectionStringsConfig.Value.Redis })
+                     .WithAzureBlobsDocumentStorage(azureBlobsConfig.Value)
+                     .WithSearchClientConfig(new() { MaxMatchesCount = 1, AnswerTokens = 4000 })
+                     .WithAzureOpenAITextGeneration(semanticKernelConfig.Value.AzureOpenAI.GPT4oMini, textTokenizer: new GPT4oTokenizer())
+                     .WithAzureOpenAITextEmbeddingGeneration(semanticKernelConfig.Value.AzureOpenAI.Embedding, textTokenizer: new GPT3Tokenizer())
                      .WithCustomPromptProvider(new CustomPromptProvider())
                      .WithCustomTextPartitioningOptions(new TextPartitioningOptions
                      {
@@ -140,8 +141,8 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
 
         private async Task ImportData()
         {
-            await ImportAppData();
-            await ImportWebData();
+            //await ImportAppData();
+            //await ImportWebData();
         }
 
         // Modify the ImportWebData method in the MabinogiKernelMemoryFactory class
@@ -162,7 +163,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
             Website[] websites = semanticKernelConfig.Value.KernelMemory.DataSource.Website;
             foreach (var website in websites)
             {
-                //await dataScrapingHelper.GetAllLinkedWebPage(new() { Url = website.Url, Name = website.Name }, null, webPageDict, []);
+                await dataScrapingHelper.GetAllLinkedWebPage(new() { Url = website.Url, Name = website.Name }, null, webPageDict, []);
             }
 
             subfolders = preloadedFolder.GetDirectories();
@@ -196,6 +197,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                 };
                 string cleanUrl = uriBuilder.Uri.ToString();
                 if (cleanUrl.EndsWith(".jpg")) continue;
+                if (cleanUrl.EndsWith(".png")) continue;
                 TagCollection tags = new()
                     {
                         { "SourceType", "WebPage" },

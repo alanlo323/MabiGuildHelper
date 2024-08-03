@@ -23,7 +23,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.62.0" />
-    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.69.240727.1" />
+    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.70.240803.1" />
     <PackageReference Include="Microsoft.KernelMemory.SemanticKernelPlugin" Version="0.69.240727.1" />
     <PackageReference Include="Microsoft.SemanticKernel" Version="1.16.2" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.16.2" />

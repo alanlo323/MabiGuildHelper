@@ -110,7 +110,7 @@ namespace DiscordBot.Commands.SlashCommand
             }
 
 
-            string documentId = MiscUtil.GetValidFileName(cleanUrl);
+            string documentId = MiscUtil.GetValidKMDocumentId(cleanUrl);
             IKernelMemory memory = await mabiKMFactory.GetMabinogiKernelMemory();
 
             if (await memory.IsDocumentReadyAsync(documentId))
@@ -129,6 +129,7 @@ namespace DiscordBot.Commands.SlashCommand
                         { "Url", cleanUrl },
                     };
             documentId = await memory.ImportWebPageAsync(cleanUrl, documentId: documentId, tags: tags);
+            while (!await memory.IsDocumentReadyAsync(documentId)) await Task.Delay(500);
             FollowUpOrEditMessage(command, $"{cleanUrl.ToHighLight()}{Environment.NewLine}匯入完成 (documentId: {documentId})", ref restFollowupMessage);
         }
 
