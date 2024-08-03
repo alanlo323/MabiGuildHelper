@@ -57,6 +57,7 @@ namespace DiscordBot
             builder.Services.AddOptions<SemanticKernelConfig>().Bind(builder.Configuration.GetSection(SemanticKernelConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<ReverseProxyConfig>().Bind(builder.Configuration.GetSection(ReverseProxyConfig.SectionName)).Validate(x => x.Validate()).ValidateOnStart();
             builder.Services.AddOptions<RabbitMqConfig>().Bind(builder.Configuration.GetSection("RabbitMQ"));
+            builder.Services.AddOptions<AzureBlobsConfig>().Bind(builder.Configuration.GetSection("AzureBlobs"));
 
             builder.Services.AddLogging(loggingBuilder =>
             {

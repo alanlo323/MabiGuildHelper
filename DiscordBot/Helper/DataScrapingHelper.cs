@@ -212,66 +212,68 @@ namespace DiscordBot.Helper
 
         public async Task<ConcurrentDictionary<string, WebPage>> GetAllLinkedWebPage(WebPage source, IBrowser browser, ConcurrentDictionary<string, WebPage> webPageDict, ConcurrentQueue<string> urlsQueue, bool isMainThread = true)
         {
-            if (browser == null)
+            try
             {
-                BrowserFetcher browserFetcher = new();
-                await browserFetcher.DownloadAsync();
-
-                await using var newBrowser = await Puppeteer.LaunchAsync(new LaunchOptions
+                if (browser == null)
                 {
-                    Headless = false,
-                    DefaultViewport = null,
-                    Args = [$"--window-size=450,450"],
-                });
+                    BrowserFetcher browserFetcher = new();
+                    await browserFetcher.DownloadAsync();
 
-                return await GetAllLinkedWebPage(source, newBrowser, webPageDict, urlsQueue);
-            }
+                    await using var newBrowser = await Puppeteer.LaunchAsync(new LaunchOptions
+                    {
+                        Headless = false,
+                        DefaultViewport = null,
+                        Args = [$"--window-size=450,450"],
+                    });
 
-            await using var page = await browser.NewPageAsync();
-            await page.GoToAsync(source.Url, WaitUntilNavigation.Networkidle0);
-            source.Name = await page.GetTitleAsync();
+                    return await GetAllLinkedWebPage(source, newBrowser, webPageDict, urlsQueue);
+                }
 
-            Dictionary<string, string> contentRefs = new() {
+                await using var page = await browser.NewPageAsync();
+                await page.GoToAsync(source.Url, WaitUntilNavigation.Networkidle0);
+                source.Name = await page.GetTitleAsync();
+
+                Dictionary<string, string> contentRefs = new() {
                 { "#main-article-new", string.Empty },
                 { "#mainlong", string.Empty },
                 { ".TbMainIE", string.Empty },
             };
 
-            await Parallel.ForEachAsync(contentRefs, async (contentRef, cancellationToken) =>
-            {
-                if (cancellationToken.IsCancellationRequested) return;
-
-                try
+                await Parallel.ForEachAsync(contentRefs, async (contentRef, cancellationToken) =>
                 {
-                    var targetQuery = contentRef.Key;
-                    await page.WaitForSelectorAsync(targetQuery, new() { Timeout = 1 * 1000 });
-                    IElementHandle queryElementHandle = await page.QuerySelectorAsync(targetQuery);
-                    IJSHandle innerTextIJSHandle = await queryElementHandle.GetPropertyAsync("innerText");
-                    contentRefs[targetQuery] = innerTextIJSHandle.RemoteObject.Value.ToString();
+                    if (cancellationToken.IsCancellationRequested) return;
+
+                    try
+                    {
+                        var targetQuery = contentRef.Key;
+                        await page.WaitForSelectorAsync(targetQuery, new() { Timeout = 1 * 1000 });
+                        IElementHandle queryElementHandle = await page.QuerySelectorAsync(targetQuery);
+                        IJSHandle innerTextIJSHandle = await queryElementHandle.GetPropertyAsync("innerText");
+                        contentRefs[targetQuery] = innerTextIJSHandle.RemoteObject.Value.ToString();
+                    }
+                    catch { }
+                });
+
+                foreach (var contentRef in contentRefs)
+                {
+                    if (string.IsNullOrWhiteSpace(contentRef.Value)) continue;
+
+                    source.Snippet = contentRef.Value;
+                    break;
                 }
-                catch { }
-            });
 
-            foreach (var contentRef in contentRefs)
-            {
-                if (string.IsNullOrWhiteSpace(contentRef.Value)) continue;
+                if (!webPageDict.ContainsKey(source.Url))
+                {
+                    webPageDict.TryAdd(source.Url, source);
+                    SaveWebPage(source);
+                }
 
-                source.Snippet = contentRef.Value;
-                break;
-            }
-
-            if (!webPageDict.ContainsKey(source.Url))
-            {
-                webPageDict.TryAdd(source.Url, source);
-                SaveWebPage(source);
-            }
-
-            var jsSelectAllAnchors = @"Array.from(document.querySelectorAll('a')).map(a => a.href);";
-            var urls = await page.EvaluateExpressionAsync<string[]>(jsSelectAllAnchors);
-            await page.CloseAsync();
-            string[] uniqueUrls =
-            [
-                "https://mabinogi.fws.tw/how_reform.php",
+                var jsSelectAllAnchors = @"Array.from(document.querySelectorAll('a')).map(a => a.href);";
+                var urls = await page.EvaluateExpressionAsync<string[]>(jsSelectAllAnchors);
+                await page.CloseAsync();
+                string[] uniqueUrls =
+                [
+                    "https://mabinogi.fws.tw/how_reform.php",
                 "https://mabinogi.fws.tw/how_titles.php",
                 "https://mabinogi.fws.tw/items.php",
                 "https://mabinogi.fws.tw/ac_bbsfree_view.php",
@@ -286,34 +288,43 @@ namespace DiscordBot.Helper
                 "https://mabinogi.fws.tw/news_info.php",
                 "https://mabinogi.fws.tw/weather.php",
             ];
-            foreach (string url in urls)
-            {
-                if (string.IsNullOrEmpty(url)) continue;
-                if (new Uri(source.Url).Host != new Uri(url).Host) continue;
-                //if (!url.StartsWith("https://mabinogi.fws.tw/how")) continue;
-                if (uniqueUrls.Any(x => url.StartsWith(x) && url != x))
-                    continue;
-                if (webPageDict.ContainsKey(url)) continue;
-
-                urlsQueue.Enqueue(url);
-            }
-            if (!isMainThread) return webPageDict;
-
-            await Parallel.ForAsync(0, 32, async (i, cancellationToken) =>
-            {
-            checkpoint:
-                while (urlsQueue.TryDequeue(out string url))
+                foreach (string url in urls)
                 {
-                    if (cancellationToken.IsCancellationRequested) return;
+                    if (string.IsNullOrEmpty(url)) continue;
+                    if (new Uri(source.Url).Host != new Uri(url).Host) continue;
+                    //if (!url.StartsWith("https://mabinogi.fws.tw/how")) continue;
+                    if (uniqueUrls.Any(x => url.StartsWith(x) && url != x))
+                        continue;
+                    if (webPageDict.ContainsKey(url)) continue;
 
-                    WebPage newWebPage = new() { Url = url };
-                    await GetAllLinkedWebPage(newWebPage, browser, webPageDict, urlsQueue, false);
+                    urlsQueue.Enqueue(url);
                 }
-                Thread.Sleep(3000);
-                if (!urlsQueue.IsEmpty) goto checkpoint;
-            });
+                if (!isMainThread)
+                {
+                    logger.LogInformation($"Downloaded: {source.Name}");
+                    return webPageDict;
+                }
 
-            return webPageDict;
+                await Parallel.ForAsync(0, 32, async (i, cancellationToken) =>
+                {
+                checkpoint:
+                    while (urlsQueue.TryDequeue(out string url))
+                    {
+                        if (cancellationToken.IsCancellationRequested) return;
+
+                        WebPage newWebPage = new() { Url = url };
+                        await GetAllLinkedWebPage(newWebPage, browser, webPageDict, urlsQueue, false);
+                    }
+                    Thread.Sleep(3000);
+                    if (!urlsQueue.IsEmpty) goto checkpoint;
+                });
+                return webPageDict;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex.Message);
+                return webPageDict;
+            }
         }
 
         public async void SaveWebPage(WebPage webPage)

@@ -53,6 +53,13 @@ namespace DiscordBot.Util
             return sanitizedUrl;
         }
 
+        public static string GetValidKMDocumentId(string input)
+        {
+            string allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-";
+            string sanitizedInput = new(input.Where(allowedChars.Contains).ToArray());
+            return sanitizedInput;
+        }
+
         /// <summary>
         /// This function will check if the value stay unchanged with specify delay and return the confirmed value.
         /// </summary>
