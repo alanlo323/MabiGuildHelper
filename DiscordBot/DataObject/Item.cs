@@ -331,7 +331,7 @@ namespace DiscordBot.DataObject
                 stringBuilder.AppendLine($"**材料** :");
                 foreach (EssentialsArr essentialsArr in production.EssentialsArr)
                 {
-                    stringBuilder.Append($"{string.Join(", ", essentialsArr.Items.Select(item => $"[{item.Name}](https://mabinogi.io/items/{item.Id})"))}");
+                    stringBuilder.Append($"{string.Join(" / ", essentialsArr.Items.Select(item => $"[{item.Name}](https://mabinogi.io/items/{item.Id})"))}");
                     stringBuilder.AppendLine($" x {essentialsArr.Qty}");
                 }
             }
