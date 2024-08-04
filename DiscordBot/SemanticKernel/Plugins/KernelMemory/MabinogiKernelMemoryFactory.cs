@@ -142,7 +142,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
         private async Task ImportData()
         {
             //await ImportAppData();
-            //await ImportWebData();
+            await ImportWebData();
         }
 
         // Modify the ImportWebData method in the MabinogiKernelMemoryFactory class
@@ -163,7 +163,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
             Website[] websites = semanticKernelConfig.Value.KernelMemory.DataSource.Website;
             foreach (var website in websites)
             {
-                await dataScrapingHelper.GetAllLinkedWebPage(new() { Url = website.Url, Name = website.Name }, null, webPageDict, []);
+                //await dataScrapingHelper.GetAllLinkedWebPage(new() { Url = website.Url, Name = website.Name }, null, webPageDict, []);
             }
 
             subfolders = preloadedFolder.GetDirectories();

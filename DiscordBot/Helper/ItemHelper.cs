@@ -35,6 +35,10 @@ namespace DiscordBot.Helper
                 if (!db.TryGetValue(name, out ItemSearchResponseDto responseObj))
                 {
                     responseObj = await SearchItem(name);
+                    foreach (Item item in responseObj.Data.Items)
+                    {
+                        item.TextDesc1 = item.TextDesc1.Replace("\n", Environment.NewLine);
+                    }
                     db[name] = responseObj;
                 }
 

@@ -83,28 +83,11 @@ namespace DiscordBot.SemanticKernel
         AzureOpenAIConfig embeddingConfig;
         CodeInterpretionPluginOptions codeInterpreterConfig;
 
-        public async Task StartEngine()
+        public async Task<Kernel> GetKernelAsync(ICollection<LogRecord> logRecords = null, AutoFunctionInvocationFilter autoFunctionInvocationFilter = null, bool withAttachment = false)
         {
-            chatCompletionConfig = semanticKernelConfig.Value.AzureOpenAI.GPT4oMini;
+            chatCompletionConfig = withAttachment ? semanticKernelConfig.Value.AzureOpenAI.GPT4O : semanticKernelConfig.Value.AzureOpenAI.GPT4oMini;
             embeddingConfig = semanticKernelConfig.Value.AzureOpenAI.Embedding;
             codeInterpreterConfig = semanticKernelConfig.Value.CodeInterpreter;
-
-            using TracerProvider traceProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource("SemanticKernel.Connectors.OpenAI")
-                .AddSource("Microsoft.SemanticKernel*")
-                .Build();
-
-            using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("SemanticKernel.Connectors.OpenAI")
-                .AddMeter("Microsoft.SemanticKernel*")
-                .Build();
-
-            isEngineStarted = true;
-        }
-
-        public async Task<Kernel> GetKernelAsync(ICollection<LogRecord> logRecords = null, AutoFunctionInvocationFilter autoFunctionInvocationFilter = null)
-        {
-            if (!isEngineStarted) await StartEngine();
 
             // ... initialize the engine ...
             var builder = Kernel.CreateBuilder();
@@ -217,80 +200,6 @@ namespace DiscordBot.SemanticKernel
             return kernel;
         }
 
-        public async Task<Kernel> GetKernelWithRelevantFunctions(string query)
-        {
-            Kernel kernel = await GetKernelAsync();
-
-            // Create memory to store the functions
-            var memoryStorage = new VolatileMemoryStore();
-            var textEmbeddingGenerator = new AzureOpenAITextEmbeddingGenerationService(
-                    embeddingConfig.Deployment,
-                    embeddingConfig.Endpoint,
-                    embeddingConfig.APIKey);
-            var memory = new SemanticTextMemory(memoryStorage, textEmbeddingGenerator);
-
-            // Save functions to memory
-            foreach (KernelPlugin plugin in kernel.Plugins)
-            {
-                foreach (KernelFunction function in plugin)
-                {
-                    var fullyQualifiedName = $"{plugin.Name} - {function.Name}";
-                    await memory.SaveInformationAsync(
-                        "functions",
-                        fullyQualifiedName + ": " + function.Description,
-                        fullyQualifiedName,
-                        additionalMetadata: function.Name
-                        );
-                }
-            }
-
-            // Retrieve the "relevant" functions
-            var relevantRememberedFunctions = memory.SearchAsync("functions", query, 30, minRelevanceScore: 0.2);
-            var relevantFoundFunctions = new List<KernelFunction>();
-            // Populate a plugin with the filtered results
-            await foreach (MemoryQueryResult relevantFunction in relevantRememberedFunctions)
-            {
-                foreach (KernelPlugin plugin in kernel.Plugins)
-                {
-                    if (plugin.TryGetFunction(relevantFunction.Metadata.AdditionalMetadata, out var function))
-                    {
-                        relevantFoundFunctions.Add(function);
-                        break;
-                    }
-                }
-            }
-            KernelPlugin relevantFunctionsPlugin = KernelPluginFactory.CreateFromFunctions("Plugin", relevantFoundFunctions);
-
-            var builder = Kernel.CreateBuilder();
-            builder
-                .AddAzureOpenAIChatCompletion(
-                    chatCompletionConfig.Deployment,
-                    chatCompletionConfig.Endpoint,
-                     chatCompletionConfig.APIKey)
-                .AddAzureOpenAITextEmbeddingGeneration(
-                    embeddingConfig.Deployment,
-                    embeddingConfig.Endpoint,
-                    embeddingConfig.APIKey)
-                ;
-            builder.Services
-                .AddScoped<IDocumentConnector, WordDocumentConnector>()
-                .AddScoped<IFileSystemConnector, LocalFileSystemConnector>()
-                .AddScoped<ISemanticTextMemory, SemanticTextMemory>()
-                .AddScoped<IMemoryStore, VolatileMemoryStore>()
-                .AddScoped<IWebSearchEngineConnector, GoogleConnector>(x =>
-                {
-                    return new GoogleConnector(
-                        semanticKernelConfig.Value.GoogleSearchApi.ApiKey,
-                        semanticKernelConfig.Value.GoogleSearchApi.SearchEngineId
-                        );
-                })
-                ;
-
-            var kernelWithRelevantFunctions = builder.Build();
-            kernelWithRelevantFunctions.Plugins.Add(relevantFunctionsPlugin);
-            return kernelWithRelevantFunctions;
-        }
-
         public async Task<KernelStatus> GenerateResponse(string prompt, SocketInteraction socketInteraction, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, Uri? imageUri = null, ChatHistory? conversationChatHistory = null)
         {
             try
@@ -322,7 +231,7 @@ namespace DiscordBot.SemanticKernel
                 ObservableCollection<LogRecord> logRecords = [];
                 bool showStatusPerSec = true || socketInteraction.User.Id == ulong.Parse(discordBotConfig.Value.AdminId);
                 AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, onKenelStatusUpdatedCallback, showStatusPerSec: showStatusPerSec);
-                Kernel kernel = await GetKernelAsync(logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter);
+                Kernel kernel = await GetKernelAsync(logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter, withAttachment: imageUri != null);
                 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
                 string basicSystemMessage = $"""
