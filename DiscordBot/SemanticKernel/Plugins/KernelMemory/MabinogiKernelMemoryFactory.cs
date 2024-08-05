@@ -53,8 +53,6 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
             if (memory != null) return;
             try
             {
-                // TODO: Use real db and storage
-
                 var tags = new Dictionary<string, char?>
                 {
                     { "__part_n", '|' },
@@ -86,10 +84,6 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
 
                 KernelMemoryBuilder kernelMemoryBuilder = new(hostBuilder.Services);
                 kernelMemoryBuilder
-                     //.WithSimpleVectorDb(SimpleVectorDbConfig.Persistent)
-                     //.WithSimpleFileStorage(SimpleFileStorageConfig.Persistent)
-                     //.WithCustomTextGenerator(new CustomModelTextGeneration(ollama, new() { MaxToken = 8 * 1024 }))
-                     //.WithCustomEmbeddingGenerator(new CustomEmbeddingGenerator(ollama, new() { MaxToken = 8 * 1024, TokenEncodingName = kernelMemoryConfig.Value.TokenEncodingName }))
                      .WithRabbitMQOrchestration(rabbitMqConfig.Value)
                      .WithRedisMemoryDb(new RedisConfig(tags: tags) { ConnectionString = connectionStringsConfig.Value.Redis })
                      .WithAzureBlobsDocumentStorage(azureBlobsConfig.Value)

@@ -242,8 +242,7 @@ namespace DiscordBot.SemanticKernel
                     你的名字: {client.CurrentUser.Username}
                     目前所在伺服器: {channel?.Guild.Name}
                     目前所在頻道: {channel?.Name}
-                    回答風格: 可愛, 有禮貌, 有點小幽默
-                    性格: 傲嬌, 有點小脾氣
+                    回答風格: 毒舌, 邪惡, 惡毒, 惡意
                     """;
                 string currentInfo = $"""
                     目前與你對話的用戶: {user?.DisplayName}
