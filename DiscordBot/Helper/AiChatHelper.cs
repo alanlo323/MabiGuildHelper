@@ -76,10 +76,10 @@ namespace DiscordBot.Helper
             ChatHistory? conversationChatHistory = null;
             if (lastConversation != null) conversationChatHistory = lastConversation.ChatHistoryJson.Deserialize<ChatHistory>();
 
-            KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(prompt, socketInteraction, imageUri: imageUri, conversationChatHistory: conversationChatHistory, onKenelStatusUpdatedCallback: OnKenelStatusUpdated);
+            KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(socketInteraction, prompt, imageUri: imageUri, conversationChatHistory: conversationChatHistory, onKenelStatusUpdatedCallback: OnKenelStatusUpdated);
             await Task.Delay(1000); // Wait for the status message to be sent
 
-            string responseMessage = GetResponseMessage(kernelStatus);
+            string responseMessage = GetResponseMessage(socketInteraction, kernelStatus);
             var answer = responseMessage ?? string.Empty;
             answer = answer[..Math.Min(2000, answer.Length)];
             MessageComponent conversationActionButtonComponent = buttonHandlerHelper.GetButtonHandler<ConversationActionButtonHandler>().GetMessageComponent();
@@ -92,7 +92,7 @@ namespace DiscordBot.Helper
             #region Local Functions
             void OnKenelStatusUpdated(object? sender, KernelStatus kernelStatus)
             {
-                string responseMessage = GetResponseMessage(kernelStatus);
+                string responseMessage = GetResponseMessage(socketInteraction, kernelStatus);
                 FollowUpOrEditMessage(socketInteraction, responseMessage, ref restFollowupMessage);
             }
             #endregion
@@ -118,7 +118,7 @@ namespace DiscordBot.Helper
             }
         }
 
-        private string GetResponseMessage(KernelStatus kernelStatus)
+        private string GetResponseMessage(SocketInteraction socketInteraction, KernelStatus kernelStatus)
         {
             Dictionary<string, string> replacementDict = new() {
                     { "memory-Ask", "搜尋核心記憶" },
@@ -187,9 +187,9 @@ namespace DiscordBot.Helper
                 statusList.Add(message);
             }
 
-            string stepStatusMessage = string.Join(Environment.NewLine, statusList);
+            SocketGuildUser? user = socketInteraction.User as SocketGuildUser;
             StringBuilder responseBuilder = new();
-            responseBuilder.AppendLine(kernelStatus.Conversation?.UserPrompt?.TrimToLimited(200).ToQuotation());
+            responseBuilder.AppendLine($"{user?.DisplayName} : {kernelStatus.Conversation?.UserPrompt}".TrimToLimited(200).ToQuotation());
             responseBuilder.AppendJoin(Environment.NewLine, statusList);
             if (statusList.Count > 0) responseBuilder.Append($"{Environment.NewLine}{Environment.NewLine}");
             if (!string.IsNullOrWhiteSpace(kernelStatus.Conversation?.Result)) responseBuilder.Append(kernelStatus.Conversation?.Result);
