@@ -200,7 +200,7 @@ namespace DiscordBot.SemanticKernel
             return kernel;
         }
 
-        public async Task<KernelStatus> GenerateResponse(string prompt, SocketInteraction socketInteraction, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, Uri? imageUri = null, ChatHistory? conversationChatHistory = null)
+        public async Task<KernelStatus> GenerateResponse(SocketInteraction socketInteraction, string prompt, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, Uri? imageUri = null, ChatHistory? conversationChatHistory = null)
         {
             try
             {
@@ -223,7 +223,6 @@ namespace DiscordBot.SemanticKernel
                 };
                 kernelStatus.Conversation = conversation;
                 onKenelStatusUpdatedCallback?.Invoke(this, kernelStatus);
-
 
                 SocketGuildUser? user = socketInteraction.User as SocketGuildUser;
                 SocketGuildChannel? channel = socketInteraction.Channel as SocketGuildChannel;

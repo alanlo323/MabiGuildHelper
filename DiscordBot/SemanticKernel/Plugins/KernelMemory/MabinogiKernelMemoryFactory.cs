@@ -142,7 +142,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
         private async Task ImportData()
         {
             //await ImportAppData();
-            await ImportWebData();
+            //await ImportWebData();
         }
 
         // Modify the ImportWebData method in the MabinogiKernelMemoryFactory class

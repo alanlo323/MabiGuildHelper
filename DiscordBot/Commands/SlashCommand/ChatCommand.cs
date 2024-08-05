@@ -33,7 +33,7 @@ namespace DiscordBot.Commands.SlashCommand
     {
         public string Name { get; set; } = "chat";
         public string Description { get; set; } = "和小幫手對話";
-        public CommandAvailability Availability { get; set; } = CommandAvailability.AdminServerOnly;
+        public CommandAvailability Availability { get; set; } = CommandAvailability.Global;
 
         public ApplicationCommandProperties GetCommandProperties()
         {
