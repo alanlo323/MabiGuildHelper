@@ -291,7 +291,7 @@ namespace DiscordBot.SemanticKernel
                     OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
                     {
                         Temperature = 1,
-                        TopP = 0.1,
+                        TopP = 0.5,
                         MaxTokens = 4000,
                         ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
                     };
