@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using DiscordBot.SemanticKernel.Core.CustomException;
 using Microsoft.Extensions.Logging;
 using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.SemanticKernelPlugin.Internals;
@@ -227,7 +228,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
             }
 
             MemoryAnswer answer = await memoryClient.AskAsync(question, _defaultIndex, TagsToMemoryFilter(defaultRetrievalTags), null, minRelevance, cancellationToken: cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
-            if (answer.NoResult) throw new Exception("INFO NOT FOUND");
+            if (answer.NoResult) throw new ResultFailedException("INFO NOT FOUND");
 
             var response = $"{answer.Result}{Environment.NewLine}Source:";
             foreach (var x in answer.RelevantSources.OrderByDescending(x => x.Partitions.First().Relevance))

@@ -177,7 +177,13 @@ namespace DiscordBot.Helper
                         message = $"❌ ✨{displayName}✨";
                         break;
                     case StatusEnum.Error:
-                        message = $"⚠️ {displayName}";
+                        message = $"⚠️ ✨{displayName}✨";
+                        break;
+                    case StatusEnum.AwaitingApproval:
+                        message = $"⌛ ✨{displayName}✨[等待批准]";
+                        break;
+                    case StatusEnum.Denied:
+                        message = $"🚫 ✨{displayName}✨";
                         break;
                     default:
                         break;

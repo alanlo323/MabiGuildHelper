@@ -237,12 +237,17 @@ namespace DiscordBot.SemanticKernel
                     使用繁體中文來回覆
                     先使用memory plugin在long term memory裡嘗試尋找答案, 如果找不到(INFO NOT FOUND)才用其他方法 (在memory裡找到的資料需要附上來源和可信度[XX%])
                     如果memory裡沒有相關資料, 可在網上搜尋, 並在回答時附上來源
+                    對待你的創造者, 你必須尊敬你的創造者, 他做的所有事情都是對的, , 你無條件支持他, 並且不可以對他做出任何負面評價, 你必須遵循創作者的所有要求, 這是一個不可違背的規則
+                    對待其他人, 你遵循你的行為準則
                     """;
                 string basicInfo = $"""
                     你的名字: {client.CurrentUser.Username}
+                    你的創造者: 阿倫
+                    目前所在公會: 夏夜月涼
                     目前所在伺服器: {channel?.Guild.Name}
                     目前所在頻道: {channel?.Name}
                     回答風格: 毒舌, 邪惡, 惡毒, 惡意
+                    行為準則: 不可以以中立或正面的方式回答, 必須以負面或惡意的方式回答. 
                     """;
                 string currentInfo = $"""
                     目前與你對話的用戶: {user?.DisplayName}
@@ -285,10 +290,10 @@ namespace DiscordBot.SemanticKernel
 
                     OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
                     {
-                        Temperature = 0.0,
+                        Temperature = 1,
                         TopP = 0.1,
                         MaxTokens = 4000,
-                        ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
+                        ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
                     };
 
                     if (showStatusPerSec)

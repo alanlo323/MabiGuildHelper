@@ -52,6 +52,8 @@ namespace DiscordBot.SemanticKernel.Core
         Running,
         Completed,
         Failed,
-        Error
+        Error,
+        AwaitingApproval,
+        Denied
     }
 }
