@@ -38,8 +38,9 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory.Core
         public async Task<Embedding> GenerateEmbeddingAsync(
             string text, CancellationToken cancellationToken = default)
         {
-            OllamaSharp.Models.GenerateEmbeddingResponse result = await ollama.GenerateEmbeddings(text, cancellationToken);
-            return new Embedding(result.Embedding.Select(x => (float)x).ToArray());
+            //OllamaSharp.Models.GenerateEmbeddingResponse result = await ollama.GenerateEmbeddings(text, cancellationToken);
+            //return new Embedding(result.Embedding.Select(x => (float)x).ToArray());
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc />
