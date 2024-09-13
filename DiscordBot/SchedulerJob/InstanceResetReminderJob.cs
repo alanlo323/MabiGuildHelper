@@ -125,7 +125,7 @@ namespace DiscordBot.SchedulerJob
                     try
                     {
                         DailyVipGift dailyVipGift = dailyVipGiftList[setting.ReminderId];
-                        if (dailyVipGift.DayOfWeek == now.DayOfWeek && (true || now.Hour == 7 && now.Minute == 0))    // Send on 7:00 a.m.
+                        if (dailyVipGift.DayOfWeek == now.DayOfWeek && (now.Hour == 7 && now.Minute == 0))    // Send on 7:00 a.m.
                         {
                             reminders.Add($"`{dailyVipGift.Items.Aggregate((s1, s2) => $"{s1}, {s2}")}`");
                         }
