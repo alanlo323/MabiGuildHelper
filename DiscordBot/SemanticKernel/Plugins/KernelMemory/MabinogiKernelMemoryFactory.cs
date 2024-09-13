@@ -143,6 +143,7 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
         {
             ConcurrentDictionary<string, WebPage> webPageDict = new();
             string folderPath = Path.Combine("KernelMemory", "WebPage");
+            if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
             DirectoryInfo preloadedFolder = new(folderPath);
             DirectoryInfo[] subfolders = preloadedFolder.GetDirectories();
             foreach (var subfolder in subfolders)
