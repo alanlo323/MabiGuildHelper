@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DiscordBot.SemanticKernel.Plugins.KernelMemory.Core;
 using Microsoft.KernelMemory.Configuration;
 using Microsoft.KernelMemory.MemoryStorage.DevTools;
 using Microsoft.KernelMemory.Prompts;
@@ -90,7 +89,6 @@ namespace DiscordBot.SemanticKernel.Plugins.KernelMemory
                      .WithSearchClientConfig(new() { MaxMatchesCount = 1, AnswerTokens = 4000 })
                      .WithAzureOpenAITextGeneration(semanticKernelConfig.Value.AzureOpenAI.GPT4oMini, textTokenizer: new GPT4oTokenizer())
                      .WithAzureOpenAITextEmbeddingGeneration(semanticKernelConfig.Value.AzureOpenAI.Embedding, textTokenizer: new GPT3Tokenizer())
-                     .WithCustomPromptProvider(new CustomPromptProvider())
                      .WithCustomTextPartitioningOptions(new TextPartitioningOptions
                      {
                          MaxTokensPerParagraph = semanticKernelConfig.Value.AzureOpenAI.Embedding.MaxTokenTotal,
