@@ -137,5 +137,14 @@ namespace DiscordBot.Util
 
             return false;
         }
+
+        public static async Task<Stream> GetStreamFromUrl(string url)
+        {
+            using HttpClient client = new();
+            HttpResponseMessage response = await client.GetAsync(url);
+            return !response.IsSuccessStatusCode
+                ? throw new Exception($"Failed to retrieve the stream from the URL: {url}")
+                : await response.Content.ReadAsStreamAsync();
+        }
     }
 }

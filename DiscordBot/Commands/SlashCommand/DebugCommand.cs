@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Webhook;
 using Discord.WebSocket;
 using DiscordBot.Configuration;
 using DiscordBot.DataObject;
@@ -13,6 +14,7 @@ using DiscordBot.Extension;
 using DiscordBot.Helper;
 using DiscordBot.SchedulerJob;
 using DiscordBot.Util;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -49,28 +51,20 @@ namespace DiscordBot.Commands.SlashCommand
             await command.DeferAsync();
             try
             {
-                var sameKeyNews = appDbContext.News.Skip(1).Take(1).ToList();
-                MabinogiNewsResult dataScrapingResult = new()
+                IIntegrationChannel? channel = command.Channel as IIntegrationChannel; ;
+                IGuildUser user = await channel!.GetUserAsync(command.User.Id);
+                string avatarUrl = user.GetDisplayAvatarUrl();
+                Stream avatarStream = await MiscUtil.GetStreamFromUrl(avatarUrl);
+                var webhook = await channel.CreateWebhookAsync(user.DisplayName, avatar: avatarStream, options: new()
                 {
-                    NewNews = sameKeyNews,
-                    UpdatedNews = [],
-                    LoadedNews = [],
-                };
+                    AuditLogReason = $"Create user: {user.Nickname}[{user.Id}] Webhook",
+                    RetryMode = RetryMode.AlwaysRetry,
+                });
+                DiscordWebhookClient client = new(webhook);
+                await client.SendMessageAsync("Test");
+                await client.DeleteWebhookAsync();
 
-                var guildSettings = appDbContext.GuildSettings.ToList();
-
-                foreach (GuildSetting guildSetting in guildSettings)
-                {
-                    if (!guildSetting.DataScapingNewsChannelId.HasValue) continue;
-                    if (guildSetting.GuildId != ulong.Parse(discordBotConfig.Value.AdminServerId)) continue;
-
-                    foreach (News news in dataScrapingResult.UpdatedNews.Concat(dataScrapingResult.NewNews))
-                    {
-                        await discordApiHelper.SendFile(guildSetting.GuildId, guildSetting.DataScapingNewsChannelId, news.SnapshotTempFile.FullName, embed: EmbedUtil.GetMainogiNewsEmbed(news));
-                    }
-                }
-
-                await command.FollowupAsync("Done");
+                await command.FollowupAsync("Done", ephemeral: true);
             }
             catch (Exception ex)
             {

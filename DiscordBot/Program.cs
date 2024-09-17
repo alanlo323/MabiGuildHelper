@@ -110,6 +110,7 @@ namespace DiscordBot
                 .AddScoped<IBaseSlashCommand, LuckyChannelCommand>()
                 .AddScoped<IBaseSlashCommand, ChatCommand>()
                 .AddScoped<IBaseSlashCommand, AiCommand>()
+                .AddScoped<IBaseSlashCommand, SpeakCommand>()
                 .AddScoped<IBaseMessageCommand, EditNewsCommand>()
                 .AddScoped<IBaseMessageCommand, SummarizeCommand>()
                 .AddScoped<IBaseButtonHandler, ManageReminderButtonHandler>()

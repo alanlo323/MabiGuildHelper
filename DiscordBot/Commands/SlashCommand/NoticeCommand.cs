@@ -23,7 +23,7 @@ namespace DiscordBot.Commands.SlashCommand
     public class NoticeCommand(ILogger<NoticeCommand> logger, DiscordSocketClient client) : IBaseSlashCommand
     {
         public string Name { get; set; } = "notice";
-        public string Description { get; set; } = "在指定頻道發出通知";
+        public string Description { get; set; } = "在指定頻道以小幫手身份發出通知";
         public CommandAvailability Availability { get; set; } = CommandAvailability.Global;
 
         public ApplicationCommandProperties GetCommandProperties()
