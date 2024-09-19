@@ -73,12 +73,12 @@ namespace DiscordBot.Commands.SlashCommand
         private async Task<DiscordWebhookClient> GetChannelWebhookClient(SocketGuild guild, IIntegrationChannel optionChannel)
         {
             IEnumerable<RestWebhook> webhooks = await guild.GetWebhooksAsync();
-            IWebhook? webhook = webhooks.FirstOrDefault(x => x.Name == nameof(SpeakCommand) && x.ChannelId == optionChannel.Id);
+            IWebhook? webhook = webhooks.FirstOrDefault(x => x.Creator.Id == client.CurrentUser.Id && x.Name == nameof(SpeakCommand) && x.ChannelId == optionChannel.Id);
             if (webhook == null)
             {
                 string avatarUrl = client.CurrentUser.GetDisplayAvatarUrl();
                 Stream avatarStream = await MiscUtil.GetStreamFromUrl(avatarUrl);
-                webhook = await optionChannel!.CreateWebhookAsync(client.CurrentUser.Username, avatar: avatarStream, options: new()
+                webhook = await optionChannel!.CreateWebhookAsync(nameof(SpeakCommand), avatar: avatarStream, options: new()
                 {
                     AuditLogReason = $"{nameof(SpeakCommand)} 指令",
                     RetryMode = RetryMode.AlwaysRetry,
