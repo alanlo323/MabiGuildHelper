@@ -10,6 +10,6 @@ namespace DiscordBot.Commands.SlashCommand
 {
     public interface IBaseSlashCommand : IBaseCommand
     {
-        public async Task Excute(SocketSlashCommand command) { }
+        public async Task Execute(SocketSlashCommand command) { }
     }
 }

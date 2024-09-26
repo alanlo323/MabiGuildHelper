@@ -42,7 +42,7 @@ namespace DiscordBot.Commands.SlashCommand
             return command.Build();
         }
 
-        public async Task Excute(SocketSlashCommand command)
+        public async Task Execute(SocketSlashCommand command)
         {
             ulong[] allowedUser = [170721070976860161, 664004261998493697];
             if (!allowedUser.Contains(command.User.Id))

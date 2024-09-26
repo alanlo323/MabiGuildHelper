@@ -28,7 +28,7 @@ namespace DiscordBot.Commands.SlashCommand
             return command.Build();
         }
 
-        public async Task Excute(SocketSlashCommand command)
+        public async Task Execute(SocketSlashCommand command)
         {
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.LightOrange)

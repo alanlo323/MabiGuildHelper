@@ -27,7 +27,7 @@ namespace DiscordBot.Commands.SlashCommand
             return command.Build();
         }
 
-        public async Task Excute(SocketSlashCommand command)
+        public async Task Execute(SocketSlashCommand command)
         {
             await command.RespondAsync("待定, 暫不提供".ToQuotation(), ephemeral: true);
         }

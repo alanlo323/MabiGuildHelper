@@ -192,7 +192,7 @@ namespace DiscordBot
                 {
                     try
                     {
-                        await instance.Excute(command);
+                        await instance.Execute(command);
                     }
                     catch (Exception ex)
                     {

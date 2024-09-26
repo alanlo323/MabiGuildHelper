@@ -39,7 +39,7 @@ namespace DiscordBot.Commands.SlashCommand
             return command.Build();
         }
 
-        public async Task Excute(SocketSlashCommand command)
+        public async Task Execute(SocketSlashCommand command)
         {
             ulong[] allowedUser = [ulong.Parse(discordBotConfig.Value.AdminId)];
             if (!allowedUser.Contains(command.User.Id))
@@ -51,18 +51,7 @@ namespace DiscordBot.Commands.SlashCommand
             await command.DeferAsync();
             try
             {
-                IIntegrationChannel? channel = command.Channel as IIntegrationChannel; ;
-                IGuildUser user = await channel!.GetUserAsync(command.User.Id);
-                string avatarUrl = user.GetDisplayAvatarUrl();
-                Stream avatarStream = await MiscUtil.GetStreamFromUrl(avatarUrl);
-                var webhook = await channel.CreateWebhookAsync(user.DisplayName, avatar: avatarStream, options: new()
-                {
-                    AuditLogReason = $"Create user: {user.Nickname}[{user.Id}] Webhook",
-                    RetryMode = RetryMode.AlwaysRetry,
-                });
-                DiscordWebhookClient client = new(webhook);
-                await client.SendMessageAsync("Test");
-                await client.DeleteWebhookAsync();
+                Task.Delay(1000).Wait();
 
                 await command.FollowupAsync("Done", ephemeral: true);
             }

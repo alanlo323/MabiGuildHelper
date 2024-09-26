@@ -46,7 +46,7 @@ namespace DiscordBot.Commands.SlashCommand
             return command.Build();
         }
 
-        public async Task Excute(SocketSlashCommand command)
+        public async Task Execute(SocketSlashCommand command)
         {
             string prompt = command.Data.Options.First(x => x.Name == "text").Value as string;
             Uri imageUri = command.Data.Options.FirstOrDefault(x => x.Name == "attachment")?.Value is Attachment attachment ? new Uri(attachment.ProxyUrl) : null;
