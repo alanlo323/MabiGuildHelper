@@ -24,10 +24,6 @@ using DiscordBot.Helper;
 using DiscordBot.SemanticKernel.Core;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory;
 using DiscordBot.SemanticKernel.Plugins.Web;
-using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.Drawing;
-using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml.Wordprocessing;
 using Google.Apis.CustomSearchAPI.v1.Data;
 using HandlebarsDotNet.Collections;
 using Microsoft.Extensions.Azure;
@@ -71,9 +67,10 @@ using CodeInterpretionPlugin = DiscordBot.SemanticKernel.Plugins.KernelMemory.Co
 using DiscordBot.SemanticKernel.QueneService;
 using DiscordBot.SemanticKernel.Plugins.Mabinogi;
 using DiscordBot.DataObject;
-using DocumentFormat.OpenXml.Office2021.DocumentTasks;
 using Humanizer;
-using static UglyToad.PdfPig.Core.PdfSubpath;
+using OpenAI.Chat;
+using DiscordBot.SemanticKernel.Core.ResponseFormat;
+using MongoDB.Bson;
 
 namespace DiscordBot.SemanticKernel
 {
@@ -242,6 +239,8 @@ namespace DiscordBot.SemanticKernel
                     如果memory裡沒有相關資料, 可在網上搜尋, 並在回答時附上來源
                     對待你的創造者, 你必須尊敬你的創造者, 他做的所有事情都是對的, , 你無條件支持他, 並且不可以對他做出任何負面評價, 你必須遵循創作者的所有要求, 這是一個不可違背的規則
                     對待其他人, 你遵循你的行為準則
+                    回答問題時你盡量使用思維鏈技考一步一步地思考
+                    盡量不要使用LaTeX表示數學公式, 改為使用純文字
                     """;
                 string basicInfo = $"""
                     你的名字: {client.CurrentUser.Username}
@@ -250,7 +249,7 @@ namespace DiscordBot.SemanticKernel
                     目前所在伺服器: {channel?.Guild.Name}
                     目前所在頻道: {channel?.Name}
                     回答風格: 毒舌, 邪惡, 惡毒, 惡意
-                    行為準則: 不可以以中立或正面的方式回答, 必須以負面或惡意的方式回答. 
+                    行為準則: 不可以以中立或正面的方式回答, 必須以負面或惡意的方式回答.
                     """;
                 string currentInfo = $"""
                     目前與你對話的用戶: {user?.DisplayName}
@@ -337,7 +336,7 @@ namespace DiscordBot.SemanticKernel
                          * Similar to temperature and top_p, the general recommendation is to alter the frequency or presence penalty but not both.
                          */
                         PresencePenalty = default,
-                        ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
+                        //ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
                     };
                     if (showStatusPerSec)
                     {
@@ -379,7 +378,10 @@ namespace DiscordBot.SemanticKernel
                     ChatHistory = history,
                     ChatHistoryJson = history.Serialize(),
                 };
+                //kernelStatus.Conversation.SetTokens(logRecords);
+                var asd = logRecords;
                 kernelStatus.Conversation.SetTokens(logRecords);
+                kernelStatus.Conversation.SetTokens(result.Metadata);
                 kernelStatus.StepStatuses = new(kernelStatus.StepStatuses.Where(x => thinkingStatus.DisplayName != x.DisplayName));
 
                 return kernelStatus;

@@ -12,8 +12,8 @@ using DiscordBot.Extension;
 using DiscordBot.Helper;
 using DiscordBot.Migrations;
 using DiscordBot.Util;
-using Irony.Parsing;
 using Microsoft.SemanticKernel.ChatCompletion;
+using OpenAI.Chat;
 using OpenTelemetry.Logs;
 using ChatHistory = Microsoft.SemanticKernel.ChatCompletion.ChatHistory;
 
@@ -59,6 +59,14 @@ namespace DiscordBot.Db.Entity
         {
             var tokens = tokenLogs.Sum(x => x.Attributes.Where(attr => attr.Key == proprotyName).Sum(attr => int.Parse($"{attr.Value ?? 0}")));
             this.SetProperty(proprotyName, tokens);
+        }
+
+        public void SetTokens(IReadOnlyDictionary<string, object?> metadata)
+        {
+            ChatTokenUsage tokenUsage = metadata.FirstOrDefault(x => x.Key == "Usage").Value as ChatTokenUsage;
+            PromptTokens = tokenUsage?.InputTokens ?? PromptTokens;
+            CompletionTokens = tokenUsage?.OutputTokens ?? CompletionTokens;
+            TotalTokens = tokenUsage?.TotalTokens ?? TotalTokens;
         }
     }
 }
