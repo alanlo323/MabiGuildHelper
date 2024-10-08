@@ -51,6 +51,7 @@ namespace DiscordBot.Commands.SlashCommand
             await command.DeferAsync();
             try
             {
+                Test();
                 Task.Delay(1000).Wait();
 
                 await command.FollowupAsync("Done", ephemeral: true);
@@ -59,6 +60,11 @@ namespace DiscordBot.Commands.SlashCommand
             {
                 await command.FollowupAsync(ex.ToString());
             }
+        }
+
+        public void Test()
+        {
+            logger.LogInformation("Test");
         }
     }
 }
