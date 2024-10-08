@@ -27,6 +27,9 @@ namespace DiscordBot.Commands.SlashCommand
         public CommandAvailability Availability { get; set; } = CommandAvailability.Global;
 
         private string OptionUser = "user";
+        private string OptionUsername = "username";
+        private string OptionIcon = "icon";
+        private string OptionIconUrl = "iconurl";
         private string OptionChannel = "channel";
         private string OptionContent = "content";
 
@@ -35,7 +38,10 @@ namespace DiscordBot.Commands.SlashCommand
             var command = new SlashCommandBuilder()
                 .WithName(Name)
                 .WithDescription(Description)
-                .AddOption(OptionUser, ApplicationCommandOptionType.User, "發言用戶", isRequired: true)
+                .AddOption(OptionUser, ApplicationCommandOptionType.User, "發言用戶", isRequired: false)
+                .AddOption(OptionUsername, ApplicationCommandOptionType.String, "發言用戶名字", isRequired: false)
+                .AddOption(OptionIcon, ApplicationCommandOptionType.Attachment, "用戶圖片", isRequired: false)
+                .AddOption(OptionIconUrl, ApplicationCommandOptionType.String, "用戶圖片網址", isRequired: false)
                 .AddOption(OptionChannel, ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
                 .AddOption(OptionContent, ApplicationCommandOptionType.String, "內容", isRequired: true, minLength: 1)
                 ;
@@ -54,20 +60,33 @@ namespace DiscordBot.Commands.SlashCommand
             await command.DeferAsync(ephemeral: true);
 
             SocketGuildUser optionUser = command.Data.Options.First(x => x.Name == OptionUser).Value as SocketGuildUser;
+            string optionUsername = command.Data.Options.First(x => x.Name == OptionUsername).Value as string;
+            Attachment optionIcon = command.Data.Options.First(x => x.Name == OptionIcon).Value as Attachment;
+            string optionIconUrl = command.Data.Options.First(x => x.Name == OptionIconUrl).Value as string;
             IIntegrationChannel optionChannel = command.Data.Options.First(x => x.Name == OptionChannel).Value as IIntegrationChannel;
             string optionContent = command.Data.Options.First(x => x.Name == OptionContent).Value as string;
 
-            SocketGuild guild = client.GetGuild(command.GuildId!.Value);
-            ISocketMessageChannel channel = command.Channel;
-            SocketGuildUser user = guild.GetUser(command.User.Id);
+            if (optionUser == null && optionUsername == default) throw new Exception("請選擇發言用戶");
+            if (optionUser == null && optionIcon == default && optionIconUrl == default) throw new Exception("請選擇用戶圖片或圖片網址");
 
-            string avatarUrl = optionUser!.GetDisplayAvatarUrl();
+            SocketGuild guild = client.GetGuild(command.GuildId!.Value);
+
+            string username = string.Empty;
+            string avatarUrl = string.Empty;
+
+            if (optionUser != null) username = optionUser.DisplayName;
+            if (optionUsername != default) username = optionUsername;
+
+            if (optionUser != default) avatarUrl = optionUser!.GetDisplayAvatarUrl();
+            if (optionIconUrl != default) avatarUrl = optionIconUrl;
+            if (optionIcon != null) avatarUrl = optionIcon.Url;
+
             DiscordWebhookClient webhookClient = await GetChannelWebhookClient(guild, optionChannel);
-            ulong messageId = await webhookClient.SendMessageAsync(optionContent, username: optionUser.DisplayName, avatarUrl: avatarUrl);
+            ulong messageId = await webhookClient.SendMessageAsync(optionContent, username: username, avatarUrl: avatarUrl);
 
             SocketTextChannel messageChannel = optionChannel as SocketTextChannel;
             IMessage message = await messageChannel!.GetMessageAsync(messageId);
-            await command.FollowupAsync($"{message.GetJumpUrl()}{Environment.NewLine}已經在{messageChannel.Mention}模仿{optionUser.DisplayName}發言:{Environment.NewLine}{optionContent}", ephemeral: true);
+            await command.FollowupAsync($"{message.GetJumpUrl()}{Environment.NewLine}已經在{messageChannel.Mention}模仿{username}發言:{Environment.NewLine}{optionContent}", ephemeral: true);
         }
 
         private async Task<DiscordWebhookClient> GetChannelWebhookClient(SocketGuild guild, IIntegrationChannel optionChannel)
