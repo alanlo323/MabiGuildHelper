@@ -385,7 +385,7 @@ namespace DiscordBot.SemanticKernel
                          * Similar to temperature and top_p, the general recommendation is to alter the frequency or presence penalty but not both.
                          */
                         PresencePenalty = default,
-                        //ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
+                        ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
                     };
                     if (showStatusPerSec)
                     {
@@ -427,8 +427,6 @@ namespace DiscordBot.SemanticKernel
                     ChatHistory = history,
                     ChatHistoryJson = history.Serialize(),
                 };
-                //kernelStatus.Conversation.SetTokens(logRecords);
-                var asd = logRecords;
                 kernelStatus.Conversation.SetTokens(logRecords);
                 kernelStatus.Conversation.SetTokens(result.Metadata);
                 kernelStatus.StepStatuses = new(kernelStatus.StepStatuses.Where(x => thinkingStatus.DisplayName != x.DisplayName));
