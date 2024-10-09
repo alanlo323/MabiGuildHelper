@@ -76,7 +76,7 @@ namespace DiscordBot.Helper
             ChatHistory? conversationChatHistory = null;
             if (lastConversation != null) conversationChatHistory = lastConversation.ChatHistoryJson.Deserialize<ChatHistory>();
 
-            KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(socketInteraction, prompt, imageUri: imageUri, conversationChatHistory: conversationChatHistory, onKenelStatusUpdatedCallback: OnKenelStatusUpdated);
+            KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(SemanticKernelEngine.Usage.ChatBot, prompt, socketInteraction: socketInteraction, imageUri: imageUri, conversationChatHistory: conversationChatHistory, onKenelStatusUpdatedCallback: OnKenelStatusUpdated);
             await Task.Delay(1000); // Wait for the status message to be sent
 
             string responseMessage = GetResponseMessage(socketInteraction, kernelStatus);
@@ -144,6 +144,11 @@ namespace DiscordBot.Helper
                     { "memory-SaveWebPage", "記憶網頁內容" },
                     { "memory-SaveText", "記憶文字內容" },
                     { "memory-Search", "尋找相關記憶" },
+                    { "MabiWebPlugin-GetMabinogiWebsiteEventContent", "獲取活動內容" },
+                    { "EventManagerPlugin-GetCurrentEvents", "獲取Discord活動" },
+                    { "EventManagerPlugin-CreateEvent", "創建Discord活動" },
+                    { "EventManagerPlugin-EndEvent", "結束Discord活動" },
+                    { "EventManagerPlugin-ModifyEvent", "修改Discord活動" },
                 };
             List<string> ignoreList = [
                 "GetBackgroundInformation",

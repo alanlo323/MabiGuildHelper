@@ -22,6 +22,7 @@ using Discord.Rest;
 using Quartz.Util;
 using Microsoft.SemanticKernel;
 using System.Threading;
+using static DiscordBot.SemanticKernel.SemanticKernelEngine;
 
 namespace DiscordBot.Commands.MessageCommand
 {
@@ -50,7 +51,7 @@ namespace DiscordBot.Commands.MessageCommand
                 Embed embed = message.Embeds.FirstOrDefault();
                 var input = (string.IsNullOrWhiteSpace(embed?.Description) ? message.Content : embed.Description);
 
-                var kernel = await semanticKernelEngine.GetKernelAsync();
+                var kernel = await semanticKernelEngine.GetKernelAsync(Usage.ChatBot);
                 string result = await kernel.InvokeAsync<string>("ConversationSummaryPlugin", "SummarizeMabiNews", arguments: new()
                 {
                     { "input", input },

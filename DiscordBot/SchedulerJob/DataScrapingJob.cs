@@ -16,6 +16,7 @@ using DiscordBot.SemanticKernel;
 using DiscordBot.Util;
 using Microsoft.Extensions.Logging;
 using Quartz;
+using static DiscordBot.SemanticKernel.SemanticKernelEngine;
 
 namespace DiscordBot.SchedulerJob
 {
@@ -32,7 +33,7 @@ namespace DiscordBot.SchedulerJob
 
             foreach (News news in dataScrapingResult.UpdatedNews.Concat(dataScrapingResult.NewNews))
             {
-                var kernel = await semanticKernelEngine.GetKernelAsync();
+                var kernel = await semanticKernelEngine.GetKernelAsync(Usage.DataScrapingJob);
                 string summary = await kernel.InvokeAsync<string>("ConversationSummaryPlugin", "SummarizeMabiNewsHtml", arguments: new()
                 {
                     { "input", news.HtmlContent },
