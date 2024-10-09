@@ -11,7 +11,7 @@ namespace DiscordBot.Extension
     {
         public static string ToKey(this KernelArguments kernelArguments)
         {
-            return kernelArguments == null ? string.Empty : kernelArguments.Select(x => $"{x.Value}").Aggregate((s1, s2) => $"{s1}-{s2}");
+            return kernelArguments == null || kernelArguments.Count == 0 ? string.Empty : kernelArguments.Select(x => $"{x.Value}").Aggregate((s1, s2) => $"{s1}-{s2}");
         }
 
         public static string ToDisplayName(this KernelArguments kernelArguments)
