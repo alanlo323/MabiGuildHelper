@@ -25,7 +25,7 @@ namespace DiscordBot.SemanticKernel.Plugins.Web;
 /// Initializes a new instance of the <see cref="WebPlugin"/> class.
 /// </remarks>
 /// <param name="connector">The web search engine connector.</param>
-public sealed class WebPlugin(ILogger<DataScrapingJob> logger, IWebSearchEngineConnector connector, DataScrapingHelper dataScrapingHelper)
+public sealed class WebPlugin(ILogger<WebPlugin> logger, IWebSearchEngineConnector connector, DataScrapingHelper dataScrapingHelper)
 {
     /// <summary>
     /// The count parameter name.

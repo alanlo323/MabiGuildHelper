@@ -29,7 +29,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Commands.SlashCommand
 {
-    public class ChatCommand(ILogger<ChatCommand> logger, DiscordSocketClient client, AiChatHelper aiChatHelper) : IBaseSlashCommand
+    public class ChatCommand(ILogger<ChatCommand> logger, DiscordSocketClient client, AiChatHelper aiChatHelper, AppDbContext appDbContext) : IBaseSlashCommand
     {
         public string Name { get; set; } = "chat";
         public string Description { get; set; } = "和小幫手對話";
