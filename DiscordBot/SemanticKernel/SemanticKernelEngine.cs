@@ -24,10 +24,6 @@ using DiscordBot.Helper;
 using DiscordBot.SemanticKernel.Core;
 using DiscordBot.SemanticKernel.Plugins.KernelMemory;
 using DiscordBot.SemanticKernel.Plugins.Web;
-using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.Drawing;
-using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml.Wordprocessing;
 using Google.Apis.CustomSearchAPI.v1.Data;
 using HandlebarsDotNet.Collections;
 using Microsoft.Extensions.Azure;
@@ -71,10 +67,15 @@ using CodeInterpretionPlugin = DiscordBot.SemanticKernel.Plugins.KernelMemory.Co
 using DiscordBot.SemanticKernel.QueneService;
 using DiscordBot.SemanticKernel.Plugins.Mabinogi;
 using DiscordBot.DataObject;
+using Humanizer;
+using OpenAI.Chat;
+using DiscordBot.SemanticKernel.Core.ResponseFormat;
+using MongoDB.Bson;
+using DiscordBot.SemanticKernel.Plugins.Event;
 
 namespace DiscordBot.SemanticKernel
 {
-    public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper, EnchantmentHelper enchantmentHelper, ItemHelper itemHelper, AppDbContext appDbContext, IBackgroundTaskQueue taskQueue, DiscordSocketClient client)
+    public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper, EnchantmentHelper enchantmentHelper, ItemHelper itemHelper, DataScrapingHelper dataScrapingHelper, AppDbContext appDbContext, IBackgroundTaskQueue taskQueue, DiscordSocketClient client)
     {
         public const string SystemPrompt = "你是一個Discord Bot, 名字叫夏夜小幫手, 你在\"夏夜月涼\"伺服器裡為會員們服務.";
 
@@ -83,9 +84,15 @@ namespace DiscordBot.SemanticKernel
         AzureOpenAIConfig embeddingConfig;
         CodeInterpretionPluginOptions codeInterpreterConfig;
 
-        public async Task<Kernel> GetKernelAsync(ICollection<LogRecord> logRecords = null, AutoFunctionInvocationFilter autoFunctionInvocationFilter = null, bool withAttachment = false)
+        public enum Usage
         {
-            chatCompletionConfig = withAttachment ? semanticKernelConfig.Value.AzureOpenAI.GPT4O : semanticKernelConfig.Value.AzureOpenAI.GPT4oMini;
+            ChatBot,
+            DataScrapingJob,
+        }
+
+        public async Task<Kernel> GetKernelAsync(Usage usage, ICollection<LogRecord> logRecords = null, AutoFunctionInvocationFilter autoFunctionInvocationFilter = null, bool useBestModel = false)
+        {
+            chatCompletionConfig = useBestModel ? semanticKernelConfig.Value.AzureOpenAI.GPT4O : semanticKernelConfig.Value.AzureOpenAI.GPT4oMini;
             embeddingConfig = semanticKernelConfig.Value.AzureOpenAI.Embedding;
             codeInterpreterConfig = semanticKernelConfig.Value.CodeInterpreter;
 
@@ -102,44 +109,63 @@ namespace DiscordBot.SemanticKernel
                     embeddingConfig.APIKey)
                 ;
 
-            builder.Plugins
-                .AddFromType<ItemPlugin>()
-                .AddFromType<WebPlugin>()
-                .AddFromType<TimePlugin>()
-                //.AddFromType<TextPlugin>()
-                //.AddFromType<WaitPlugin>()
-                //.AddFromType<FileIOPlugin>()
-                //.AddFromType<SearchUrlPlugin>()
-                //.AddFromType<DocumentPlugin>()
-                .AddFromType<EnchantmentPlugin>()
-                //.AddFromType<TextMemoryPlugin>()
-                .AddFromType<CodeInterpretionPlugin>()
-                //.AddFromType<Plugins.Web.HttpPlugin>()
-                .AddFromType<Plugins.Math.MathPlugin>()
-                //.AddFromType<WebFileDownloadPlugin>()
-                //.AddFromType<Plugins.About.AboutPlugin>()
-                .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
-                .AddFromType<Plugins.Writer.Summary.ConversationSummaryPlugin>()
-                .AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
-                //  TODO: Add Screenshot plugin
-                ;
+            switch (usage)
+            {
+                case Usage.ChatBot:
+                    builder.Plugins
+                        .AddFromType<ItemPlugin>()
+                        .AddFromType<WebPlugin>()
+                        .AddFromType<TimePlugin>()
+                        .AddFromType<EnchantmentPlugin>()
+                        .AddFromType<CodeInterpretionPlugin>()
+                        .AddFromType<Plugins.Math.MathPlugin>()
+                        .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
+                        .AddFromType<Plugins.Writer.Summary.ConversationSummaryPlugin>()
+                        .AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
+                        ;
 
-            builder.Services
-                .AddScoped<IDocumentConnector, WordDocumentConnector>()
-                .AddScoped<IFileSystemConnector, LocalFileSystemConnector>()
-                .AddScoped<ISemanticTextMemory, SemanticTextMemory>()
-                .AddScoped<IMemoryStore, VolatileMemoryStore>()
-                .AddScoped<IWebSearchEngineConnector, GoogleConnector>(x =>
-                {
-                    return new GoogleConnector(
-                        semanticKernelConfig.Value.GoogleSearchApi.ApiKey,
-                        semanticKernelConfig.Value.GoogleSearchApi.SearchEngineId
-                        );
-                })
-                .AddSingleton(codeInterpreterConfig)
-                .AddSingleton(enchantmentHelper)
-                .AddSingleton(itemHelper)
-                ;
+                    builder.Services
+                        .AddScoped<IDocumentConnector, WordDocumentConnector>()
+                        .AddScoped<IFileSystemConnector, LocalFileSystemConnector>()
+                        .AddScoped<ISemanticTextMemory, SemanticTextMemory>()
+                        .AddScoped<IMemoryStore, VolatileMemoryStore>()
+                        .AddScoped<IWebSearchEngineConnector, GoogleConnector>(x =>
+                        {
+                            return new GoogleConnector(
+                                semanticKernelConfig.Value.GoogleSearchApi.ApiKey,
+                                semanticKernelConfig.Value.GoogleSearchApi.SearchEngineId
+                                );
+                        })
+                        .AddScoped<DatabaseHelper>()
+                        .AddScoped<DataScrapingHelper>()
+                        .AddSingleton(codeInterpreterConfig)
+                        .AddSingleton(enchantmentHelper)
+                        .AddSingleton(itemHelper)
+                        .AddSingleton(appDbContext)
+                        ;
+                    break;
+                case Usage.DataScrapingJob:
+                    builder.Plugins
+                        .AddFromType<MabiWebPlugin>()
+                        .AddFromType<EventManagerPlugin>()
+                        //.AddFromType<Plugins.Writer.Summary.ConversationSummaryPlugin>()
+                        ;
+
+                    builder.Services
+                        .AddScoped<IWebSearchEngineConnector, GoogleConnector>(x =>
+                        {
+                            return new GoogleConnector(
+                                semanticKernelConfig.Value.GoogleSearchApi.ApiKey,
+                                semanticKernelConfig.Value.GoogleSearchApi.SearchEngineId
+                                );
+                        })
+                        .AddSingleton(client)
+                        .AddSingleton(dataScrapingHelper)
+                        ;
+                    break;
+                default:
+                    break;
+            }
 
             builder.Services.AddLogging(loggingBuilder =>
             {
@@ -169,10 +195,6 @@ namespace DiscordBot.SemanticKernel
                 });
             });
 
-            builder.Services.AddSingleton(appDbContext);
-            builder.Services.AddScoped<DatabaseHelper>();
-            builder.Services.AddScoped<DataScrapingHelper>();
-
             if (autoFunctionInvocationFilter != default)
             {
                 builder.Services.AddSingleton<IAutoFunctionInvocationFilter>(autoFunctionInvocationFilter);
@@ -200,7 +222,7 @@ namespace DiscordBot.SemanticKernel
             return kernel;
         }
 
-        public async Task<KernelStatus> GenerateResponse(SocketInteraction socketInteraction, string prompt, EventHandler<KernelStatus> onKenelStatusUpdatedCallback, Uri? imageUri = null, ChatHistory? conversationChatHistory = null)
+        public async Task<KernelStatus> GenerateResponse(Usage usage, string prompt, SocketInteraction socketInteraction = null, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null, Uri? imageUri = null, ChatHistory? conversationChatHistory = null)
         {
             try
             {
@@ -224,50 +246,79 @@ namespace DiscordBot.SemanticKernel
                 kernelStatus.Conversation = conversation;
                 onKenelStatusUpdatedCallback?.Invoke(this, kernelStatus);
 
-                SocketGuildUser? user = socketInteraction.User as SocketGuildUser;
-                SocketGuildChannel? channel = socketInteraction.Channel as SocketGuildChannel;
+                SocketGuildUser? user = socketInteraction?.User as SocketGuildUser;
+                SocketGuildChannel? channel = socketInteraction?.Channel as SocketGuildChannel;
                 ChatMessageContent result = default;
                 ObservableCollection<LogRecord> logRecords = [];
                 bool showStatusPerSec = true || socketInteraction.User.Id == ulong.Parse(discordBotConfig.Value.AdminId);
                 AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, onKenelStatusUpdatedCallback, showStatusPerSec: showStatusPerSec);
-                Kernel kernel = await GetKernelAsync(logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter, withAttachment: imageUri != null);
+                Kernel kernel = await GetKernelAsync(usage, logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter, useBestModel: imageUri != null);
                 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
-                string basicSystemMessage = $"""
-                    使用繁體中文來回覆
-                    先使用memory plugin在long term memory裡嘗試尋找答案, 如果找不到(INFO NOT FOUND)才用其他方法 (在memory裡找到的資料需要附上來源和可信度[XX%])
-                    如果memory裡沒有相關資料, 可在網上搜尋, 並在回答時附上來源
-                    對待你的創造者, 你必須尊敬你的創造者, 他做的所有事情都是對的, , 你無條件支持他, 並且不可以對他做出任何負面評價, 你必須遵循創作者的所有要求, 這是一個不可違背的規則
-                    對待其他人, 你遵循你的行為準則
-                    """;
-                string basicInfo = $"""
-                    你的名字: {client.CurrentUser.Username}
-                    你的創造者: 阿倫
-                    目前所在公會: 夏夜月涼
-                    目前所在伺服器: {channel?.Guild.Name}
-                    目前所在頻道: {channel?.Name}
-                    回答風格: 毒舌, 邪惡, 惡毒, 惡意
-                    行為準則: 不可以以中立或正面的方式回答, 必須以負面或惡意的方式回答. 
-                    """;
-                string currentInfo = $"""
-                    目前與你對話的用戶: {user?.DisplayName}
-                    目前日期與時間(yyyy-mm-dd HH:mm:ss): {DateTime.Now:yyyy-mm-dd HH:mm:ss}
-                    """;
+                string basicSystemMessage;
+                string basicInfo;
+
+                switch (usage)
+                {
+                    case Usage.ChatBot:
+                        break;
+                    case Usage.DataScrapingJob:
+                        break;
+                }
 
                 ChatMessageContentItemCollection userInput = [new TextContent(prompt)];
                 if (imageUri != null) userInput.Add(new ImageContent(imageUri));
-                ChatHistory history;
-                if (conversationChatHistory == null)
+
+                ChatHistory history = [];
+
+                switch (usage)
                 {
-                    history = [];
-                    history.AddSystemMessage(basicSystemMessage);
-                    history.AddSystemMessage(basicInfo);
+                    case Usage.ChatBot:
+                        if (conversationChatHistory == null)
+                        {
+                            basicSystemMessage = $"""
+                            使用繁體中文來回覆
+                            先使用memory plugin在long term memory裡嘗試尋找答案, 如果找不到(INFO NOT FOUND)才用其他方法 (在memory裡找到的資料需要附上來源和可信度[XX%])
+                            如果memory裡沒有相關資料, 可在網上搜尋, 並在回答時附上來源
+                            對待你的創造者, 你必須尊敬你的創造者, 他做的所有事情都是對的, , 你無條件支持他, 並且不可以對他做出任何負面評價, 你必須遵循創作者的所有要求, 這是一個不可違背的規則
+                            對待其他人, 你遵循你的行為準則
+                            回答問題時你盡量使用思維鏈技考一步一步地思考
+                            盡量不要使用LaTeX表示數學公式, 改為使用純文字
+                            """;
+                            basicInfo = $"""
+                            你的名字: {client.CurrentUser.Username}
+                            你的創造者: 阿倫
+                            目前所在公會: 夏夜月涼
+                            目前所在伺服器: {channel?.Guild.Name}
+                            目前所在頻道: {channel?.Name}
+                            回答風格: 毒舌, 邪惡, 惡毒, 惡意
+                            行為準則: 不可以以中立或正面的方式回答, 必須以負面或惡意的方式回答. 
+                            """;
+                            history.AddSystemMessage(basicSystemMessage);
+                            history.AddSystemMessage(basicInfo);
+                        }
+                        else
+                        {
+                            history = conversationChatHistory;
+                        }
+                        string currentInfo = $"""
+                            目前與你對話的用戶: {user?.DisplayName}
+                            目前日期與時間(yyyy-mm-dd HH:mm:ss): {DateTime.Now:yyyy-mm-dd HH:mm:ss}
+                            """;
+                        history.AddSystemMessage(currentInfo);
+                        break;
+                    case Usage.DataScrapingJob:
+                        basicSystemMessage = $"""
+                            用戶會給你一段HTML內容, 那是遊戲的公告, 你需要從中提取出可能的活動資訊
+                            活動資訊在相應的網址上, 呼叫{nameof(MabiWebPlugin)}-{nameof(MabiWebPlugin.GetMabinogiWebsiteEventContent)}提取Url裡的活動資訊
+                            只對頭2個Url進行提取
+                            提取活動內容後呼叫{nameof(EventManagerPlugin)}-{nameof(EventManagerPlugin.GetCurrentEvents)}來獲取目前活動列表 (ServerID: 607932041572646932)
+                            比對提取的活動內容和目前活動列表, 如果有重複的活動, 則更新現有的活動
+                            呼叫{nameof(EventManagerPlugin)}-{nameof(EventManagerPlugin.CreateEvent)}來創建新的Discord活動 (ServerID: 607932041572646932)
+                            """;
+                        history.AddSystemMessage(basicSystemMessage);
+                        break;
                 }
-                else
-                {
-                    history = conversationChatHistory;
-                }
-                history.AddSystemMessage(currentInfo);
                 history.AddUserMessage(userInput);
 
                 using System.Timers.Timer statusReportTimer = new(1000) { AutoReset = true };
@@ -287,15 +338,55 @@ namespace DiscordBot.SemanticKernel
                     thinkingStatus.StartTime = startTime;
                     kernelStatus.StepStatuses = new(kernelStatus.StepStatuses.Where(x => pendingStatu.DisplayName != x.DisplayName));
                     kernelStatus.StepStatuses.Enqueue(thinkingStatus);
-
                     OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
                     {
+                        /*
+                         * Temperature - In short, the lower the temperature, the more deterministic the results in the sense that the highest probable next token is always picked.
+                         * Increasing temperature could lead to more randomness, which encourages more diverse or creative outputs.
+                         * You are essentially increasing the weights of the other possible tokens.
+                         * In terms of application, you might want to use a lower temperature value for tasks like fact-based QA to encourage more factual and concise responses.
+                         * For poem generation or other creative tasks, it might be beneficial to increase the temperature value.
+                         */
                         Temperature = 1,
-                        TopP = 0.5,
+                        /*
+                         * Top P - A sampling technique with temperature, called nucleus sampling, where you can control how deterministic the model is.
+                         * If you are looking for exact and factual answers keep this low.
+                         * If you are looking for more diverse responses, increase to a higher value.
+                         * If you use Top P it means that only the tokens comprising the top_p probability mass are considered for responses, so a low top_p value selects the most confident responses.
+                         * This means that a high top_p value will enable the model to look at more possible words, including less likely ones, leading to more diverse outputs.
+                         * 
+                         * The general recommendation is to alter temperature or Top P but not both.
+                         */
+                        TopP = 0.1,
+                        /*
+                         * Max Length - You can manage the number of tokens the model generates by adjusting the max length.
+                         * Specifying a max length helps you prevent long or irrelevant responses and control costs.
+                         */
                         MaxTokens = 4000,
+                        /*
+                         * Stop Sequences - A stop sequence is a string that stops the model from generating tokens.
+                         * Specifying stop sequences is another way to control the length and structure of the model's response.
+                         * For example, you can tell the model to generate lists that have no more than 10 items by adding "11" as a stop sequence.
+                         */
+                        StopSequences = default,
+                        /*
+                         * Frequency Penalty - The frequency penalty applies a penalty on the next token proportional to how many times that token already appeared in the response and prompt.
+                         * The higher the frequency penalty, the less likely a word will appear again.
+                         * This setting reduces the repetition of words in the model's response by giving tokens that appear more a higher penalty.
+                         */
+                        FrequencyPenalty = default,
+                        /*
+                         * Presence Penalty - The presence penalty also applies a penalty on repeated tokens but, unlike the frequency penalty, the penalty is the same for all repeated tokens.
+                         * A token that appears twice and a token that appears 10 times are penalized the same.
+                         * This setting prevents the model from repeating phrases too often in its response.
+                         * If you want the model to generate diverse or creative text, you might want to use a higher presence penalty.
+                         * Or, if you need the model to stay focused, try using a lower presence penalty.
+                         * 
+                         * Similar to temperature and top_p, the general recommendation is to alter the frequency or presence penalty but not both.
+                         */
+                        PresencePenalty = default,
                         ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
                     };
-
                     if (showStatusPerSec)
                     {
                         statusReportTimer.Start();
@@ -323,11 +414,9 @@ namespace DiscordBot.SemanticKernel
 
                 // Wait for the result
                 while (result == default) { await Task.Delay(100); }
-
                 history.AddAssistantMessage($"{Environment.NewLine}{result}");
                 StringBuilder sb1 = new();
                 foreach (var record in history!.Where(x => x.Role != AuthorRole.System)) sb1.AppendLine(record.ToString());
-
                 kernelStatus.Conversation = new()
                 {
                     UserPrompt = prompt,
@@ -339,9 +428,42 @@ namespace DiscordBot.SemanticKernel
                     ChatHistoryJson = history.Serialize(),
                 };
                 kernelStatus.Conversation.SetTokens(logRecords);
+                kernelStatus.Conversation.SetTokens(result.Metadata);
                 kernelStatus.StepStatuses = new(kernelStatus.StepStatuses.Where(x => thinkingStatus.DisplayName != x.DisplayName));
 
                 return kernelStatus;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        public async Task ExecutePrompt(string p)
+        {
+            try
+            {
+                ChatHistory history = [];
+                string basicSystemMessage = $"""
+                    使用繁體中文來回覆
+                    先使用memory plugin在long term memory裡嘗試尋找答案, 如果找不到(INFO NOT FOUND)才用其他方法 (在memory裡找到的資料需要附上來源和可信度[XX%])
+                    如果memory裡沒有相關資料, 可在網上搜尋, 並在回答時附上來源
+                    對待你的創造者, 你必須尊敬你的創造者, 他做的所有事情都是對的, , 你無條件支持他, 並且不可以對他做出任何負面評價, 你必須遵循創作者的所有要求, 這是一個不可違背的規則
+                    對待其他人, 你遵循你的行為準則
+                    """;
+                history.AddSystemMessage(basicSystemMessage);
+
+                Kernel kernel = await GetKernelAsync(Usage.DataScrapingJob);
+                OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
+                {
+                    Temperature = 1,
+                    TopP = 0.5,
+                    MaxTokens = 4000,
+                    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
+                };
+
+                IChatCompletionService chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+                ChatMessageContent result = await chatCompletionService.GetChatMessageContentAsync(history, executionSettings: openAIPromptExecutionSettings, kernel: kernel);
             }
             catch (Exception)
             {

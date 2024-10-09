@@ -444,5 +444,42 @@ namespace DiscordBot.Helper
                 return null;
             }
         }
+
+        public async Task<byte[]> GetWebsiteScreenshot(string url)
+        {
+            try
+            {
+                BrowserFetcher browserFetcher = new();
+                await browserFetcher.DownloadAsync();
+
+                await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+                {
+                    Headless = true,
+                    DefaultViewport = null,
+                    Args = [$"--start-maximized"],
+                });
+
+                await using var page = await browser.NewPageAsync();
+                await page.GoToAsync(url, WaitUntilNavigation.Networkidle0);
+                await Task.Delay(500);
+                var elementHandle = await page.QuerySelectorAsync("selector");
+                var tempFile = Path.GetTempFileName().Replace("tmp", "png");
+                byte[] data = await page.ScreenshotDataAsync(
+                    new ElementScreenshotOptions
+                    {
+                        Type = ScreenshotType.Png,
+                        OmitBackground = true,
+                        CaptureBeyondViewport = true,
+                    }
+                );
+                Uri uri = new(tempFile);
+                return data;
+            }
+            catch (Exception ex)
+            {
+                logger.LogException(ex);
+                return null;
+            }
+        }
     }
 }

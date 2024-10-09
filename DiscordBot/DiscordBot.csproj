@@ -23,19 +23,19 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.64.1" />
-    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.73.240906.1" />
-    <PackageReference Include="Microsoft.KernelMemory.SemanticKernelPlugin" Version="0.73.240906.1" />
-    <PackageReference Include="Microsoft.SemanticKernel" Version="1.19.0" />
-    <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.19.0" />
-    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Redis" Version="1.18.0-alpha" />
-    <PackageReference Include="Microsoft.SemanticKernel.Experimental.Orchestration.Flow" Version="1.19.0-alpha" />
-    <PackageReference Include="Microsoft.SemanticKernel.Planners.Handlebars" Version="1.19.0-preview" />
-    <PackageReference Include="Microsoft.SemanticKernel.Planners.OpenAI" Version="1.19.0-preview" />
-    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.19.0-alpha" />
-    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.19.0-alpha" />
-    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.19.0-alpha" />
-    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.19.0-alpha" />
-    <PackageReference Include="Microsoft.SemanticKernel.PromptTemplates.Handlebars" Version="1.19.0" />
+    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.74.240919.1" />
+    <PackageReference Include="Microsoft.KernelMemory.SemanticKernelPlugin" Version="0.74.240919.1" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.20.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.20.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Redis" Version="1.20.0-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.Experimental.Orchestration.Flow" Version="1.20.0-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.Planners.Handlebars" Version="1.20.0-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Planners.OpenAI" Version="1.20.0-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.20.0-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Document" Version="1.20.0-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Memory" Version="1.20.0-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.20.0-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.PromptTemplates.Handlebars" Version="1.20.0" />
     <PackageReference Include="NLog" Version="5.3.4" />
     <PackageReference Include="NLog.Extensions.Logging" Version="5.3.13" />
     <PackageReference Include="OllamaSharp" Version="3.0.7" />
