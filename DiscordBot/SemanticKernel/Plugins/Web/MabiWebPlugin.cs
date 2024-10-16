@@ -48,20 +48,20 @@ public sealed class MabiWebPlugin(ILogger<MabiWebPlugin> logger, DataScrapingHel
         {
             //url = "https://tw-event.beanfun.com/mabinogi/EventAD/EventAD.aspx?EventADID=10825";
 
-            var data = await dataScrapingHelper.GetWebsiteScreenshot(url);
-            if (data == null) return $"Unable to get event from url: {url}";
+            var snapshot = await dataScrapingHelper.GetWebsiteSnapshot(url);
+            if (snapshot == default) return $"Unable to get event from url: {url}";
 
-            ChatMessageContentItemCollection userInput = [new ImageContent(data, MimeTypes.ImagePng)];
+            ChatMessageContentItemCollection userInput = [new TextContent(snapshot.Item1), new ImageContent(snapshot.Item2, MimeTypes.ImagePng)];
 
             ChatHistory history = [];
             string basicSystemMessage = $"""
                     使用繁體中文來回覆
-                    獲取圖片中的活動內容
-                     - 活動名字
-                     - 開始時間
-                     - 結束時間
-                     - 活動地點
-                     - 活動描述
+                    綜合提供的文字和圖片中的內容來提取活動內容
+                    - 活動名字
+                    - 開始時間
+                    - 結束時間
+                    - 活動地點
+                    - 活動內容
                     """;
             history.AddSystemMessage(basicSystemMessage);
             history.AddUserMessage(userInput);
@@ -75,7 +75,7 @@ public sealed class MabiWebPlugin(ILogger<MabiWebPlugin> logger, DataScrapingHel
             };
 
             IChatCompletionService chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-            ChatMessageContent result = await chatCompletionService.GetChatMessageContentAsync(history, executionSettings: openAIPromptExecutionSettings, kernel: kernel);
+            ChatMessageContent result = await chatCompletionService.GetChatMessageContentAsync(history, executionSettings: openAIPromptExecutionSettings, kernel: kernel, cancellationToken: cancellationToken);
 
             return result.ToString();
         }

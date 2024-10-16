@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using DiscordBot.Migrations;
 using DiscordBot.Commands.SlashCommand;
+using DiscordBot.SemanticKernel;
 
 namespace DiscordBot.Helper
 {
@@ -112,6 +113,27 @@ namespace DiscordBot.Helper
             {
                 logger.LogError(ex, ex.Message);
                 return null;
+            }
+        }
+
+        public async Task LogMessage(ulong guildId, string content)
+        {
+            try
+            {
+                logger.LogInformation($"Posting log to: {guildId}");
+                logger.LogInformation($"Log Content: {content}");
+
+                GuildSetting guildSetting = appDbContext.GuildSettings.FirstOrDefault(x => x.GuildId == guildId) ?? throw new Exception($"Guild setting not found for guild: {guildId}");
+                if (!guildSetting.LogChannelId.HasValue) throw new Exception($"Log channel not set for guild: {guildId}");
+
+                SocketGuild guild = client.GetGuild(guildId);
+                SocketTextChannel textChannel = guild.GetTextChannel(guildSetting.LogChannelId.Value);
+                await textChannel.SendMessageAsync(text: content[..Math.Min(2000, content.Length)]);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning($"Unable to send log to guild: {guildId}");
+                logger.LogException(ex);
             }
         }
     }

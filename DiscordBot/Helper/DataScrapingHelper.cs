@@ -445,7 +445,7 @@ namespace DiscordBot.Helper
             }
         }
 
-        public async Task<byte[]> GetWebsiteScreenshot(string url)
+        public async Task<(string, byte[])> GetWebsiteSnapshot(string url)
         {
             try
             {
@@ -462,8 +462,8 @@ namespace DiscordBot.Helper
                 await using var page = await browser.NewPageAsync();
                 await page.GoToAsync(url, WaitUntilNavigation.Networkidle0);
                 await Task.Delay(500);
-                var elementHandle = await page.QuerySelectorAsync("selector");
-                var tempFile = Path.GetTempFileName().Replace("tmp", "png");
+
+                string plainText = await page.EvaluateExpressionAsync<string>("document.body.innerText");
                 byte[] data = await page.ScreenshotDataAsync(
                     new ElementScreenshotOptions
                     {
@@ -472,13 +472,12 @@ namespace DiscordBot.Helper
                         CaptureBeyondViewport = true,
                     }
                 );
-                Uri uri = new(tempFile);
-                return data;
+                return (plainText, data);
             }
             catch (Exception ex)
             {
                 logger.LogException(ex);
-                return null;
+                return default;
             }
         }
     }

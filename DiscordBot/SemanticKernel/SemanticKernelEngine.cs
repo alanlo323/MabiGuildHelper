@@ -77,20 +77,17 @@ namespace DiscordBot.SemanticKernel
 {
     public class SemanticKernelEngine(ILogger<SemanticKernelEngine> logger, IOptionsSnapshot<SemanticKernelConfig> semanticKernelConfig, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, MabinogiKernelMemoryFactory mabiKMFactory, PromptHelper promptHelper, EnchantmentHelper enchantmentHelper, ItemHelper itemHelper, DataScrapingHelper dataScrapingHelper, AppDbContext appDbContext, IBackgroundTaskQueue taskQueue, DiscordSocketClient client)
     {
-        public const string SystemPrompt = "你是一個Discord Bot, 名字叫夏夜小幫手, 你在\"夏夜月涼\"伺服器裡為會員們服務.";
-
-        bool isEngineStarted = false;
         AzureOpenAIConfig chatCompletionConfig;
         AzureOpenAIConfig embeddingConfig;
         CodeInterpretionPluginOptions codeInterpreterConfig;
 
-        public enum Usage
+        public enum Scope
         {
             ChatBot,
             DataScrapingJob,
         }
 
-        public async Task<Kernel> GetKernelAsync(Usage usage, ICollection<LogRecord> logRecords = null, AutoFunctionInvocationFilter autoFunctionInvocationFilter = null, bool useBestModel = false)
+        public async Task<Kernel> GetKernelAsync(Scope usage, ICollection<LogRecord> logRecords = null, AutoFunctionInvocationFilter autoFunctionInvocationFilter = null, bool useBestModel = false)
         {
             chatCompletionConfig = useBestModel ? semanticKernelConfig.Value.AzureOpenAI.GPT4O : semanticKernelConfig.Value.AzureOpenAI.GPT4oMini;
             embeddingConfig = semanticKernelConfig.Value.AzureOpenAI.Embedding;
@@ -111,7 +108,7 @@ namespace DiscordBot.SemanticKernel
 
             switch (usage)
             {
-                case Usage.ChatBot:
+                case Scope.ChatBot:
                     builder.Plugins
                         .AddFromType<ItemPlugin>()
                         .AddFromType<WebPlugin>()
@@ -144,11 +141,11 @@ namespace DiscordBot.SemanticKernel
                         .AddSingleton(appDbContext)
                         ;
                     break;
-                case Usage.DataScrapingJob:
+                case Scope.DataScrapingJob:
                     builder.Plugins
                         .AddFromType<MabiWebPlugin>()
                         .AddFromType<EventManagerPlugin>()
-                        //.AddFromType<Plugins.Writer.Summary.ConversationSummaryPlugin>()
+                        .AddFromType<Plugins.Writer.Summary.ConversationSummaryPlugin>()
                         ;
 
                     builder.Services
@@ -222,21 +219,21 @@ namespace DiscordBot.SemanticKernel
             return kernel;
         }
 
-        public async Task<KernelStatus> GenerateResponse(Usage usage, string prompt, SocketInteraction socketInteraction = null, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null, Uri? imageUri = null, ChatHistory? conversationChatHistory = null)
+        public async Task<KernelStatus> GenerateResponse(Scope scope, string prompt, SocketInteraction socketInteraction = null, EventHandler<KernelStatus> onKenelStatusUpdatedCallback = null, Uri? imageUri = null, ChatHistory? conversationChatHistory = null, object metaData = null)
         {
             try
             {
                 DateTime startTime = DateTime.Now;
 
                 KernelStatus kernelStatus = new();
-                StepStatus pendingStatu = new()
+                StepStatus pendingStatus = new()
                 {
                     DisplayName = nameof(StatusEnum.Pending),
                     Status = StatusEnum.Pending,
                     StartTime = DateTime.Now,
                     ShowElapsedTime = false
                 };
-                kernelStatus.StepStatuses.Enqueue(pendingStatu);
+                kernelStatus.StepStatuses.Enqueue(pendingStatus);
                 Conversation conversation = new()
                 {
                     UserPrompt = prompt,
@@ -246,34 +243,34 @@ namespace DiscordBot.SemanticKernel
                 kernelStatus.Conversation = conversation;
                 onKenelStatusUpdatedCallback?.Invoke(this, kernelStatus);
 
+                bool showStatusPerSec = true || socketInteraction.User.Id == ulong.Parse(discordBotConfig.Value.AdminId);
+                bool showArguments = scope switch
+                {
+                    Scope.ChatBot => true,
+                    Scope.DataScrapingJob => false,
+                    _ => true,
+                };
+                ;
+                ulong? guild = socketInteraction?.GuildId ?? metaData.GetProperty<ulong>(nameof(SocketInteraction.GuildId));
                 SocketGuildUser? user = socketInteraction?.User as SocketGuildUser;
                 SocketGuildChannel? channel = socketInteraction?.Channel as SocketGuildChannel;
                 ChatMessageContent result = default;
                 ObservableCollection<LogRecord> logRecords = [];
-                bool showStatusPerSec = true || socketInteraction.User.Id == ulong.Parse(discordBotConfig.Value.AdminId);
-                AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, onKenelStatusUpdatedCallback, showStatusPerSec: showStatusPerSec);
-                Kernel kernel = await GetKernelAsync(usage, logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter, useBestModel: imageUri != null);
+                AutoFunctionInvocationFilter autoFunctionInvocationFilter = new(kernelStatus, onKenelStatusUpdatedCallback, showStatusPerSec: showStatusPerSec, showArguments: showArguments);
+                Kernel kernel = await GetKernelAsync(scope, logRecords: logRecords, autoFunctionInvocationFilter: autoFunctionInvocationFilter, useBestModel: imageUri != null);
                 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
                 string basicSystemMessage;
                 string basicInfo;
-
-                switch (usage)
-                {
-                    case Usage.ChatBot:
-                        break;
-                    case Usage.DataScrapingJob:
-                        break;
-                }
 
                 ChatMessageContentItemCollection userInput = [new TextContent(prompt)];
                 if (imageUri != null) userInput.Add(new ImageContent(imageUri));
 
                 ChatHistory history = [];
 
-                switch (usage)
+                switch (scope)
                 {
-                    case Usage.ChatBot:
+                    case Scope.ChatBot:
                         if (conversationChatHistory == null)
                         {
                             basicSystemMessage = $"""
@@ -307,14 +304,15 @@ namespace DiscordBot.SemanticKernel
                             """;
                         history.AddSystemMessage(currentInfo);
                         break;
-                    case Usage.DataScrapingJob:
+                    case Scope.DataScrapingJob:
                         basicSystemMessage = $"""
                             用戶會給你一段HTML內容, 那是遊戲的公告, 你需要從中提取出可能的活動資訊
                             活動資訊在相應的網址上, 呼叫{nameof(MabiWebPlugin)}-{nameof(MabiWebPlugin.GetMabinogiWebsiteEventContent)}提取Url裡的活動資訊
-                            只對頭2個Url進行提取
-                            提取活動內容後呼叫{nameof(EventManagerPlugin)}-{nameof(EventManagerPlugin.GetCurrentEvents)}來獲取目前活動列表 (ServerID: 607932041572646932)
-                            比對提取的活動內容和目前活動列表, 如果有重複的活動, 則更新現有的活動
-                            呼叫{nameof(EventManagerPlugin)}-{nameof(EventManagerPlugin.CreateEvent)}來創建新的Discord活動 (ServerID: 607932041572646932)
+                            最多只對頭10個Url進行提取
+                            1. 提取活動內容後呼叫{nameof(EventManagerPlugin)}-{nameof(EventManagerPlugin.GetCurrentEvents)}來獲取目前活動列表 (ServerID: {guild})
+                            2. 比對提取的活動內容和目前活動列表 (根據活動名字和描述來比對)
+                            3. 對於現有的活動, 如果有資料不同, 使用最新的資料更新現有的活動
+                            4. 對於新的活動, 呼叫{nameof(EventManagerPlugin)}-{nameof(EventManagerPlugin.CreateEvent)}來創建新的Discord活動 (ServerID: {guild})
                             """;
                         history.AddSystemMessage(basicSystemMessage);
                         break;
@@ -336,7 +334,7 @@ namespace DiscordBot.SemanticKernel
                 {
                     startTime = DateTime.Now;
                     thinkingStatus.StartTime = startTime;
-                    kernelStatus.StepStatuses = new(kernelStatus.StepStatuses.Where(x => pendingStatu.DisplayName != x.DisplayName));
+                    kernelStatus.StepStatuses = new(kernelStatus.StepStatuses.Where(x => pendingStatus.DisplayName != x.DisplayName));
                     kernelStatus.StepStatuses.Enqueue(thinkingStatus);
                     OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
                     {
@@ -453,7 +451,7 @@ namespace DiscordBot.SemanticKernel
                     """;
                 history.AddSystemMessage(basicSystemMessage);
 
-                Kernel kernel = await GetKernelAsync(Usage.DataScrapingJob);
+                Kernel kernel = await GetKernelAsync(Scope.DataScrapingJob);
                 OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
                 {
                     Temperature = 1,

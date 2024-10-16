@@ -26,8 +26,9 @@ namespace DiscordBot.Db.Entity
         public ulong? InstanceResetReminderMessageIdToday { get; set; }
         public ulong? DataScapingNewsChannelId { get; set; }
         public ulong? CromBasHelperChannelId { get; set; }
+        public ulong? LogChannelId { get; set; }
 
-        public ICollection<GuildUserSetting> GuildUserSettings { get; set; } = new List<GuildUserSetting>();
-        public ICollection<GuildNewsOverride> GuildNewsOverrides { get; set; } = new List<GuildNewsOverride>();
+        public ICollection<GuildUserSetting> GuildUserSettings { get; set; } = [];
+        public ICollection<GuildNewsOverride> GuildNewsOverrides { get; set; } = [];
     }
 }

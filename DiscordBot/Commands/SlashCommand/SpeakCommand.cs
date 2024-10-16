@@ -59,10 +59,10 @@ namespace DiscordBot.Commands.SlashCommand
 
             await command.DeferAsync(ephemeral: true);
 
-            SocketGuildUser optionUser = command.Data.Options.First(x => x.Name == OptionUser).Value as SocketGuildUser;
-            string optionUsername = command.Data.Options.First(x => x.Name == OptionUsername).Value as string;
-            Attachment optionIcon = command.Data.Options.First(x => x.Name == OptionIcon).Value as Attachment;
-            string optionIconUrl = command.Data.Options.First(x => x.Name == OptionIconUrl).Value as string;
+            SocketGuildUser optionUser = command.Data.Options.FirstOrDefault(x => x.Name == OptionUser)?.Value as SocketGuildUser;
+            string optionUsername = command.Data.Options.FirstOrDefault(x => x.Name == OptionUsername)?.Value as string;
+            Attachment optionIcon = command.Data.Options.FirstOrDefault(x => x.Name == OptionIcon)?.Value as Attachment;
+            string optionIconUrl = command.Data.Options.FirstOrDefault(x => x.Name == OptionIconUrl)?.Value as string;
             IIntegrationChannel optionChannel = command.Data.Options.First(x => x.Name == OptionChannel).Value as IIntegrationChannel;
             string optionContent = command.Data.Options.First(x => x.Name == OptionContent).Value as string;
 

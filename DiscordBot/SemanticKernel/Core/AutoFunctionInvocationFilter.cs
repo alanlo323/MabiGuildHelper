@@ -12,7 +12,7 @@ using Microsoft.SemanticKernel;
 
 namespace DiscordBot.SemanticKernel.Core
 {
-    public class AutoFunctionInvocationFilter(KernelStatus kernelStatus, EventHandler<KernelStatus> onKenelStatusUpdatedHandler, bool showStatusPerSec = false) : IAutoFunctionInvocationFilter, IFunctionInvocationFilter
+    public class AutoFunctionInvocationFilter(KernelStatus kernelStatus, EventHandler<KernelStatus> onKenelStatusUpdatedHandler, bool showStatusPerSec = false, bool showArguments = true) : IAutoFunctionInvocationFilter, IFunctionInvocationFilter
     {
         public async Task OnAutoFunctionInvocationAsync(AutoFunctionInvocationContext context, Func<AutoFunctionInvocationContext, Task> next)
         {
@@ -115,7 +115,8 @@ namespace DiscordBot.SemanticKernel.Core
                     KernelArguments = kernelArguments,
                     DisplayName = displayName,
                     StartTime = DateTime.Now,
-                    ShowElapsedTime = showStatusPerSec
+                    ShowElapsedTime = showStatusPerSec,
+                    ShowArguments = showArguments,
                 };
                 kernelStatus.StepStatuses.Enqueue(stepStatus);
             }
@@ -142,7 +143,8 @@ namespace DiscordBot.SemanticKernel.Core
                     Key = key,
                     DisplayName = displayName,
                     StartTime = DateTime.Now,
-                    ShowElapsedTime = showStatusPerSec
+                    ShowElapsedTime = showStatusPerSec,
+                    ShowArguments = showArguments,
                 };
                 kernelStatus.StepStatuses.Enqueue(stepStatus);
             }

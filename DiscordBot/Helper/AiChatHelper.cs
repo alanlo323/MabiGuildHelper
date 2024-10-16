@@ -26,9 +26,9 @@ using Microsoft.SemanticKernel;
 
 namespace DiscordBot.Helper
 {
-    public class AiChatHelper(ILogger<AiChatHelper> logger, SemanticKernelEngine semanticKernelEngine, AppDbContext appDbContext, DatabaseHelper databaseHelper, ButtonHandlerHelper buttonHandlerHelper, EnchantmentHelper enchantmentHelper, ItemHelper itemHelper)
+    public class AiChatHelper(ILogger<AiChatHelper> logger, SemanticKernelEngine semanticKernelEngine, AppDbContext appDbContext, DatabaseHelper databaseHelper, ButtonHandlerHelper buttonHandlerHelper, EnchantmentHelper enchantmentHelper, ItemHelper itemHelper, DiscordApiHelper discordApiHelper)
     {
-        public async Task ProcessChatRequest(SocketInteraction socketInteraction, string prompt, Uri? imageUri = null, int? lastConversationId = null)
+        public async Task ProcessChatRequest(SemanticKernelEngine.Scope scope, SocketInteraction socketInteraction, string prompt, Uri? imageUri = null, int? lastConversationId = null, bool logResult = false)
         {
             await socketInteraction.DeferAsync();
 
@@ -76,7 +76,7 @@ namespace DiscordBot.Helper
             ChatHistory? conversationChatHistory = null;
             if (lastConversation != null) conversationChatHistory = lastConversation.ChatHistoryJson.Deserialize<ChatHistory>();
 
-            KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(SemanticKernelEngine.Usage.ChatBot, prompt, socketInteraction: socketInteraction, imageUri: imageUri, conversationChatHistory: conversationChatHistory, onKenelStatusUpdatedCallback: OnKenelStatusUpdated);
+            KernelStatus kernelStatus = await semanticKernelEngine.GenerateResponse(scope, prompt, socketInteraction: socketInteraction, imageUri: imageUri, conversationChatHistory: conversationChatHistory, onKenelStatusUpdatedCallback: OnKenelStatusUpdated);
             await Task.Delay(1000); // Wait for the status message to be sent
 
             string responseMessage = GetResponseMessage(socketInteraction, kernelStatus);
@@ -84,6 +84,8 @@ namespace DiscordBot.Helper
             answer = answer[..Math.Min(2000, answer.Length)];
             MessageComponent conversationActionButtonComponent = buttonHandlerHelper.GetButtonHandler<ConversationActionButtonHandler>().GetMessageComponent();
             FollowUpOrEditMessage(socketInteraction, answer, ref restFollowupMessage, components: conversationActionButtonComponent);
+
+            if (logResult) await discordApiHelper.LogMessage(socketInteraction.GuildId.Value, kernelStatus.Conversation.Result);
 
             kernelStatus.Conversation.DiscordMessageId = restFollowupMessage!.Id;
             await databaseHelper.Add(kernelStatus.Conversation);
@@ -193,7 +195,7 @@ namespace DiscordBot.Helper
                     default:
                         break;
                 }
-                message += $"{stepStatus.KernelArguments.ToDisplayName()}";
+                if (stepStatus.ShowArguments) message += stepStatus.KernelArguments.ToDisplayName();
                 if (stepStatus.ElapsedTime.HasValue) message += $" ({stepStatus.ElapsedTime?.Humanize(precision: 2, minUnit: Humanizer.Localisation.TimeUnit.Second, collectionSeparator: " ", culture: new CultureInfo("zh-tw"))})";
                 statusList.Add(message);
             }

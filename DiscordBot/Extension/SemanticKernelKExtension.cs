@@ -17,8 +17,8 @@ namespace DiscordBot.Extension
         public static string ToDisplayName(this KernelArguments kernelArguments)
         {
             if (kernelArguments == null) return string.Empty;
-            string asd = kernelArguments.Select(x => $"{x.Value}").Aggregate((s1, s2) => $"{s1} {s2}");
-            return kernelArguments == null ? string.Empty : $"  [{asd}]";
+            string argumentsStr = kernelArguments.Select(x => $"{x.Value}").Aggregate((s1, s2) => $"{s1} {s2}");
+            return kernelArguments == null ? string.Empty : $"  [{argumentsStr}]";
         }
     }
 }

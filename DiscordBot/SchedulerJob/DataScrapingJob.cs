@@ -12,15 +12,17 @@ using DiscordBot.Db;
 using DiscordBot.Db.Entity;
 using DiscordBot.Extension;
 using DiscordBot.Helper;
+using DiscordBot.Migrations;
 using DiscordBot.SemanticKernel;
 using DiscordBot.Util;
 using Microsoft.Extensions.Logging;
 using Quartz;
 using static DiscordBot.SemanticKernel.SemanticKernelEngine;
+using News = DiscordBot.Db.Entity.News;
 
 namespace DiscordBot.SchedulerJob
 {
-    public class DataScrapingJob(ILogger<DataScrapingJob> logger, AppDbContext appDbContext, DiscordApiHelper discordApiHelper, DataScrapingHelper dataScrapingHelper, SemanticKernelEngine semanticKernelEngine) : IJob
+    public class DataScrapingJob(ILogger<DataScrapingJob> logger, DiscordSocketClient client, AppDbContext appDbContext, DiscordApiHelper discordApiHelper, DataScrapingHelper dataScrapingHelper, SemanticKernelEngine semanticKernelEngine) : IJob
     {
         public static readonly JobKey Key = new(nameof(DataScrapingJob));
 
@@ -30,10 +32,12 @@ namespace DiscordBot.SchedulerJob
 
             var dataScrapingResult = await dataScrapingHelper.GetMabinogiNews();
             var guildSettings = appDbContext.GuildSettings.ToList();
+            var newsList = dataScrapingResult.UpdatedNews.Concat(dataScrapingResult.NewNews);
 
-            foreach (News news in dataScrapingResult.UpdatedNews.Concat(dataScrapingResult.NewNews))
+            // Genarate Ai Content
+            foreach (News news in newsList)
             {
-                var kernel = await semanticKernelEngine.GetKernelAsync(Usage.DataScrapingJob);
+                var kernel = await semanticKernelEngine.GetKernelAsync(Scope.DataScrapingJob);
                 string summary = await kernel.InvokeAsync<string>("ConversationSummaryPlugin", "SummarizeMabiNewsHtml", arguments: new()
                 {
                     { "input", news.HtmlContent },
@@ -41,13 +45,36 @@ namespace DiscordBot.SchedulerJob
                 });
                 news.AiContent = summary;
                 await appDbContext.SaveChangesAsync();
+            }
+
+            // Post news
+            foreach (News news in newsList)
+            {
 
                 Embed embed = EmbedUtil.GetMainogiNewsEmbed(news);
                 foreach (GuildSetting guildSetting in guildSettings)
                 {
                     if (!guildSetting.DataScapingNewsChannelId.HasValue) continue;
 
+                    logger.LogInformation($"Posting news: {news.Title} to {guildSetting.GuildId}");
+
+                    // Post to News Channel
                     await discordApiHelper.SendFile(guildSetting.GuildId, guildSetting.DataScapingNewsChannelId, news.SnapshotTempFile.FullName, embed: embed);
+
+                    Thread newThread = new(async () =>
+                    {
+                        try
+                        {
+                            // Create or Update Event
+                            var response = await semanticKernelEngine.GenerateResponse(Scope.DataScrapingJob, news.HtmlContent, metaData: new { guildSetting.GuildId });
+                            await discordApiHelper.LogMessage(guildSetting.GuildId, response.Conversation.Result);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogException(ex);
+                        }
+                    });
+                    newThread.Start();
                 }
             }
         }

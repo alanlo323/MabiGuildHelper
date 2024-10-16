@@ -89,6 +89,12 @@ namespace DiscordBot.Commands.SlashCommand
                         .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
                     )
                 )
+                .AddOption(new SlashCommandOptionBuilder()
+                    .WithName("log")
+                    .WithDescription("設定日誌紀錄頻道")
+                    .WithType(ApplicationCommandOptionType.SubCommand)
+                    .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
+                )
                 ;
             return command.Build();
         }
@@ -107,6 +113,9 @@ namespace DiscordBot.Commands.SlashCommand
                         break;
                     case "helper":
                         await HandleHelperCommand(command, option);
+                        break;
+                    case "log":
+                        await HandleLogCommand(command, option);
                         break;
                     default:
                         break;
@@ -232,6 +241,12 @@ namespace DiscordBot.Commands.SlashCommand
 
             var guildSettings = await appDbContext.GuildSettings.Where(x => x.CromBasHelperChannelId != null).ToListAsync();
             RuntimeDbUtil.DefaultRuntimeDb[MessageReceivedHandler.CromBasHelperChannelIdListKey] = guildSettings.Select(x => x.CromBasHelperChannelId).ToList();
+        }
+
+        private async Task HandleLogCommand(SocketSlashCommand command, SocketSlashCommandDataOption option)
+        {
+            SocketTextChannel optionChannel = await SetChannelId(command.GuildId.Value, option, nameof(GuildSetting.LogChannelId));
+            await command.RespondAsync($"已設定{optionChannel.Mention}為日誌紀錄頻道", ephemeral: true);
         }
     }
 }

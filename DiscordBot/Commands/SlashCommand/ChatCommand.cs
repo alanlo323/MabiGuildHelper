@@ -51,7 +51,7 @@ namespace DiscordBot.Commands.SlashCommand
             string prompt = command.Data.Options.First(x => x.Name == "text").Value as string;
             Uri imageUri = command.Data.Options.FirstOrDefault(x => x.Name == "attachment")?.Value is Attachment attachment ? new Uri(attachment.ProxyUrl) : null;
 
-            await aiChatHelper.ProcessChatRequest(command, prompt, imageUri);
+            await aiChatHelper.ProcessChatRequest(SemanticKernelEngine.Scope.ChatBot,command, prompt, imageUri);
         }
     }
 }

@@ -51,7 +51,7 @@ namespace DiscordBot.Commands.MessageCommand
                 Embed embed = message.Embeds.FirstOrDefault();
                 var input = (string.IsNullOrWhiteSpace(embed?.Description) ? message.Content : embed.Description);
 
-                var kernel = await semanticKernelEngine.GetKernelAsync(Usage.ChatBot);
+                var kernel = await semanticKernelEngine.GetKernelAsync(Scope.ChatBot);
                 string result = await kernel.InvokeAsync<string>("ConversationSummaryPlugin", "SummarizeMabiNews", arguments: new()
                 {
                     { "input", input },

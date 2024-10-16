@@ -35,7 +35,7 @@ namespace DiscordBot.ModalHandler
                 var prompt = modal.Data.Components.Where(x => x.CustomId == ConversationFollowUpModalContentIdPrefix).Single().Value;
                 int conversationId = int.Parse(modal.Data.CustomId.Split("_")[1]);
 
-                await aiChatHelper.ProcessChatRequest(modal, prompt, lastConversationId: conversationId);
+                await aiChatHelper.ProcessChatRequest(SemanticKernel.SemanticKernelEngine.Scope.ChatBot, modal, prompt, lastConversationId: conversationId);
             }
             catch (Exception ex)
             {

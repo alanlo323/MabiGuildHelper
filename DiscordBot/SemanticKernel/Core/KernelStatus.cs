@@ -38,6 +38,7 @@ namespace DiscordBot.SemanticKernel.Core
         }
 
         public bool ShowElapsedTime { get; set; } = false;
+        public bool ShowArguments { get; set; } = true;
 
         public string GetQueueKey()
         {

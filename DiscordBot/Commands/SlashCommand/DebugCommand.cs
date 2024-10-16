@@ -31,7 +31,7 @@ using Microsoft.KernelMemory.Pipeline;
 
 namespace DiscordBot.Commands.SlashCommand
 {
-    public class DebugCommand(ILogger<DebugCommand> logger, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, AppDbContext appDbContext, DiscordApiHelper discordApiHelper, DataScrapingHelper dataScrapingHelper, SemanticKernelEngine semanticKernelEngine) : IBaseSlashCommand
+    public class DebugCommand(ILogger<DebugCommand> logger, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, AppDbContext appDbContext, DiscordApiHelper discordApiHelper, DataScrapingHelper dataScrapingHelper, AiChatHelper aiChatHelper, SemanticKernelEngine semanticKernelEngine) : IBaseSlashCommand
     {
         public string Name { get; set; } = "debug";
         public string Description { get; set; } = "測試";
@@ -56,14 +56,11 @@ namespace DiscordBot.Commands.SlashCommand
                 return;
             }
 
-            await command.DeferAsync();
             try
             {
-                News news = appDbContext.News.First(x => x.Id == 7);
+                News news = appDbContext.News.First(x => x.Id == 20);
 
-                var result = await semanticKernelEngine.GenerateResponse(Usage.DataScrapingJob, news.HtmlContent);
-
-                await command.FollowupAsync(result.Conversation.Result);
+                await aiChatHelper.ProcessChatRequest(Scope.DataScrapingJob, command, news.HtmlContent, logResult: true);
             }
             catch (Exception ex)
             {

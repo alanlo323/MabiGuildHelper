@@ -14,6 +14,9 @@ using Discord.WebSocket;
 using Discord.Rest;
 using DocumentFormat.OpenXml.Drawing;
 using Discord;
+using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
+using System.Collections;
+using System.IO;
 
 namespace DiscordBot.SemanticKernel.Plugins.Event
 {
@@ -23,7 +26,7 @@ namespace DiscordBot.SemanticKernel.Plugins.Event
     /// <remarks>
     /// Initializes a new instance of the <see cref="EventManagerPlugin"/> class.
     /// </remarks>
-    public sealed class EventManagerPlugin(ILogger<EventManagerPlugin> logger, DiscordSocketClient client)
+    public sealed class EventManagerPlugin(ILogger<EventManagerPlugin> logger, DiscordSocketClient client, DataScrapingHelper dataScrapingHelper)
     {
         /// <summary>
         /// Get events list from a discord server
@@ -89,8 +92,13 @@ namespace DiscordBot.SemanticKernel.Plugins.Event
 
                 SocketGuild guild = client.GetGuild(serverId);
                 Image coverImage = default;
+
+                var snapshot = await dataScrapingHelper.GetWebsiteSnapshot(link);
+                using MemoryStream stream = new(snapshot.Item2 ?? []);
+                if (snapshot != default) coverImage = new Image(stream);
+
                 RestGuildEvent restGuildEvent = await guild.CreateEventAsync(name, amendStartTime ? DateTime.Now.AddSeconds(5) : startTime, GuildScheduledEventType.External, description: description, endTime: endTime, coverImage: coverImage, location: link);
-                return $"EventId: {restGuildEvent.Name} created.";
+                return $"Event: {restGuildEvent.Name} created.";
             }
             catch (Exception ex)
             {
@@ -119,7 +127,7 @@ namespace DiscordBot.SemanticKernel.Plugins.Event
                 RestGuildEvent restGuildEvent = await guild.GetEventAsync(eventId);
                 await restGuildEvent.EndAsync();
 
-                return $"EventId: {restGuildEvent.Id} ended.";
+                return $"Event: {restGuildEvent.Name} ended.";
             }
             catch (Exception ex)
             {
@@ -161,16 +169,22 @@ namespace DiscordBot.SemanticKernel.Plugins.Event
 
                 SocketGuild guild = client.GetGuild(serverId);
                 Image coverImage = default;
+
+                var snapshot = await dataScrapingHelper.GetWebsiteSnapshot(link);
+                using MemoryStream stream = new(snapshot.Item2 ?? []);
+                if (snapshot != default) coverImage = new Image(stream);
+
                 RestGuildEvent restGuildEvent = await guild.GetEventAsync(eventId);
                 await restGuildEvent.ModifyAsync(x =>
                    {
                        x.Name = name;
-                       x.StartTime = amendStartTime ? DateTime.Now.AddSeconds(5) : startTime;
+                       if (restGuildEvent.StartTime > DateTime.Now) x.StartTime = amendStartTime ? DateTime.Now.AddSeconds(5) : startTime;
                        x.Description = description;
                        if (endTime.HasValue) x.EndTime = endTime.Value;
                        x.Location = link;
+                       if (snapshot != default) x.CoverImage = coverImage;
                    });
-                return $"EventId: {restGuildEvent.Id} updated.";
+                return $"Event: {restGuildEvent.Name} updated.";
             }
             catch (Exception ex)
             {
