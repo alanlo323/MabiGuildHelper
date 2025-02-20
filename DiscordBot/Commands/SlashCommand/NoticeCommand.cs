@@ -31,7 +31,7 @@ namespace DiscordBot.Commands.SlashCommand
             var command = new SlashCommandBuilder()
                 .WithName(Name)
                 .WithDescription(Description)
-                .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
+                .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text, ChannelType.News])
                 .AddOption("content", ApplicationCommandOptionType.String, "內容", isRequired: true, minLength: 1)
                 .AddOption("useembed", ApplicationCommandOptionType.Boolean, "使用Embed樣式", isRequired: false)
                 ;
@@ -61,6 +61,8 @@ namespace DiscordBot.Commands.SlashCommand
             {
                 message = await channel.SendMessageAsync(content);
             }
+            if (channel.GetChannelType() == ChannelType.News) await message.CrosspostAsync();
+
             await command.RespondAsync($"{message.GetJumpUrl()}{Environment.NewLine}已經在{channel.Mention}發出通知: {content}", ephemeral: true);
         }
     }

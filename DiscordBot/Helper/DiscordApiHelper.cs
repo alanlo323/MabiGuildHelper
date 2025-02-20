@@ -82,15 +82,15 @@ namespace DiscordBot.Helper
             return await textChannel.SendMessageAsync(text: content, embed: embed, components: messageComponent);
         }
 
-        public async Task<RestUserMessage?> SendFile(ulong? guildId, ulong? textChannelId, string filePath, string content = null, Embed embed = null, MessageComponent messageComponent = null)
+        public async Task<(SocketTextChannel, RestUserMessage?)> SendFile(ulong? guildId, ulong? textChannelId, string filePath, string content = null, Embed embed = null, MessageComponent messageComponent = null)
         {
             var guild = client.GetGuild(guildId ?? 0);
-            if (guild == null) return null;
+            if (guild == null) return default;
 
             SocketTextChannel textChannel = guild.GetTextChannel(textChannelId ?? 0);
-            if (textChannel == null) return null;
-
-            return await textChannel.SendFileAsync(filePath: filePath, text: content, embed: embed, components: messageComponent);
+            return textChannel == null
+                ? default
+                : ((SocketTextChannel, RestUserMessage?))(textChannel, await textChannel.SendFileAsync(filePath: filePath, text: content, embed: embed, components: messageComponent));
         }
 
         public async Task<string?> UploadAttachment(string filePath, string sourceFunction)

@@ -35,6 +35,8 @@ using Microsoft.KernelMemory.Pipeline;
 using DiscordBot.SemanticKernel.QueneService;
 using System.Net;
 using DiscordBot.ModalHandler;
+using Microsoft.SemanticKernel.TextGeneration;
+using DiscordBot.SemanticKernel.Core.LocalLlmTextGenerationService;
 
 namespace DiscordBot
 {
@@ -111,6 +113,7 @@ namespace DiscordBot
                 .AddScoped<IBaseSlashCommand, ChatCommand>()
                 .AddScoped<IBaseSlashCommand, AiCommand>()
                 .AddScoped<IBaseSlashCommand, SpeakCommand>()
+                .AddScoped<IBaseSlashCommand, EnchantmentCommand>()
                 .AddScoped<IBaseMessageCommand, EditNewsCommand>()
                 .AddScoped<IBaseMessageCommand, SummarizeCommand>()
                 .AddScoped<IBaseButtonHandler, ManageReminderButtonHandler>()
@@ -120,6 +123,8 @@ namespace DiscordBot
                 .AddScoped<IBaseModalHandler, EditNewsModalHandler>()
                 .AddScoped<IBaseModalHandler, ConversationFollowUpModalHandler>()
                 .AddScoped<IBaseAutocompleteHandler, ChatCommandAutocompleteHandler>()
+                .AddScoped<IBaseAutocompleteHandler, EnchantmentCommandAutocompleteHandler>()
+                .AddScoped<ITextGenerationService, LocalDeepSeekTextGenerationService>()
                 .AddScoped<MessageReceivedHandler>()
                 .AddScoped<DailyDungeonInfoJob>()
                 .AddScoped<DailyEffectJob>()

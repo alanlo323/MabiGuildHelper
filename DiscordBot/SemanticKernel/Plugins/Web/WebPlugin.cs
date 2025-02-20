@@ -84,7 +84,7 @@ public sealed class WebPlugin(ILogger<WebPlugin> logger, IWebSearchEngineConnect
     /// <param name="query">The text to search for.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The return value contains the search results as an IEnumerable WebPage object serialized as a string</returns>
-    [KernelFunction, Description("Perform a advanced web search with Microsoft Bing AI and return complete results.")]
+    //[KernelFunction, Description("Perform a advanced web search with Microsoft Bing AI and return complete results.")]
     public async Task<string> BingAiSearch(
         [Description("Text to search for")] string query,
         CancellationToken cancellationToken = default)
@@ -107,7 +107,7 @@ public sealed class WebPlugin(ILogger<WebPlugin> logger, IWebSearchEngineConnect
     /// <param name="url">The URI of the request.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The return value contains the content as a string</returns>
-    [KernelFunction, Description("Get content of a website.")]
+    //[KernelFunction, Description("Get content of a website.")]
     public async Task<string> GetWebContent(
         [Description("The URI of the request")] string url,
         Kernel kernel,

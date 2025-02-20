@@ -12,6 +12,7 @@ namespace DiscordBot.Util
         {
             return Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
         }
+
         public static bool IsLocal()
         {
             return GetEnvironment() == "Local";

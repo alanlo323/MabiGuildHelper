@@ -33,7 +33,8 @@ namespace DiscordBot.Configuration
         public required AzureOpenAIConfig GPT4_32K { get; set; }
         public required AzureOpenAIConfig GPT4_Turbo_0409 { get; set; }
         public required AzureOpenAIConfig GPT4O { get; set; }
-        public required AzureOpenAIConfig GPT4oMini{ get; set; }
+        public required AzureOpenAIConfig GPT4oMini { get; set; }
+        public required AzureOpenAIConfig DeepSeek_R1_32B { get; set; }
         public required AzureOpenAIConfig LLAMA3 { get; set; }
         public required AzureOpenAIConfig Embedding { get; set; }
     }

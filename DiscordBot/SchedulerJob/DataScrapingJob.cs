@@ -34,7 +34,7 @@ namespace DiscordBot.SchedulerJob
             var guildSettings = appDbContext.GuildSettings.ToList();
             var newsList = dataScrapingResult.UpdatedNews.Concat(dataScrapingResult.NewNews);
 
-            // Genarate Ai Content
+            // Generate Ai Content
             foreach (News news in newsList)
             {
                 var kernel = await semanticKernelEngine.GetKernelAsync(Scope.DataScrapingJob);
@@ -54,27 +54,37 @@ namespace DiscordBot.SchedulerJob
                 Embed embed = EmbedUtil.GetMainogiNewsEmbed(news);
                 foreach (GuildSetting guildSetting in guildSettings)
                 {
-                    if (!guildSetting.DataScapingNewsChannelId.HasValue) continue;
-
-                    logger.LogInformation($"Posting news: {news.Title} to {guildSetting.GuildId}");
-
-                    // Post to News Channel
-                    await discordApiHelper.SendFile(guildSetting.GuildId, guildSetting.DataScapingNewsChannelId, news.SnapshotTempFile.FullName, embed: embed);
-
-                    Thread newThread = new(async () =>
+                    try
                     {
-                        try
+                        if (!guildSetting.DataScapingNewsChannelId.HasValue) continue;
+                        logger.LogInformation($"Posting news: {news.Title} to {guildSetting.GuildId}");
+
+                        // Post to News Channel
+                        var postResult = await discordApiHelper.SendFile(guildSetting.GuildId, guildSetting.DataScapingNewsChannelId, news.SnapshotTempFile.FullName, embed: embed);
+                        if (postResult.Item1.GetChannelType() == ChannelType.News) await postResult.Item2!.CrosspostAsync();
+
+                        Thread newThread = new(async () =>
                         {
-                            // Create or Update Event
-                            var response = await semanticKernelEngine.GenerateResponse(Scope.DataScrapingJob, news.HtmlContent, metaData: new { guildSetting.GuildId });
-                            await discordApiHelper.LogMessage(guildSetting.GuildId, response.Conversation.Result);
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.LogException(ex);
-                        }
-                    });
-                    newThread.Start();
+                            try
+                            {
+                                // Create or Update Event
+                                if (guildSetting.GuildId == 1058732396998033428)    // Temporarily hardcode
+                                {
+                                    var response = await semanticKernelEngine.GenerateResponse(Scope.DataScrapingJob, news.HtmlContent, metaData: new { guildSetting.GuildId });
+                                    await discordApiHelper.LogMessage(guildSetting.GuildId, response.Conversation.Result);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.LogException(ex);
+                            }
+                        });
+                        newThread.Start();
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogException(ex);
+                    }
                 }
             }
         }

@@ -31,7 +31,9 @@ namespace DiscordBot.Commands.SlashCommand
 {
     public class ChatCommand(ILogger<ChatCommand> logger, DiscordSocketClient client, AiChatHelper aiChatHelper, AppDbContext appDbContext) : IBaseSlashCommand
     {
-        public string Name { get; set; } = "chat";
+        public const string GobleName = "chat";
+
+        public string Name { get; set; } = GobleName;
         public string Description { get; set; } = "和小幫手對話";
         public CommandAvailability Availability { get; set; } = CommandAvailability.Global;
 

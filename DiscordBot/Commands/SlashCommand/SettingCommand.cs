@@ -64,7 +64,7 @@ namespace DiscordBot.Commands.SlashCommand
                         .WithName("news")
                         .WithDescription("官網消息")
                         .WithType(ApplicationCommandOptionType.SubCommand)
-                        .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
+                        .AddOption("channel", ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text, ChannelType.News])
                     )
                 )
                 .AddOption(new SlashCommandOptionBuilder()

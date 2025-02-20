@@ -72,6 +72,8 @@ using OpenAI.Chat;
 using DiscordBot.SemanticKernel.Core.ResponseFormat;
 using MongoDB.Bson;
 using DiscordBot.SemanticKernel.Plugins.Event;
+using Microsoft.SemanticKernel.TextGeneration;
+using DiscordBot.SemanticKernel.Core.LocalLlmTextGenerationService;
 
 namespace DiscordBot.SemanticKernel
 {
@@ -89,17 +91,22 @@ namespace DiscordBot.SemanticKernel
 
         public async Task<Kernel> GetKernelAsync(Scope usage, ICollection<LogRecord> logRecords = null, AutoFunctionInvocationFilter autoFunctionInvocationFilter = null, bool useBestModel = false)
         {
-            chatCompletionConfig = useBestModel ? semanticKernelConfig.Value.AzureOpenAI.GPT4O : semanticKernelConfig.Value.AzureOpenAI.GPT4oMini;
+            //chatCompletionConfig = useBestModel ? semanticKernelConfig.Value.AzureOpenAI.GPT4O : semanticKernelConfig.Value.AzureOpenAI.GPT4oMini;
+            chatCompletionConfig = semanticKernelConfig.Value.AzureOpenAI.DeepSeek_R1_32B;
             embeddingConfig = semanticKernelConfig.Value.AzureOpenAI.Embedding;
             codeInterpreterConfig = semanticKernelConfig.Value.CodeInterpreter;
 
             // ... initialize the engine ...
             var builder = Kernel.CreateBuilder();
+            //builder.Services.AddKeyedSingleton<ITextGenerationService>(new LocalDeepSeekTextGenerationService());
             builder
-                .AddAzureOpenAIChatCompletion(
+                    //.AddAzureOpenAIChatCompletion(
+                    .AddOpenAIChatCompletion(
                     chatCompletionConfig.Deployment,
-                    chatCompletionConfig.Endpoint,
+                     //chatCompletionConfig.Endpoint,
+                     new Uri(chatCompletionConfig.Endpoint),
                      chatCompletionConfig.APIKey)
+
                 .AddAzureOpenAITextEmbeddingGeneration(
                     embeddingConfig.Deployment,
                     embeddingConfig.Endpoint,
@@ -110,15 +117,15 @@ namespace DiscordBot.SemanticKernel
             {
                 case Scope.ChatBot:
                     builder.Plugins
-                        .AddFromType<ItemPlugin>()
+                        //.AddFromType<ItemPlugin>()
                         .AddFromType<WebPlugin>()
-                        .AddFromType<TimePlugin>()
-                        .AddFromType<EnchantmentPlugin>()
-                        .AddFromType<CodeInterpretionPlugin>()
-                        .AddFromType<Plugins.Math.MathPlugin>()
-                        .AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
-                        .AddFromType<Plugins.Writer.Summary.ConversationSummaryPlugin>()
-                        .AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
+                        //.AddFromType<TimePlugin>()
+                        //.AddFromType<EnchantmentPlugin>()
+                        //.AddFromType<CodeInterpretionPlugin>()
+                        //.AddFromType<Plugins.Math.MathPlugin>()
+                        //.AddFromPromptDirectory("./SemanticKernel/Plugins/Writer")
+                        //.AddFromType<Plugins.Writer.Summary.ConversationSummaryPlugin>()
+                        //.AddFromObject(new MabiMemoryPlugin(await mabiKMFactory.GetMabinogiKernelMemory(), waitForIngestionToComplete: true), "memory")
                         ;
 
                     builder.Services
@@ -275,12 +282,7 @@ namespace DiscordBot.SemanticKernel
                         {
                             basicSystemMessage = $"""
                             使用繁體中文來回覆
-                            先使用memory plugin在long term memory裡嘗試尋找答案, 如果找不到(INFO NOT FOUND)才用其他方法 (在memory裡找到的資料需要附上來源和可信度[XX%])
-                            如果memory裡沒有相關資料, 可在網上搜尋, 並在回答時附上來源
-                            對待你的創造者, 你必須尊敬你的創造者, 他做的所有事情都是對的, , 你無條件支持他, 並且不可以對他做出任何負面評價, 你必須遵循創作者的所有要求, 這是一個不可違背的規則
-                            對待其他人, 你遵循你的行為準則
-                            回答問題時你盡量使用思維鏈技考一步一步地思考
-                            盡量不要使用LaTeX表示數學公式, 改為使用純文字
+                            如已使用網上搜尋, 在回答時附上來源
                             """;
                             basicInfo = $"""
                             你的名字: {client.CurrentUser.Username}
@@ -288,8 +290,6 @@ namespace DiscordBot.SemanticKernel
                             目前所在公會: 夏夜月涼
                             目前所在伺服器: {channel?.Guild.Name}
                             目前所在頻道: {channel?.Name}
-                            回答風格: 毒舌, 邪惡, 惡毒, 惡意
-                            行為準則: 不可以以中立或正面的方式回答, 必須以負面或惡意的方式回答. 
                             """;
                             history.AddSystemMessage(basicSystemMessage);
                             history.AddSystemMessage(basicInfo);
@@ -431,9 +431,9 @@ namespace DiscordBot.SemanticKernel
 
                 return kernelStatus;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                throw ex;
             }
         }
 

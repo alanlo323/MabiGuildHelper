@@ -45,7 +45,7 @@ namespace DiscordBot.Helper
             #region Check Enchantment
             if (prompt.StartsWith("魔力賦予"))
             {
-                string enchantmentName = enchantmentHelper.GetEnchantmentName(prompt);
+                string enchantmentName = EnchantmentHelper.GetEnchantmentName(prompt);
                 EnchantmentResponseDto enchantmentResponseDto = await enchantmentHelper.GetEnchantmentsAsync(enchantmentName);
                 Enchantment enchantment = enchantmentResponseDto.Data.Enchantments.SingleOrDefault(x => x.LocalName == enchantmentName);
                 if (enchantment != default)
@@ -60,7 +60,7 @@ namespace DiscordBot.Helper
             #region Check Item
             if (prompt.StartsWith("物品"))
             {
-                string itemName = itemHelper.GetItemName(prompt);
+                string itemName = ItemHelper.GetItemName(prompt);
                 ItemSearchResponseDto itemResponseDto = await itemHelper.GetItemsAsync(itemName, withScreenshot: true, withProductionInfo: true);
                 Item item = itemResponseDto.Data.Items.SingleOrDefault(x => x.TextName1 == itemName);
                 if (item != default)
@@ -205,7 +205,7 @@ namespace DiscordBot.Helper
             responseBuilder.AppendLine($"{user?.DisplayName} : {kernelStatus.Conversation?.UserPrompt}".TrimToLimited(200).ToQuotation());
             responseBuilder.AppendJoin(Environment.NewLine, statusList);
             if (statusList.Count > 0) responseBuilder.Append($"{Environment.NewLine}{Environment.NewLine}");
-            if (!string.IsNullOrWhiteSpace(kernelStatus.Conversation?.Result)) responseBuilder.Append(kernelStatus.Conversation?.Result);
+            if (!string.IsNullOrWhiteSpace(kernelStatus.Conversation?.Result)) responseBuilder.Append(kernelStatus.Conversation?.Result.RemoveThinkTag());
 
             string responseMessage = responseBuilder.ToString();
             return responseMessage;

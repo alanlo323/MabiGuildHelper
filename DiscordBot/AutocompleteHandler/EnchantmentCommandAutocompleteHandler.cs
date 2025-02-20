@@ -13,20 +13,20 @@ using DiscordBot.Util;
 
 namespace DiscordBot.ButtonHandler
 {
-    public class ChatCommandAutocompleteHandler(EnchantmentHelper enchantmentHelper, ItemHelper itemHelper) : IBaseAutocompleteHandler
+    public class EnchantmentCommandAutocompleteHandler(EnchantmentHelper enchantmentHelper, ItemHelper itemHelper) : IBaseAutocompleteHandler
     {
         public const string PrefixMabi = "瑪奇";
         public const string PrefixEnchantment = "魔力賦予";
         public const string PrefixItem = "物品";
 
-        public string CommandName { get; set; } = ChatCommand.GobleName;
+        public string CommandName { get; set; } = EnchantmentCommand.GobleName;
 
         public async Task Excute(SocketAutocompleteInteraction interaction)
         {
             List<AutocompleteResult> results = [];
-            string keyword = interaction.Data.Options.First(x => x.Name == "text").Value as string;
-            await CheckEnchantment(results, keyword);
-            await CheckItem(results, keyword);
+            string itemStr = interaction.Data.Options.FirstOrDefault(x => x.Name == "物品")?.Value as string;
+            //await CheckEnchantment(results, keyword);
+            await CheckItem(results, itemStr);
             results = results.Take(25).ToList();
             await interaction.RespondAsync(results);
         }
@@ -46,14 +46,14 @@ namespace DiscordBot.ButtonHandler
 
         private async Task CheckItem(List<AutocompleteResult> results, string keyword)
         {
-            if (!keyword.Any(x => PrefixMabi.Any(y => x == y)) && !keyword.Any(x => PrefixItem.Any(y => x == y))) return;
+            if (string.IsNullOrWhiteSpace(keyword)) return;
 
             ItemSearchResponseDto itemResponseDto = await itemHelper.GetItemsAsync(keyword);
             foreach (Item item in itemResponseDto.Data.Items.Take(25))
             {
-                string autocomputeName = $"{PrefixItem} {item.TextName1}";
-                string autocomputeValue = $"{PrefixItem} {item.TextName1}";
-                results.Add(new(autocomputeName, autocomputeValue));
+                string autocompleteName = $"{PrefixItem} {item.TextName1}";
+                string autocompleteValue = $"{PrefixItem} {item.TextName1}";
+                results.Add(new(autocompleteName, autocompleteValue));
             }
         }
     }

@@ -42,7 +42,7 @@ namespace DiscordBot.Commands.SlashCommand
                 .AddOption(OptionUsername, ApplicationCommandOptionType.String, "發言用戶名字", isRequired: false)
                 .AddOption(OptionIcon, ApplicationCommandOptionType.Attachment, "用戶圖片", isRequired: false)
                 .AddOption(OptionIconUrl, ApplicationCommandOptionType.String, "用戶圖片網址", isRequired: false)
-                .AddOption(OptionChannel, ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text])
+                .AddOption(OptionChannel, ApplicationCommandOptionType.Channel, "目標頻道", isRequired: true, channelTypes: [ChannelType.Text, ChannelType.News])
                 .AddOption(OptionContent, ApplicationCommandOptionType.String, "內容", isRequired: true, minLength: 1)
                 ;
             return command.Build();

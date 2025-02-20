@@ -63,7 +63,7 @@ namespace DiscordBot.Db.Entity
 
         public void SetTokens(IReadOnlyDictionary<string, object?> metadata)
         {
-            ChatTokenUsage tokenUsage = metadata.FirstOrDefault(x => x.Key == "Usage").Value as ChatTokenUsage;
+            ChatTokenUsage tokenUsage = metadata?.FirstOrDefault(x => x.Key == "Usage").Value as ChatTokenUsage;
             PromptTokens = tokenUsage?.InputTokens ?? PromptTokens;
             CompletionTokens = tokenUsage?.OutputTokens ?? CompletionTokens;
             TotalTokens = tokenUsage?.TotalTokens ?? TotalTokens;

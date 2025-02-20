@@ -3,6 +3,7 @@ using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Amazon.Runtime.Internal.Util;
 using DiscordBot.DataObject;
@@ -20,10 +21,11 @@ namespace DiscordBot.Helper
         public const string BaseAddress = "https://mabinogi.io";
         public const string SearchEndpoint = "napi/items/search";
         public const string ProductionEndpoint = "napi/items/production";
+        public const string HtmlEndpoint = "napi/items/";
         public const string CacheDbName = "ItemsCache";
         public const string ItemScreenshotSelector = "#__next > div > div > div.mabinogi-io-main-wrapper > article > div > div > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.MuiGrid-grid-sm-12.MuiGrid-grid-md-4.MuiGrid-grid-lg-3 > div > div.MabinogiItemBox_mabinogi_item_box__10Hah";
 
-        public async Task<ItemSearchResponseDto> GetItemsAsync(string keyword, bool withScreenshot = false, bool withProductionInfo = false)
+        public async Task<ItemSearchResponseDto> GetItemsAsync(string keyword, bool withScreenshot = false, bool withProductionInfo = false, bool withDetail = false)
         {
             try
             {
@@ -57,6 +59,11 @@ namespace DiscordBot.Helper
                             ItemProductionResponseDto itemProductionResponseDto = await GetItemProduction(item);
                             item.Production = itemProductionResponseDto.Data.Production;
                         }
+                        if (withDetail && item.Production == default)
+                        {
+                            List<string> itemTags = await GetItemTag(item);
+                            item.Tags = itemTags;
+                        }
                     }
                 }
 
@@ -68,7 +75,7 @@ namespace DiscordBot.Helper
             }
         }
 
-        public string GetItemName(string input)
+        public static string GetItemName(string input)
         {
             string output = input;
             string strToRemove = "瑪奇物品";
@@ -146,6 +153,54 @@ namespace DiscordBot.Helper
             {
                 throw;
             }
+        }
+
+        private async Task<List<string>> GetItemTag(Item item)
+        {
+            try
+            {
+                string html = await GetItemHtml(item);
+
+                string tagStr = MatchRegex(html, "span class=\"meilisearch-items-lvl1\" style=\"display:none\"", "span").FirstOrDefault();
+                List<string> tags = [.. tagStr?.Split("/").Select(s => s.Trim())];
+
+                return tags;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        private async Task<string> GetItemHtml(Item item)
+        {
+            try
+            {
+                logger.LogInformation($"Calling {BaseAddress}/{HtmlEndpoint}/{item.Id} to get production info for item: {item.Id} ({item.TextName1})");
+
+                RestClient client = new(BaseAddress);
+                RestRequest request = new($"{ProductionEndpoint}/{item.Id}", method: Method.Get);
+                var response = await client.GetAsync(request);
+                return !response.IsSuccessStatusCode ? throw new Exception(response.Content) : response.Content;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        private List<string> MatchRegex(string input, string fieldNamePre, string? fieldNamePost = default)
+        {
+            string pattern = $"<{fieldNamePre}>[\\s\\S]*?</{(fieldNamePost == default ? fieldNamePre : fieldNamePost)}>";
+            List<string> result = new List<string>();
+            MatchCollection matches = Regex.Matches(input, pattern);
+
+            foreach (var match in matches)
+            {
+                result.Add(match.ToString().Replace($"<{fieldNamePre}>", string.Empty).Replace($"</{(fieldNamePost == default ? fieldNamePre : fieldNamePost)}>", string.Empty));
+            }
+
+            return result;
         }
     }
 }

@@ -313,6 +313,9 @@ namespace DiscordBot.DataObject
         [NotMapped]
         public List<Production> Production { get; set; }
 
+        [NotMapped]
+        public List<string> Tags { get; set; } = [];
+
         public override string ToString() => ToString(true);
 
         public string ToString(bool includeName)
@@ -320,6 +323,10 @@ namespace DiscordBot.DataObject
             StringBuilder stringBuilder = new();
             if (includeName) stringBuilder.AppendLine($"{TextName1}");
             stringBuilder.AppendLine($"{TextDesc1}");
+            if (Tags.Count > 0)
+            {
+                stringBuilder.AppendLine($"{Tags.Aggregate((s1, s2) => $"{s1} / {s2}")}");
+            }
             Production production = Production?.FirstOrDefault();
             if (production != default)
             {

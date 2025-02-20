@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DiscordBot.Extension
 {
-    public static class StringExtension
+    public static partial class StringExtension
     {
         public static string ToQuotation(this string input)
         {
@@ -81,5 +82,22 @@ namespace DiscordBot.Extension
             byte[] hash = input.GetHash();
             return BitConverter.ToString(hash).Replace("-", string.Empty);
         }
+
+        public static string RemoveThinkTag(this string input)
+        {
+            if (string.IsNullOrEmpty(input)) return input;
+
+            Regex thinkTag = ThinkTag();
+            Match match = thinkTag.Match(input);
+            if (match.Success)
+            {
+                input = input.Replace(match.ToString(), string.Empty);
+                input = input.Remove(0, 2);
+            }
+            return input;
+        }
+
+        [GeneratedRegex("<think>(.+?)</think>", RegexOptions.Multiline | RegexOptions.Singleline)]
+        private static partial Regex ThinkTag();
     }
 }

@@ -65,7 +65,7 @@ namespace DiscordBot.Helper
             }
         }
 
-        public string GetEnchantmentName(string input)
+        public static string GetEnchantmentName(string input)
         {
             string output = input;
             string strToRemove = "瑪奇魔力賦予卷軸";
