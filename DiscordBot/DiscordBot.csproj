@@ -47,6 +47,8 @@
     <PackageReference Include="Quartz" Version="3.13.0" />
     <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.13.0" />
     <PackageReference Include="Quartz.Extensions.Hosting" Version="3.13.0" />
+    <PackageReference Include="Refit" Version="7.2.22" />
+    <PackageReference Include="Refit.HttpClientFactory" Version="7.2.22" />
     <PackageReference Include="RestSharp" Version="112.0.0" />
     <PackageReference Include="SemanticKernel.Assistants.AutoGen" Version="1.17.1" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.8" />

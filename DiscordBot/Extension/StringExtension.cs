@@ -17,6 +17,11 @@ namespace DiscordBot.Extension
             return $"```{input}```";
         }
 
+        public static string ToCodeBlock(this string input, string? language)
+        {
+            return $"```{language}{Environment.NewLine}{input}{Environment.NewLine}```";
+        }
+
         public static string ToHighLight(this string input)
         {
             return $"`{input}`";

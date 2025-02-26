@@ -28,10 +28,13 @@ using static DiscordBot.SemanticKernel.SemanticKernelEngine;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using Microsoft.Identity.Client;
 using Microsoft.KernelMemory.Pipeline;
+using DiscordBot.Refit.ApiInterface;
+using MongoDB.Bson;
+using Refit;
 
 namespace DiscordBot.Commands.SlashCommand
 {
-    public class DebugCommand(ILogger<DebugCommand> logger, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, AppDbContext appDbContext, DiscordApiHelper discordApiHelper, DataScrapingHelper dataScrapingHelper, AiChatHelper aiChatHelper, SemanticKernelEngine semanticKernelEngine) : IBaseSlashCommand
+    public class DebugCommand(ILogger<DebugCommand> logger, IOptionsSnapshot<DiscordBotConfig> discordBotConfig, AppDbContext appDbContext, DiscordApiHelper discordApiHelper, DataScrapingHelper dataScrapingHelper, AiChatHelper aiChatHelper, SemanticKernelEngine semanticKernelEngine, IJsonplaceholderApi jsonplaceholderApi) : IBaseSlashCommand
     {
         public string Name { get; set; } = "debug";
         public string Description { get; set; } = "測試";
@@ -43,6 +46,7 @@ namespace DiscordBot.Commands.SlashCommand
                 .WithName(Name)
                 .WithDescription(Description)
                 .WithDefaultMemberPermissions(GuildPermission.Administrator)
+                .AddOption("option1", ApplicationCommandOptionType.String, "Option 1")
                 ;
             return command.Build();
         }
@@ -58,9 +62,12 @@ namespace DiscordBot.Commands.SlashCommand
 
             try
             {
-                News news = appDbContext.News.First(x => x.Id == 20);
+                await command.DeferAsync();
 
-                await aiChatHelper.ProcessChatRequest(Scope.DataScrapingJob, command, news.HtmlContent, logResult: true);
+                string userId = command.Data.Options.First(x => x.Name == "option1").Value as string;
+                User user = await jsonplaceholderApi.GetUser(userId);
+
+                await command.FollowupAsync(user.Serialize().ToCodeBlock("JSON"));
             }
             catch (Exception ex)
             {

@@ -37,6 +37,9 @@ using System.Net;
 using DiscordBot.ModalHandler;
 using Microsoft.SemanticKernel.TextGeneration;
 using DiscordBot.SemanticKernel.Core.LocalLlmTextGenerationService;
+using DiscordBot.Refit.ApiInterface;
+using Refit;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 
 namespace DiscordBot
 {
@@ -135,6 +138,8 @@ namespace DiscordBot
                 .AddHostedService<QueuedHostedService>()
                 //.AddHostedService<MabinogiProxy>()
                 ;
+
+            builder.Services.AddRefitClient<IJsonplaceholderApi>().ConfigureHttpClient(c => c.BaseAddress = new Uri("https://jsonplaceholder.typicode.com"));
 
             builder.Services
                 .AddQuartz(q =>
